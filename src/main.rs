@@ -8,9 +8,9 @@
 \**********************************************************/
 /**********************************************************\
  *                                                        *
- * lib.rs                                                 *
+ * main.rs                                                *
  *                                                        *
- * hprose lib for Rust.                                   *
+ * hprose main for Rust.                                  *
  *                                                        *
  * LastModified: Sep 11, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
@@ -18,4 +18,16 @@
 \**********************************************************/
 
 #![feature(test)]
-pub mod io;
+
+mod io;
+
+use io::writer::Writer;
+
+fn main() {
+    let mut writer = Writer::new();
+    writer
+        .serialize(true)
+        .serialize(false)
+        .serialize(8);
+    println!("{}", writer.string());
+}

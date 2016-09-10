@@ -8,14 +8,15 @@
 \**********************************************************/
 /**********************************************************\
  *                                                        *
- * lib.rs                                                 *
+ * io/mod.rs                                              *
  *                                                        *
- * hprose lib for Rust.                                   *
+ * hprose io module for Rust.                             *
  *                                                        *
  * LastModified: Sep 11, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
-#![feature(test)]
-pub mod io;
+mod tags;
+mod encoder;
+pub mod writer;
