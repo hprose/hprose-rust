@@ -41,7 +41,7 @@ impl Writer {
     }
 
     pub fn write_bool(&mut self, b: bool) {
-        self.buf.push(if b { TagTrue } else { TagFalse });
+        self.buf.push(if b { TAG_TRUE } else { TAG_FALSE });
     }
 
     pub fn write_int(&mut self, i: i64) {
@@ -50,12 +50,12 @@ impl Writer {
             return
         }
         if i >= i32::MIN as i64 && i <= i32::MAX as i64 {
-            self.buf.push(TagInteger);
+            self.buf.push(TAG_INTEGER);
         } else {
-            self.buf.push(TagLong);
+            self.buf.push(TAG_LONG);
         }
-        write!(self.buf, "{}", i);
-        self.buf.push(TagSemicolon);
+        write!(self.buf, "{}", i).unwrap();
+        self.buf.push(TAG_SEMICOLON);
     }
 
     pub fn write_uint(&mut self, i: u64) {
@@ -64,42 +64,42 @@ impl Writer {
             return
         }
         if i <= i32::MAX as u64 {
-            self.buf.push(TagInteger);
+            self.buf.push(TAG_INTEGER);
         } else {
-            self.buf.push(TagLong);
+            self.buf.push(TAG_LONG);
         }
-        write!(self.buf, "{}", i);
-        self.buf.push(TagSemicolon);
+        write!(self.buf, "{}", i).unwrap();
+        self.buf.push(TAG_SEMICOLON);
     }
 
     pub fn write_float32(&mut self, f: f32) {
         if f.is_nan() {
-            self.buf.push(TagNaN);
+            self.buf.push(TAG_NAN);
             return
         }
         if f.is_infinite() {
-            self.buf.push(TagInfinity);
-            self.buf.push(if f.is_sign_negative() { TagNeg } else { TagPos });
+            self.buf.push(TAG_INFINITY);
+            self.buf.push(if f.is_sign_negative() { TAG_NEG } else { TAG_POS });
             return
         }
-        self.buf.push(TagDouble);
-        write!(self.buf, "{}", f);
-        self.buf.push(TagSemicolon);
+        self.buf.push(TAG_DOUBLE);
+        write!(self.buf, "{}", f).unwrap();
+        self.buf.push(TAG_SEMICOLON);
     }
 
     pub fn write_float64(&mut self, f: f64) {
         if f.is_nan() {
-            self.buf.push(TagNaN);
+            self.buf.push(TAG_NAN);
             return
         }
         if f.is_infinite() {
-            self.buf.push(TagInfinity);
-            self.buf.push(if f.is_sign_negative() { TagNeg } else { TagPos });
+            self.buf.push(TAG_INFINITY);
+            self.buf.push(if f.is_sign_negative() { TAG_NEG } else { TAG_POS });
             return
         }
-        self.buf.push(TagDouble);
-        write!(self.buf, "{}", f);
-        self.buf.push(TagSemicolon);
+        self.buf.push(TAG_DOUBLE);
+        write!(self.buf, "{}", f).unwrap();
+        self.buf.push(TAG_SEMICOLON);
     }
 
     pub fn clear(&mut self) {
@@ -121,7 +121,6 @@ impl Writer {
 
 #[cfg(test)]
 mod tests {
-    use super::super::tags::*;
     use super::*;
     use super::test::Bencher;
 
@@ -167,16 +166,16 @@ mod tests {
 
     #[test]
     fn test_serialize_float32() {
-        let testCases = [
+        let test_cases = [
             (f32::NAN, "N"),
             (f32::INFINITY, "I+"),
             (f32::NEG_INFINITY, "I-"),
             (f32::consts::PI, "d3.1415927;")
         ];
         let mut w = Writer::new();
-        for testCase in &testCases {
-            w.serialize(testCase.0);
-            assert_eq!(w.string(), testCase.1);
+        for test_case in &test_cases {
+            w.serialize(test_case.0);
+            assert_eq!(w.string(), test_case.1);
             w.clear();
         }
     }
@@ -193,16 +192,16 @@ mod tests {
 
     #[test]
     fn test_serialize_float64() {
-        let testCases = [
+        let test_cases = [
             (f64::NAN, "N"),
             (f64::INFINITY, "I+"),
             (f64::NEG_INFINITY, "I-"),
             (f64::consts::PI, "d3.141592653589793;")
         ];
         let mut w = Writer::new();
-        for testCase in &testCases {
-            w.serialize(testCase.0);
-            assert_eq!(w.string(), testCase.1);
+        for test_case in &test_cases {
+            w.serialize(test_case.0);
+            assert_eq!(w.string(), test_case.1);
             w.clear();
         }
     }
