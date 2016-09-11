@@ -17,6 +17,8 @@
  *                                                        *
 \**********************************************************/
 
+extern crate test;
+
 pub fn utf16_length(s: &str) -> i64 {
     let length = s.len();
     let bytes = s.as_bytes();
@@ -45,4 +47,25 @@ pub fn utf16_length(s: &str) -> i64 {
         }
     }
     n
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use super::test::Bencher;
+
+    #[test]
+    fn test_utf16_length() {
+        let test_cases = [
+            ("", 0),
+            ("π", 1),
+            ("你", 1),
+            ("你好", 2),
+            ("你好啊,hello!", 10),
+            ("🇨🇳", 4)
+        ];
+        for test_case in &test_cases {
+            assert!(utf16_length(test_case.0) == test_case.1, "The UTF16Length of \"{}\" must be {}", test_case.0, test_case.1);
+        }
+    }
 }

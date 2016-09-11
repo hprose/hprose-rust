@@ -8,17 +8,19 @@
 \**********************************************************/
 /**********************************************************\
  *                                                        *
- * io/mod.rs                                              *
+ * io/formatter.rs                                        *
  *                                                        *
- * hprose io module for Rust.                             *
+ * io Formatter for Rust.                                 *
  *                                                        *
  * LastModified: Sep 11, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
-mod tags;
-mod util;
-mod encoder;
-pub mod formatter;
-pub mod writer;
+
+use super::encoder::Encoder;
+use super::writer::Writer;
+
+pub fn serialize<T: Encoder>(v: &T, simple: bool) -> Vec<u8> {
+    Writer::new(simple).serialize(v).bytes()
+}

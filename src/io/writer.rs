@@ -198,6 +198,10 @@ impl Writer {
         self.buf.clear();
     }
 
+    pub fn bytes(&mut self) -> Vec<u8> {
+        self.buf.clone()
+    }
+
     pub fn string(&mut self) -> String {
         String::from_utf8(self.buf.clone()).unwrap()
     }
