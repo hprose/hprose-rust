@@ -88,3 +88,15 @@ impl Encoder for usize {
         w.write_uint(*self as u64);
     }
 }
+
+impl Encoder for f32 {
+    fn encode(&self, w: &mut Writer) {
+        w.write_float32(*self);
+    }
+}
+
+impl Encoder for f64 {
+    fn encode(&self, w: &mut Writer) {
+        w.write_float64(*self);
+    }
+}

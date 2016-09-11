@@ -28,6 +28,8 @@ fn main() {
     writer
         .serialize(true)
         .serialize(false)
-        .serialize(8);
+        .serialize(8)
+        .serialize(std::f32::consts::PI)
+        .serialize(std::f64::consts::PI);
     println!("{}", writer.string());
 }
