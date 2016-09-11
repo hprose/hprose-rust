@@ -100,3 +100,16 @@ impl Encoder for f64 {
         w.write_float64(*self);
     }
 }
+
+impl Encoder for str {
+    fn encode(&self, w: &mut Writer) {
+        w.write_string(self);
+    }
+}
+
+impl Encoder for String {
+    fn encode(&self, w: &mut Writer) {
+        w.write_string(self);
+    }
+}
+

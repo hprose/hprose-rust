@@ -24,6 +24,7 @@ use std::io::Write;
 use std::string::String;
 
 use super::tags::*;
+use super::util::*;
 use super::encoder::*;
 
 pub struct Writer {
@@ -31,12 +32,13 @@ pub struct Writer {
 }
 
 impl Writer {
-    pub fn serialize<T: Encoder>(&mut self, v: T) -> &mut Writer {
+    pub fn serialize<T: Encoder + ?Sized>(&mut self, v: &T) -> &mut Writer {
         self.write_value(v);
         self
     }
 
-    pub fn write_value<T: Encoder>(&mut self, v: T) {
+    #[inline]
+    pub fn write_value<T: Encoder + ?Sized>(&mut self, v: &T) {
         v.encode(self);
     }
 
@@ -102,6 +104,31 @@ impl Writer {
         self.buf.push(TAG_SEMICOLON);
     }
 
+    pub fn write_string(&mut self, s: &str) {
+        // todo: add length -1 handler
+        let length = utf16_length(s);
+        match length {
+            0 => self.buf.push(TAG_EMPTY),
+            1 => {
+                self.buf.push(TAG_UTF8_CHAR);
+                write!(self.buf, "{}", s).unwrap()
+            },
+            _ => {
+                // todo: write ref
+                self.write_string_inner(s, length)
+            }
+        }
+    }
+
+    fn write_string_inner(&mut self, s: &str, length: i64) {
+        self.buf.push(TAG_STRING);
+        write!(self.buf, "{}", length).unwrap();
+        self.buf.push(TAG_QUOTE);
+        write!(self.buf, "{}", s).unwrap();
+        self.buf.push(TAG_QUOTE);
+    }
+
+
     pub fn clear(&mut self) {
         self.buf.clear();
     }
@@ -129,10 +156,10 @@ mod tests {
     #[test]
     fn test_serialize_bool() {
         let mut w = Writer::new();
-        w.serialize(true);
+        w.serialize(&true);
         assert_eq!(w.string(), "t");
         w.clear();
-        w.serialize(false);
+        w.serialize(&false);
         assert_eq!(w.string(), "f");
     }
 
@@ -140,17 +167,17 @@ mod tests {
     fn benchmark_serialize_bool(b: &mut Bencher) {
         let mut w = Writer::new();
         b.iter(|| {
-            w.serialize(true);
+            w.serialize(&true);
         });
     }
 
     #[test]
     fn test_serialize_int() {
         let mut w = Writer::new();
-        w.serialize(8);
+        w.serialize(&8);
         assert_eq!(w.string(), "8");
         w.clear();
-        w.serialize(88);
+        w.serialize(&88);
         assert_eq!(w.string(), "i88;");
     }
 
@@ -159,7 +186,7 @@ mod tests {
         let mut w = Writer::new();
         let mut i: i64 = 1;
         b.iter(|| {
-            w.serialize(i);
+            w.serialize(&i);
             i += 1;
         });
     }
@@ -174,7 +201,7 @@ mod tests {
         ];
         let mut w = Writer::new();
         for test_case in &test_cases {
-            w.serialize(test_case.0);
+            w.serialize(&test_case.0);
             assert_eq!(w.string(), test_case.1);
             w.clear();
         }
@@ -185,7 +212,7 @@ mod tests {
         let mut w = Writer::new();
         let mut i: f32 = 1.0;
         b.iter(|| {
-            w.serialize(i);
+            w.serialize(&i);
             i += 1.0;
         });
     }
@@ -200,7 +227,7 @@ mod tests {
         ];
         let mut w = Writer::new();
         for test_case in &test_cases {
-            w.serialize(test_case.0);
+            w.serialize(&test_case.0);
             assert_eq!(w.string(), test_case.1);
             w.clear();
         }
@@ -211,8 +238,35 @@ mod tests {
         let mut w = Writer::new();
         let mut i: f64 = 1.0;
         b.iter(|| {
-            w.serialize(i);
+            w.serialize(&i);
             i += 1.0;
+        });
+    }
+
+    #[test]
+    fn test_serialize_string() {
+        let test_cases = [
+            ("", "e"),
+            ("π", "uπ"),
+            ("你", "u你"),
+            ("你好", "s2\"你好\""),
+            ("你好啊,hello!", "s10\"你好啊,hello!\""),
+            ("🇨🇳", "s4\"🇨🇳\"")
+        ];
+        let mut w = Writer::new();
+        for test_case in &test_cases {
+            w.serialize(test_case.0);
+            assert_eq!(w.string(), test_case.1);
+            w.clear();
+        }
+    }
+
+    #[bench]
+    fn benchmark_serialize_string(b: &mut Bencher) {
+        let mut w = Writer::new();
+        let s = "你好,hello!";
+        b.iter(|| {
+            w.serialize(s);
         });
     }
 }

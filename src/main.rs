@@ -26,10 +26,12 @@ use io::writer::Writer;
 fn main() {
     let mut writer = Writer::new();
     writer
-        .serialize(true)
-        .serialize(false)
-        .serialize(8)
-        .serialize(std::f32::consts::PI)
-        .serialize(std::f64::consts::PI);
+        .serialize(&true)
+        .serialize(&false)
+        .serialize(&8)
+        .serialize(&std::f32::consts::PI)
+        .serialize(&std::f64::consts::PI)
+        .serialize("你好,hello!")
+    ;
     println!("{}", writer.string());
 }
