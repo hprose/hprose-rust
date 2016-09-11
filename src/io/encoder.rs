@@ -29,8 +29,62 @@ impl Encoder for bool {
     }
 }
 
+impl Encoder for i8 {
+    fn encode(&self, w: &mut Writer) {
+        w.write_int(*self as i64);
+    }
+}
+
+impl Encoder for i16 {
+    fn encode(&self, w: &mut Writer) {
+        w.write_int(*self as i64);
+    }
+}
+
+impl Encoder for i32 {
+    fn encode(&self, w: &mut Writer) {
+        w.write_int(*self as i64);
+    }
+}
+
 impl Encoder for i64 {
     fn encode(&self, w: &mut Writer) {
         w.write_int(*self);
+    }
+}
+
+impl Encoder for isize {
+    fn encode(&self, w: &mut Writer) {
+        w.write_int(*self as i64);
+    }
+}
+
+impl Encoder for u8 {
+    fn encode(&self, w: &mut Writer) {
+        w.write_uint(*self as u64);
+    }
+}
+
+impl Encoder for u16 {
+    fn encode(&self, w: &mut Writer) {
+        w.write_uint(*self as u64);
+    }
+}
+
+impl Encoder for u32 {
+    fn encode(&self, w: &mut Writer) {
+        w.write_uint(*self as u64);
+    }
+}
+
+impl Encoder for u64 {
+    fn encode(&self, w: &mut Writer) {
+        w.write_uint(*self);
+    }
+}
+
+impl Encoder for usize {
+    fn encode(&self, w: &mut Writer) {
+        w.write_uint(*self as u64);
     }
 }

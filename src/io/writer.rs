@@ -58,6 +58,24 @@ impl Writer {
         self.buf.push(TagSemicolon);
     }
 
+    pub fn write_uint(&mut self, i: u64) {
+        if i <= 9 {
+            self.buf.push('0' as u8 + i as u8);
+            return
+        }
+        if i <= i32::MAX as u64 {
+            self.buf.push(TagInteger);
+        } else {
+            self.buf.push(TagLong);
+        }
+        write!(self.buf, "{}", i);
+        self.buf.push(TagSemicolon);
+    }
+
+    pub fn clear(&mut self) {
+        self.buf.clear();
+    }
+
     pub fn string(&mut self) -> String {
         String::from_utf8(self.buf.clone()).unwrap()
     }
@@ -78,14 +96,17 @@ mod tests {
     use super::test::Bencher;
 
     #[test]
-    fn test_serialize_true() {
+    fn test_serialize_bool() {
         let mut writer = Writer::new();
         writer.serialize(true);
         assert_eq!(writer.string(), "t");
+        writer.clear();
+        writer.serialize(false);
+        assert_eq!(writer.string(), "f");
     }
 
     #[bench]
-    fn benchmark_serialize_true(b: &mut Bencher) {
+    fn benchmark_serialize_bool(b: &mut Bencher) {
         let mut writer = Writer::new();
         b.iter(|| {
             writer.serialize(true);
@@ -93,16 +114,9 @@ mod tests {
     }
 
     #[bench]
-    fn benchmark_write_true(b: &mut Bencher) {
+    fn benchmark_write_bool(b: &mut Bencher) {
         let mut writer = Writer::new();
         b.iter(|| writer.write_bool(true));
-    }
-
-    #[test]
-    fn test_serialize_false() {
-        let mut writer = Writer::new();
-        writer.serialize(false);
-        assert_eq!(writer.string(), "f");
     }
 
     #[test]
@@ -110,19 +124,28 @@ mod tests {
         let mut writer = Writer::new();
         writer.serialize(8);
         assert_eq!(writer.string(), "8");
+        writer.clear();
+        writer.serialize(88);
+        assert_eq!(writer.string(), "i88;");
     }
 
     #[bench]
     fn benchmark_serialize_int(b: &mut Bencher) {
         let mut writer = Writer::new();
+        let mut i = 1;
         b.iter(|| {
-            writer.serialize(8888);
+            writer.serialize(i);
+            i += 1;
         });
     }
 
     #[bench]
     fn benchmark_write_int(b: &mut Bencher) {
         let mut writer = Writer::new();
-        b.iter(|| writer.write_int(8888));
+        let mut i = 1;
+        b.iter(|| {
+            writer.write_int(i);
+            i += 1;
+        });
     }
 }
