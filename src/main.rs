@@ -24,7 +24,7 @@ mod io;
 use io::writer::Writer;
 
 fn main() {
-    let mut writer = Writer::new();
+    let mut writer = Writer::new(true);
     writer
         .serialize(&true)
         .serialize(&false)
@@ -34,4 +34,12 @@ fn main() {
         .serialize("你好,hello!")
     ;
     println!("{}", writer.string());
+    
+    let mut writer2 = Writer::new(false);
+    let v: Vec<i32> = vec![2, 3];
+    writer2
+        .serialize(&v)
+        .serialize(&v)
+    ;
+    println!("{}", writer2.string());
 }

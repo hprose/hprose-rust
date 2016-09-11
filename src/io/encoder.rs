@@ -113,3 +113,8 @@ impl Encoder for String {
     }
 }
 
+impl<T: Encoder> Encoder for Vec<T> {
+    fn encode(&self, w: &mut Writer) {
+        w.write_list(self);
+    }
+}
