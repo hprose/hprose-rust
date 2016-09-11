@@ -34,11 +34,13 @@ fn main() {
         .serialize("你好,hello!")
     ;
     println!("{}", writer.string());
-    
+
     let mut writer2 = Writer::new(false);
+    let a: &[i32] = &[1, 2, 3];
     let v: Vec<i32> = vec![2, 3];
     writer2
         .serialize(&v)
+        .serialize(a)
         .serialize(&v)
     ;
     println!("{}", writer2.string());

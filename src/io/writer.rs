@@ -142,6 +142,20 @@ impl Writer {
         self.write_list_footer();
     }
 
+    pub fn write_slice<T: Encoder>(&mut self, slice: &[T]) {
+        self.set_writer_ref(0);
+        let count = slice.len();
+        if count == 0 {
+            self.write_empty_list();
+            return
+        }
+        self.write_list_header(count as i64);
+        for v in slice {
+            self.serialize(v);
+        }
+        self.write_list_footer();
+    }
+
     // private functions
 
     fn writer_ref(&mut self, p: isize) -> bool {
@@ -183,7 +197,7 @@ impl Writer {
         self.buf.push(TAG_OPENBRACE);
     }
 
-
+    #[inline]
     fn write_list_footer(&mut self) {
         self.buf.push(TAG_CLOSEBRACE);
     }

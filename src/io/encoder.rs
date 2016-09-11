@@ -118,3 +118,9 @@ impl<T: Encoder> Encoder for Vec<T> {
         w.write_list(self);
     }
 }
+
+impl<T: Encoder> Encoder for [T] {
+    fn encode(&self, w: &mut Writer) {
+        w.write_slice(self);
+    }
+}
