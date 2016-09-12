@@ -59,7 +59,8 @@ impl Writer {
         } else {
             self.buf.push(TAG_LONG);
         }
-        write!(self.buf, "{}", i).unwrap();
+        let mut buf: [u8; 20] = [0; 20];
+        self.buf.extend_from_slice(get_int_bytes(&mut buf, i));
         self.buf.push(TAG_SEMICOLON);
     }
 
@@ -169,15 +170,17 @@ impl Writer {
 
     fn write_string_inner(&mut self, s: &str, length: i64) {
         self.buf.push(TAG_STRING);
-        write!(self.buf, "{}", length).unwrap();
+        let mut buf: [u8; 20] = [0; 20];
+        self.buf.extend_from_slice(get_int_bytes(&mut buf, length));
         self.buf.push(TAG_QUOTE);
-        write!(self.buf, "{}", s).unwrap();
+        self.buf.extend_from_slice(s.as_bytes());
         self.buf.push(TAG_QUOTE);
     }
 
     fn write_list_header(&mut self, count: i64) {
         self.buf.push(TAG_LIST);
-        write!(self.buf, "{}", count).unwrap();
+        let mut buf: [u8; 20] = [0; 20];
+        self.buf.extend_from_slice(get_int_bytes(&mut buf, count));
         self.buf.push(TAG_OPENBRACE);
     }
 
