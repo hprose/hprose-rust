@@ -91,9 +91,7 @@ impl Writer {
             return
         }
         self.buf.push(TAG_DOUBLE);
-        let mut buf = Vec::new();
-        dtoa::write(&mut buf, f).unwrap();
-        self.buf.append(&mut buf);
+        dtoa::write(&mut self.buf, f).unwrap();
         self.buf.push(TAG_SEMICOLON);
     }
 
@@ -108,9 +106,7 @@ impl Writer {
             return
         }
         self.buf.push(TAG_DOUBLE);
-        let mut buf = Vec::new();
-        dtoa::write(&mut buf, f).unwrap();
-        self.buf.append(&mut buf);
+        dtoa::write(&mut self.buf, f).unwrap();
         self.buf.push(TAG_SEMICOLON);
     }
 
