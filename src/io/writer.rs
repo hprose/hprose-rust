@@ -46,6 +46,10 @@ impl Writer {
         v.encode(self);
     }
 
+    pub fn write_nil(&mut self) {
+        self.buf.push(TAG_NULL);
+    }
+
     pub fn write_bool(&mut self, b: bool) {
         self.buf.push(if b { TAG_TRUE } else { TAG_FALSE });
     }
@@ -126,6 +130,11 @@ impl Writer {
         }
     }
 
+    pub fn write_bytes(&mut self, bytes: &[u8]) {
+        self.set_ref(ptr::null::<&[u8]>());
+        self.write_bytes_inner(bytes);
+    }
+
     pub fn write_list<T: Encoder>(&mut self, lst: &Vec<T>) {
         if self.write_ref(lst) {
             return
@@ -176,6 +185,22 @@ impl Writer {
         self.buf.extend_from_slice(get_int_bytes(&mut buf, length));
         self.buf.push(TAG_QUOTE);
         self.buf.extend_from_slice(s.as_bytes());
+        self.buf.push(TAG_QUOTE);
+    }
+
+    fn write_bytes_inner(&mut self, bytes: &[u8]) {
+        let count = bytes.len();
+        if count == 0 {
+            self.buf.push(TAG_BYTES);
+            self.buf.push(TAG_QUOTE);
+            self.buf.push(TAG_QUOTE);
+            return
+        }
+        self.buf.push(TAG_BYTES);
+        let mut buf: [u8; 20] = [0; 20];
+        self.buf.extend_from_slice(get_int_bytes(&mut buf, count as i64));
+        self.buf.push(TAG_QUOTE);
+        self.buf.extend_from_slice(bytes);
         self.buf.push(TAG_QUOTE);
     }
 
@@ -239,6 +264,7 @@ mod tests {
     #[bench]
     fn benchmark_serialize_bool(b: &mut Bencher) {
         let mut w = Writer::new(true);
+        b.bytes = 1;
         b.iter(|| {
             w.serialize(&true);
         });
@@ -338,9 +364,24 @@ mod tests {
     fn benchmark_serialize_string(b: &mut Bencher) {
         let mut w = Writer::new(true);
         let s = "你好,hello!";
+        b.bytes = s.len() as u64;
         b.iter(|| {
             w.serialize(s);
         });
+    }
+
+    #[test]
+    fn test_serialize_bytes() {
+        let test_cases = [
+            ("hello".as_bytes(), "b5\"hello\""),
+            ("".as_bytes(), "b\"\"")
+        ];
+        let mut w = Writer::new(true);
+        for test_case in &test_cases {
+            w.serialize(test_case.0);
+            assert_eq!(w.string(), test_case.1);
+            w.clear();
+        }
     }
 
     #[bench]

@@ -119,8 +119,17 @@ impl<T: Encoder> Encoder for Vec<T> {
     }
 }
 
+use std::mem;
+
 impl<T: Encoder> Encoder for [T] {
     fn encode(&self, w: &mut Writer) {
-        w.write_slice(self);
+        // todo: check i8
+        if mem::size_of::<T>() == 1 {
+            w.write_bytes(unsafe {
+                mem::transmute::<&[T], &[u8]>(self)
+            });
+        } else {
+            w.write_slice(self);
+        }
     }
 }
