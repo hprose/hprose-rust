@@ -2,3 +2,6 @@
 name = "hprose"
 version = "0.1.0"
 authors = ["Ma Bingyao <andot@hprose.com>"]
+
+[dependencies]
+dtoa = "0.2"

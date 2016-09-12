@@ -18,6 +18,7 @@
 \**********************************************************/
 
 extern crate test;
+extern crate dtoa;
 
 use std::i32;
 use std::io::Write;
@@ -90,7 +91,9 @@ impl Writer {
             return
         }
         self.buf.push(TAG_DOUBLE);
-        write!(self.buf, "{}", f).unwrap();
+        let mut buf = Vec::new();
+        dtoa::write(&mut buf, f).unwrap();
+        self.buf.append(&mut buf);
         self.buf.push(TAG_SEMICOLON);
     }
 
@@ -105,7 +108,9 @@ impl Writer {
             return
         }
         self.buf.push(TAG_DOUBLE);
-        write!(self.buf, "{}", f).unwrap();
+        let mut buf = Vec::new();
+        dtoa::write(&mut buf, f).unwrap();
+        self.buf.append(&mut buf);
         self.buf.push(TAG_SEMICOLON);
     }
 
