@@ -12,27 +12,26 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 11, 2016                             *
+ * LastModified: Sep 12, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
 extern crate test;
 
-use std::collections::HashMap;
 use std::i32;
 use std::io::Write;
+use std::ptr;
 use std::string::String;
 
 use super::tags::*;
 use super::util::*;
 use super::encoder::*;
+use super::writer_refer::WriterRefer;
 
 pub struct Writer {
     buf: Vec<u8>,
-    simple: bool,
-    ref_map: HashMap<isize, i32>,
-    ref_count: i32
+    refer: Option<WriterRefer>
 }
 
 impl Writer {
@@ -118,18 +117,17 @@ impl Writer {
                 write!(self.buf, "{}", s).unwrap()
             },
             _ => {
-                self.set_writer_ref(0);
+                self.set_ref(ptr::null::<&str>());
                 self.write_string_inner(s, length)
             }
         }
     }
 
     pub fn write_list<T: Encoder>(&mut self, lst: &Vec<T>) {
-        let ptr = lst as *const Vec<T> as isize;
-        if self.writer_ref(ptr) {
+        if self.write_ref(lst) {
             return
         }
-        self.set_writer_ref(ptr);
+        self.set_ref(lst);
         let count = lst.len();
         if count == 0 {
             self.write_empty_list();
@@ -143,7 +141,7 @@ impl Writer {
     }
 
     pub fn write_slice<T: Encoder>(&mut self, slice: &[T]) {
-        self.set_writer_ref(0);
+        self.set_ref(ptr::null::<&[T]>());
         let count = slice.len();
         if count == 0 {
             self.write_empty_list();
@@ -158,29 +156,15 @@ impl Writer {
 
     // private functions
 
-    fn writer_ref(&mut self, p: isize) -> bool {
-        if self.simple {
-            return false
-        }
-        match self.ref_map.get(&p) {
-            Some(n) => {
-                self.buf.push(TAG_REF);
-                write!(self.buf, "{}", n).unwrap();
-                self.buf.push(TAG_SEMICOLON);
-                true
-            },
-            None => false
-        }
+    #[inline]
+    fn write_ref<T>(&mut self, p: *const T) -> bool {
+        let buf = &mut self.buf;
+        self.refer.as_mut().map_or(true, |r| r.write(buf, p))
     }
 
-    fn set_writer_ref(&mut self, p: isize) {
-        if self.simple {
-            return
-        }
-        if p > 0 {
-            self.ref_map.insert(p, self.ref_count);
-        }
-        self.ref_count += 1
+    #[inline]
+    fn set_ref<T>(&mut self, p: *const T) {
+        self.refer.as_mut().map(|r| r.set(p));
     }
 
     fn write_string_inner(&mut self, s: &str, length: i64) {
@@ -224,9 +208,7 @@ impl Writer {
     pub fn new(simple: bool) -> Writer {
         Writer {
             buf: Vec::with_capacity(1024),
-            simple: simple,
-            ref_map: HashMap::new(),
-            ref_count: 0
+            refer: if simple { None } else { Some(WriterRefer::new()) }
         }
     }
 }

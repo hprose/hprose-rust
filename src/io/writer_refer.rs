@@ -6,20 +6,52 @@
 |                   http://www.hprose.org/                 |
 |                                                          |
 \**********************************************************/
+
 /**********************************************************\
  *                                                        *
- * io/mod.rs                                              *
+ * io/writer_refer.rs                                     *
  *                                                        *
- * hprose io module for Rust.                             *
+ * hprose writer reference struct for Rust                *
  *                                                        *
  * LastModified: Sep 12, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
-mod tags;
-mod util;
-mod encoder;
-pub mod formatter;
-pub mod writer;
-mod writer_refer;
+use std::collections::HashMap;
+use std::io::Write;
+
+use super::tags::*;
+
+pub struct WriterRefer {
+    references: HashMap<isize, i32>,
+    lastref: i32
+}
+
+impl WriterRefer {
+    pub fn set<T>(&mut self, p: *const T) {
+        let i = p as isize;
+        if i > 0 {
+            self.references.insert(p as isize, self.lastref);
+        }
+        self.lastref += 1;
+    }
+
+    pub fn write<T>(&mut self, v: &mut Vec<u8>, p: *const T) -> bool {
+        let i = p as isize;
+        self.references.get(&i).map_or(false, |n| {
+            v.push(TAG_REF);
+            write!(v, "{}", n).unwrap();
+            v.push(TAG_SEMICOLON);
+            true
+        })
+    }
+
+    #[inline]
+    pub fn new() -> WriterRefer {
+        WriterRefer {
+            references: HashMap::new(),
+            lastref: 0
+        }
+    }
+}

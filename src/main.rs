@@ -39,6 +39,7 @@ fn main() {
     let a: &[i32] = &[1, 2, 3];
     let v: Vec<i32> = vec![2, 3];
     writer2
+        .serialize(a)
         .serialize(&v)
         .serialize(a)
         .serialize(&v)
