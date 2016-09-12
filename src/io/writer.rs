@@ -340,4 +340,14 @@ mod tests {
             w.serialize(s);
         });
     }
+
+    #[bench]
+    fn benchmark_serialize_int_slice(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let array = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 1, 2, 3, 4, 0, 1, 2, 3, 4];
+        let slice = &array[..];
+        b.iter(|| {
+            w.serialize(slice);
+        });
+    }
 }
