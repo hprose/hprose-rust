@@ -131,6 +131,39 @@ pub fn get_int_bytes(buf: &mut [u8], mut i: i64) -> &[u8] {
     return &buf[off..]
 }
 
+pub fn get_uint_bytes(buf: &mut [u8], mut i: u64) -> &[u8] {
+    if i == 0 {
+        buf[0] = '0' as u8;
+        return &buf[..1]
+    }
+
+    let mut off = buf.len();
+    let mut q: u64;
+    let mut p: u64;
+    while i >= 100 {
+        q = i / 1000;
+        p = (i - (q * 1000)) * 3;
+        i = q;
+        off -= 3;
+        buf[off] = DIGIT3.as_bytes()[p as usize];
+        buf[off + 1] = DIGIT3.as_bytes()[p as usize + 1];
+        buf[off + 2] = DIGIT3.as_bytes()[p as usize + 2];
+    }
+    if i >= 10 {
+        q = i / 100;
+        p = (i - (q * 100)) * 2;
+        i = q;
+        off -= 2;
+        buf[off] = DIGIT2.as_bytes()[p as usize];
+        buf[off + 1] = DIGIT2.as_bytes()[p as usize + 1];
+    }
+    if i > 0 {
+        off -= 1;
+        buf[off] = DIGITS.as_bytes()[i as usize];
+    }
+    return &buf[off..]
+}
+
 pub fn utf16_length(s: &str) -> i64 {
     let length = s.len();
     let bytes = s.as_bytes();
@@ -166,17 +199,29 @@ mod tests {
     use super::*;
     use super::test::Bencher;
 
-    use std::{i32, i64};
+    use std::*;
 
     #[test]
     fn test_get_int_bytes() {
         let data = [
-            0i64, 9, 10, 99, 100, 999, 1000, -1000, 10000, -10000, 123456789, -123456789,
+            0, 9, 10, 99, 100, 999, 1000, -1000, 10000, -10000, 123456789, -123456789,
             i32::MAX as i64, i32::MIN as i64, i64::MAX, i64::MIN
         ];
         let mut buf: [u8; 20] = [0; 20];
         for i in &data {
             assert!(get_int_bytes(&mut buf, *i) == i.to_string().as_bytes(), "b must be []byte(\"{:?}\")", i.to_string().as_bytes());
+        }
+    }
+
+    #[test]
+    fn test_get_uint_bytes() {
+        let data = [
+            0, 9, 10, 99, 100, 999, 1000, 10000, 123456789,
+            i32::MAX as u64, u32::MAX as u64, i64::MAX as u64, u64::MAX
+        ];
+        let mut buf: [u8; 20] = [0; 20];
+        for i in &data {
+            assert!(get_uint_bytes(&mut buf, *i) == i.to_string().as_bytes(), "b must be []byte(\"{:?}\")", i.to_string().as_bytes());
         }
     }
 
