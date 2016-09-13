@@ -21,6 +21,8 @@
 use super::tags;
 use super::*;
 
+use super::bool_decoder::bool_decoder;
+
 use std::io;
 
 #[derive(Clone, PartialEq, Debug)]
@@ -32,7 +34,8 @@ pub enum ParserError {
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum DecoderError {
-    ParserError(ParserError)
+    ParserError(ParserError),
+    CastError(u8, String)
 }
 
 pub type DecodeResult<T> = Result<T, DecoderError>;
@@ -90,7 +93,7 @@ impl Decoder for Reader {
     }
 
     fn read_bool(&mut self) -> DecodeResult<bool> {
-        unimplemented!()
+        self.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| bool_decoder(self, t))
     }
 
     fn read_i64(&mut self) -> DecodeResult<i64> {

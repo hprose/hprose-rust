@@ -8,32 +8,30 @@
 \**********************************************************/
 /**********************************************************\
  *                                                        *
- * io/mod.rs                                              *
+ * io/bool_decoder.rs                                     *
  *                                                        *
- * hprose io module for Rust.                             *
+ * hprose bool decoder for Rust.                          *
  *                                                        *
  * LastModified: Sep 13, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
-pub use self::formatter::*;
-pub use self::encoder::{Encoder, Encodable};
-pub use self::decoder::{Decoder, Decodable};
-pub use self::writer::Writer;
-pub use self::reader::{Reader, DecodeResult, DecoderError};
+use super::*;
+use super::tags::*;
 
-mod tags;
-mod util;
+pub fn bool_decoder(r: &mut Reader, tag: u8) -> Result<bool, DecoderError> {
+    match tag {
+        b'0' | TAG_NULL | TAG_EMPTY | TAG_FALSE => Ok(read_bool_false(r)),
+        b'1' ... b'9' | TAG_TRUE | TAG_NAN => Ok(read_bool_true(r)),
+        _ => Err(DecoderError::CastError(tag, "bool".to_string()))
+    }
+}
 
-mod encoder;
-mod decoder;
-mod bool_decoder;
+fn read_bool_false(r: &mut Reader) -> bool {
+    false
+}
 
-mod writer_refer;
-
-mod formatter;
-mod writer;
-mod reader;
-
-
+fn read_bool_true(r: &mut Reader) -> bool {
+    true
+}

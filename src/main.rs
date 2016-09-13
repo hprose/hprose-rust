@@ -22,7 +22,7 @@
 
 mod io;
 
-use io::Writer;
+use io::{Writer, Reader};
 
 fn main() {
     let mut writer = Writer::new(true);
@@ -49,4 +49,9 @@ fn main() {
         .serialize(&Some(v))
     ;
     println!("{}", writer2.string());
+
+    let mut buf = Vec::from("t");
+    let mut reader = Reader::new(buf);
+    let result: bool = reader.unserialize().unwrap();
+    println!("{}", result);
 }
