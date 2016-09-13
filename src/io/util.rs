@@ -82,7 +82,7 @@ const DIGIT3: &'static [u8] = b"\
     960961962963964965966967968969970971972973974975976977978979\
     980981982983984985986987988989990991992993994995996997998999";
 
-const MIN_I64_BUF: &'static str = "-9223372036854775808";
+const MIN_I64_BUF: &'static [u8] = b"-9223372036854775808";
 
 pub fn get_int_bytes(buf: &mut [u8], mut i: i64) -> &[u8] {
     if i == 0 {
@@ -170,10 +170,10 @@ pub fn utf16_length(s: &str) -> i64 {
     let mut n = length as i64;
     let mut p = 0;
     while p < length {
-        let a = bytes[p];
+        let a = bytes.as_bytes()[p];
         match a >> 4 {
             0 ... 7 => p += 1,
-            12 ... 13 => {
+            12 | 13 => {
                 p += 2;
                 n -= 1
             },
