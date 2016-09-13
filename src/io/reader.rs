@@ -47,6 +47,7 @@ pub struct Reader {
 
 pub trait ByteReader {
     fn read_byte(&mut self) -> Result<u8, ParserError>;
+    fn read_until(&mut self, tag: u8) -> Result<&[u8], ParserError>;
 }
 
 impl Reader {
@@ -82,6 +83,20 @@ impl ByteReader for Reader {
         let b = self.buf[self.off];
         self.off += 1;
         return Ok(b)
+    }
+
+    fn read_until(&mut self, tag: u8) -> Result<&[u8], ParserError> {
+        let result = &self.buf[self.off..];
+        match result.iter().position(|x| *x == tag) {
+            Some(idx) => {
+                self.off += idx + 1;
+                Ok(&result[..idx])
+            },
+            None => {
+                self.off = self.buf.len();
+                Err(io_error_to_error(io::Error::new(io::ErrorKind::UnexpectedEof, "")))
+            }
+        }
     }
 }
 

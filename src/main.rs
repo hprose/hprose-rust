@@ -50,7 +50,7 @@ fn main() {
     ;
     println!("{}", writer2.string());
 
-    let mut buf = Vec::from("t");
+    let buf = Vec::from("i0;");
     let mut reader = Reader::new(buf);
     let result: bool = reader.unserialize().unwrap();
     println!("{}", result);
