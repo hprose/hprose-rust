@@ -33,6 +33,7 @@ pub trait Encoder {
 
 
     // Specialized types:
+    fn write_option<F>(&mut self, f: F) where F: FnOnce(&mut Self);
     fn write_seq<F>(&mut self, len: usize, f: F) where F: FnOnce(&mut Self);
 
     // Reference:
@@ -140,20 +141,6 @@ impl Encodable for String {
     }
 }
 
-impl<T: Encodable> Encodable for Vec<T> {
-    fn encode<W: Encoder>(&self, w: &mut W) {
-        if w.write_ref(self) {
-            return
-        }
-        w.set_ref(self);
-        w.write_seq(self.len(), |s| {
-            for e in self {
-                e.encode(s);
-            }
-        });
-    }
-}
-
 use std::{mem, ptr};
 
 impl<T: Encodable> Encodable for [T] {
@@ -165,11 +152,36 @@ impl<T: Encodable> Encodable for [T] {
                 mem::transmute::<&[T], &[u8]>(self)
             });
         } else {
-            w.write_seq(self.len(), |s| {
+            w.write_seq(self.len(), |w| {
                 for e in self {
-                    e.encode(s);
+                    e.encode(w);
                 }
             });
         }
+    }
+}
+
+impl<T: Encodable> Encodable for Vec<T> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        if w.write_ref(self) {
+            return
+        }
+        w.set_ref(self);
+        w.write_seq(self.len(), |w| {
+            for e in self {
+                e.encode(w);
+            }
+        });
+    }
+}
+
+impl<T: Encodable> Encodable for Option<T> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_option(|w| {
+            match *self {
+                None => w.write_nil(),
+                Some(ref v) => v.encode(w)
+            }
+        })
     }
 }

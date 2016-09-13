@@ -33,6 +33,7 @@ fn main() {
         .serialize(&std::f64::consts::PI)
         .serialize(&'你')
         .serialize("你好,hello!")
+        .serialize(&Some(88))
     ;
     println!("{}", writer.string());
 
@@ -44,6 +45,7 @@ fn main() {
         .serialize(&v)
         .serialize(a)
         .serialize(&v)
+        .serialize(&Some(v))
     ;
     println!("{}", writer2.string());
 }

@@ -222,6 +222,10 @@ impl Encoder for Writer {
         self.buf.push(TAG_QUOTE);
     }
 
+    fn write_option<F>(&mut self, f: F) where F: FnOnce(&mut Writer) {
+        f(self);
+    }
+
     fn write_seq<F>(&mut self, len: usize, f: F) where F: FnOnce(&mut Writer) {
         if len == 0 {
             self.write_empty_list();
