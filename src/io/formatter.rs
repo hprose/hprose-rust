@@ -18,9 +18,12 @@
 \**********************************************************/
 
 
-use super::encoder::Encodable;
-use super::writer::Writer;
+use super::*;
 
 pub fn serialize<T: Encodable>(v: &T, simple: bool) -> Vec<u8> {
     Writer::new(simple).serialize(v).bytes()
+}
+
+pub fn unserialize<T: Decodable>(buf: Vec<u8>) -> DecodeResult<T> {
+    Reader::new(buf).read()
 }

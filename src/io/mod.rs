@@ -17,10 +17,22 @@
  *                                                        *
 \**********************************************************/
 
+pub use self::formatter::*;
+pub use self::encoder::{Encoder, Encodable};
+pub use self::decoder::{Decoder, Decodable};
+pub use self::writer::Writer;
+pub use self::reader::{Reader, DecodeResult};
+
 mod tags;
 mod util;
+
 mod encoder;
 mod decoder;
-pub mod formatter;
-pub mod writer;
+
 mod writer_refer;
+
+mod formatter;
+mod writer;
+mod reader;
+
+

@@ -22,7 +22,7 @@
 
 mod io;
 
-use io::writer::Writer;
+use io::Writer;
 
 fn main() {
     let mut writer = Writer::new(true);
