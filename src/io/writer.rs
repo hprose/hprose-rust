@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 12, 2016                             *
+ * LastModified: Sep 13, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -20,8 +20,9 @@
 extern crate test;
 extern crate dtoa;
 
-use std::i32;
+use std::{i32, f32, f64};
 use std::io::Write;
+use std::num::FpCategory as Fp;
 use std::ptr;
 use std::string::String;
 
@@ -140,33 +141,45 @@ impl Encoder for Writer {
     }
 
     fn write_f32(&mut self, f: f32) {
-        if f.is_nan() {
-            self.buf.push(TAG_NAN);
-            return
-        }
-        if f.is_infinite() {
-            self.buf.push(TAG_INFINITY);
-            self.buf.push(if f.is_sign_negative() { TAG_NEG } else { TAG_POS });
-            return
-        }
-        self.buf.push(TAG_DOUBLE);
-        dtoa::write(&mut self.buf, f).unwrap();
-        self.buf.push(TAG_SEMICOLON);
+        match f.classify() {
+            Fp::Nan => self.buf.push(TAG_NAN),
+            Fp::Infinite => {
+                self.buf.push(TAG_INFINITY);
+                self.buf.push(if f == f32::NEG_INFINITY { TAG_NEG } else { TAG_POS });
+            },
+            _ if f.fract() != 0f32 => {
+                self.buf.push(TAG_DOUBLE);
+                dtoa::write(&mut self.buf, f).unwrap();
+                self.buf.push(TAG_SEMICOLON);
+            }
+            _ => {
+                self.buf.push(TAG_DOUBLE);
+                let mut buf: [u8; 20] = [0; 20];
+                self.buf.extend_from_slice(get_int_bytes(&mut buf, f as i64));
+                self.buf.push(TAG_SEMICOLON);
+            }
+        };
     }
 
     fn write_f64(&mut self, f: f64) {
-        if f.is_nan() {
-            self.buf.push(TAG_NAN);
-            return
-        }
-        if f.is_infinite() {
-            self.buf.push(TAG_INFINITY);
-            self.buf.push(if f.is_sign_negative() { TAG_NEG } else { TAG_POS });
-            return
-        }
-        self.buf.push(TAG_DOUBLE);
-        dtoa::write(&mut self.buf, f).unwrap();
-        self.buf.push(TAG_SEMICOLON);
+        match f.classify() {
+            Fp::Nan => self.buf.push(TAG_NAN),
+            Fp::Infinite => {
+                self.buf.push(TAG_INFINITY);
+                self.buf.push(if f == f64::NEG_INFINITY { TAG_NEG } else { TAG_POS });
+            },
+            _ if f.fract() != 0f64 => {
+                self.buf.push(TAG_DOUBLE);
+                dtoa::write(&mut self.buf, f).unwrap();
+                self.buf.push(TAG_SEMICOLON);
+            }
+            _ => {
+                self.buf.push(TAG_DOUBLE);
+                let mut buf: [u8; 20] = [0; 20];
+                self.buf.extend_from_slice(get_int_bytes(&mut buf, f as i64));
+                self.buf.push(TAG_SEMICOLON);
+            }
+        };
     }
 
     fn write_char(&mut self, c: char) {}
@@ -294,7 +307,7 @@ mod tests {
         let mut i: f32 = 1.0;
         b.iter(|| {
             w.serialize(&i);
-            i += 1.0;
+            i += 1.1;
         });
     }
 
@@ -320,7 +333,7 @@ mod tests {
         let mut i: f64 = 1.0;
         b.iter(|| {
             w.serialize(&i);
-            i += 1.0;
+            i += 1.1;
         });
     }
 
