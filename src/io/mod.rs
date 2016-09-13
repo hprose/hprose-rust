@@ -12,7 +12,7 @@
  *                                                        *
  * hprose io module for Rust.                             *
  *                                                        *
- * LastModified: Sep 12, 2016                             *
+ * LastModified: Sep 13, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -20,6 +20,7 @@
 mod tags;
 mod util;
 mod encoder;
+mod decoder;
 pub mod formatter;
 pub mod writer;
 mod writer_refer;

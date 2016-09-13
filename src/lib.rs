@@ -12,10 +12,11 @@
  *                                                        *
  * hprose lib for Rust.                                   *
  *                                                        *
- * LastModified: Sep 11, 2016                             *
+ * LastModified: Sep 13, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
+#![feature(question_mark)]
 #![feature(test)]
 pub mod io;
