@@ -122,6 +122,12 @@ impl Encodable for f64 {
     }
 }
 
+impl Encodable for char {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_char(*self);
+    }
+}
+
 impl Encodable for str {
     fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_str(self);

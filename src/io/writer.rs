@@ -150,6 +150,7 @@ impl Encoder for Writer {
             _ if f.fract() != 0f32 => {
                 self.buf.push(TAG_DOUBLE);
                 dtoa::write(&mut self.buf, f).unwrap();
+                // self.buf.extend_from_slice(f.to_string().as_bytes());
                 self.buf.push(TAG_SEMICOLON);
             }
             _ => {
@@ -171,6 +172,7 @@ impl Encoder for Writer {
             _ if f.fract() != 0f64 => {
                 self.buf.push(TAG_DOUBLE);
                 dtoa::write(&mut self.buf, f).unwrap();
+                // self.buf.extend_from_slice(f.to_string().as_bytes());
                 self.buf.push(TAG_SEMICOLON);
             }
             _ => {
@@ -182,7 +184,11 @@ impl Encoder for Writer {
         };
     }
 
-    fn write_char(&mut self, c: char) {}
+    #[inline]
+    fn write_char(&mut self, c: char) {
+        let s = c.to_string();
+        self.write_str(&s);
+    }
 
     fn write_str(&mut self, s: &str) {
         let length = utf16_length(s);
