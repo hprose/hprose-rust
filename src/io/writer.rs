@@ -36,6 +36,7 @@ pub struct Writer {
 }
 
 impl Writer {
+    #[inline]
     pub fn serialize<T: Encodable + ?Sized>(&mut self, v: &T) -> &mut Writer {
         self.write_value(v);
         self
@@ -98,10 +99,12 @@ impl Writer {
 }
 
 impl Encoder for Writer {
+    #[inline]
     fn write_nil(&mut self) {
         self.buf.push(TAG_NULL);
     }
 
+    #[inline]
     fn write_bool(&mut self, b: bool) {
         self.buf.push(if b { TAG_TRUE } else { TAG_FALSE });
     }
@@ -172,7 +175,7 @@ impl Encoder for Writer {
         let length = utf16_length(s);
         match length {
             0 => self.buf.push(TAG_EMPTY),
-            -1 => self.write_bytes(s.as_bytes()),
+            - 1 => self.write_bytes(s.as_bytes()),
             1 => {
                 self.buf.push(TAG_UTF8_CHAR);
                 self.buf.extend_from_slice(s.as_bytes());
@@ -270,7 +273,7 @@ mod tests {
     }
 
     #[test]
-    fn test_serialize_float32() {
+    fn test_serialize_f32() {
         let test_cases = [
             (f32::NAN, "N"),
             (f32::INFINITY, "I+"),
@@ -286,7 +289,7 @@ mod tests {
     }
 
     #[bench]
-    fn benchmark_serialize_float32(b: &mut Bencher) {
+    fn benchmark_serialize_f32(b: &mut Bencher) {
         let mut w = Writer::new(true);
         let mut i: f32 = 1.0;
         b.iter(|| {
@@ -296,7 +299,7 @@ mod tests {
     }
 
     #[test]
-    fn test_serialize_float64() {
+    fn test_serialize_f64() {
         let test_cases = [
             (f64::NAN, "N"),
             (f64::INFINITY, "I+"),
@@ -312,7 +315,7 @@ mod tests {
     }
 
     #[bench]
-    fn benchmark_serialize_float64(b: &mut Bencher) {
+    fn benchmark_serialize_f64(b: &mut Bencher) {
         let mut w = Writer::new(true);
         let mut i: f64 = 1.0;
         b.iter(|| {
@@ -322,7 +325,7 @@ mod tests {
     }
 
     #[test]
-    fn test_serialize_string() {
+    fn test_serialize_str() {
         let test_cases = [
             ("", "e"),
             ("π", "uπ"),
@@ -340,7 +343,7 @@ mod tests {
     }
 
     #[bench]
-    fn benchmark_serialize_string(b: &mut Bencher) {
+    fn benchmark_serialize_str(b: &mut Bencher) {
         let mut w = Writer::new(true);
         let s = "你好,hello!";
         b.bytes = s.len() as u64;
@@ -361,6 +364,16 @@ mod tests {
             assert_eq!(w.string(), test_case.1);
             w.clear();
         }
+    }
+
+    #[bench]
+    fn benchmark_serialize_bytes(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let bytes = "你好,hello!".as_bytes();
+        b.bytes = bytes.len() as u64;
+        b.iter(|| {
+            w.serialize(bytes);
+        });
     }
 
     #[bench]
