@@ -12,124 +12,158 @@
  *                                                        *
  * hprose encoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 11, 2016                             *
+ * LastModified: Sep 13, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
-use super::writer::Writer;
-
 pub trait Encoder {
-    fn encode(&self, w: &mut Writer);
+    // Primitive types:
+    fn write_nil(&mut self);
+    fn write_bool(&mut self, v: bool);
+    fn write_int(&mut self, v: i64);
+    fn write_uint(&mut self, v: u64);
+    fn write_f32(&mut self, v: f32);
+    fn write_f64(&mut self, v: f64);
+    fn write_char(&mut self, v: char);
+    fn write_str(&mut self, v: &str);
+    fn write_bytes(&mut self, v: &[u8]);
+
+    // Compound types:
+
+
+    // Specialized types:
+    fn write_seq<F>(&mut self, len: usize, f: F) where F: FnOnce(&mut Self);
+
+    // Reference:
+    fn write_ref<T>(&mut self, p: *const T) -> bool;
+    fn set_ref<T>(&mut self, p: *const T);
 }
 
-impl Encoder for bool {
-    fn encode(&self, w: &mut Writer) {
+pub trait Encodable {
+    fn encode<W: Encoder>(&self, w: &mut W);
+}
+
+impl Encodable for bool {
+    fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_bool(*self);
     }
 }
 
-impl Encoder for i8 {
-    fn encode(&self, w: &mut Writer) {
+impl Encodable for i8 {
+    fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_int(*self as i64);
     }
 }
 
-impl Encoder for i16 {
-    fn encode(&self, w: &mut Writer) {
+impl Encodable for i16 {
+    fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_int(*self as i64);
     }
 }
 
-impl Encoder for i32 {
-    fn encode(&self, w: &mut Writer) {
+impl Encodable for i32 {
+    fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_int(*self as i64);
     }
 }
 
-impl Encoder for i64 {
-    fn encode(&self, w: &mut Writer) {
+impl Encodable for i64 {
+    fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_int(*self);
     }
 }
 
-impl Encoder for isize {
-    fn encode(&self, w: &mut Writer) {
+impl Encodable for isize {
+    fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_int(*self as i64);
     }
 }
 
-impl Encoder for u8 {
-    fn encode(&self, w: &mut Writer) {
+impl Encodable for u8 {
+    fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_uint(*self as u64);
     }
 }
 
-impl Encoder for u16 {
-    fn encode(&self, w: &mut Writer) {
+impl Encodable for u16 {
+    fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_uint(*self as u64);
     }
 }
 
-impl Encoder for u32 {
-    fn encode(&self, w: &mut Writer) {
+impl Encodable for u32 {
+    fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_uint(*self as u64);
     }
 }
 
-impl Encoder for u64 {
-    fn encode(&self, w: &mut Writer) {
+impl Encodable for u64 {
+    fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_uint(*self);
     }
 }
 
-impl Encoder for usize {
-    fn encode(&self, w: &mut Writer) {
+impl Encodable for usize {
+    fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_uint(*self as u64);
     }
 }
 
-impl Encoder for f32 {
-    fn encode(&self, w: &mut Writer) {
-        w.write_float32(*self);
+impl Encodable for f32 {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_f32(*self);
     }
 }
 
-impl Encoder for f64 {
-    fn encode(&self, w: &mut Writer) {
-        w.write_float64(*self);
+impl Encodable for f64 {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_f64(*self);
     }
 }
 
-impl Encoder for str {
-    fn encode(&self, w: &mut Writer) {
-        w.write_string(self);
+impl Encodable for str {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_str(self);
     }
 }
 
-impl Encoder for String {
-    fn encode(&self, w: &mut Writer) {
-        w.write_string(self);
+impl Encodable for String {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_str(self);
     }
 }
 
-impl<T: Encoder> Encoder for Vec<T> {
-    fn encode(&self, w: &mut Writer) {
-        w.write_list(self);
+impl<T: Encodable> Encodable for Vec<T> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        if w.write_ref(self) {
+            return
+        }
+        w.set_ref(self);
+        w.write_seq(self.len(), |s| {
+            for e in self {
+                e.encode(s);
+            }
+        });
     }
 }
 
-use std::mem;
+use std::{mem, ptr};
 
-impl<T: Encoder> Encoder for [T] {
-    fn encode(&self, w: &mut Writer) {
+impl<T: Encodable> Encodable for [T] {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.set_ref(ptr::null::<&[T]>());
         // todo: check i8
         if mem::size_of::<T>() == 1 {
             w.write_bytes(unsafe {
                 mem::transmute::<&[T], &[u8]>(self)
             });
         } else {
-            w.write_slice(self);
+            w.write_seq(self.len(), |s| {
+                for e in self {
+                    e.encode(s);
+                }
+            });
         }
     }
 }

@@ -36,190 +36,14 @@ pub struct Writer {
 }
 
 impl Writer {
-    pub fn serialize<T: Encoder + ?Sized>(&mut self, v: &T) -> &mut Writer {
+    pub fn serialize<T: Encodable + ?Sized>(&mut self, v: &T) -> &mut Writer {
         self.write_value(v);
         self
     }
 
     #[inline]
-    pub fn write_value<T: Encoder + ?Sized>(&mut self, v: &T) {
+    pub fn write_value<T: Encodable + ?Sized>(&mut self, v: &T) {
         v.encode(self);
-    }
-
-    pub fn write_nil(&mut self) {
-        self.buf.push(TAG_NULL);
-    }
-
-    pub fn write_bool(&mut self, b: bool) {
-        self.buf.push(if b { TAG_TRUE } else { TAG_FALSE });
-    }
-
-    pub fn write_int(&mut self, i: i64) {
-        if i >= 0 && i <= 9 {
-            self.buf.push(b'0' + i as u8);
-            return
-        }
-        if i >= i32::MIN as i64 && i <= i32::MAX as i64 {
-            self.buf.push(TAG_INTEGER);
-        } else {
-            self.buf.push(TAG_LONG);
-        }
-        let mut buf: [u8; 20] = [0; 20];
-        self.buf.extend_from_slice(get_int_bytes(&mut buf, i));
-        self.buf.push(TAG_SEMICOLON);
-    }
-
-    pub fn write_uint(&mut self, i: u64) {
-        if i <= 9 {
-            self.buf.push(b'0' + i as u8);
-            return
-        }
-        if i <= i32::MAX as u64 {
-            self.buf.push(TAG_INTEGER);
-        } else {
-            self.buf.push(TAG_LONG);
-        }
-        let mut buf: [u8; 20] = [0; 20];
-        self.buf.extend_from_slice(get_uint_bytes(&mut buf, i));
-        self.buf.push(TAG_SEMICOLON);
-    }
-
-    pub fn write_float32(&mut self, f: f32) {
-        if f.is_nan() {
-            self.buf.push(TAG_NAN);
-            return
-        }
-        if f.is_infinite() {
-            self.buf.push(TAG_INFINITY);
-            self.buf.push(if f.is_sign_negative() { TAG_NEG } else { TAG_POS });
-            return
-        }
-        self.buf.push(TAG_DOUBLE);
-        dtoa::write(&mut self.buf, f).unwrap();
-        self.buf.push(TAG_SEMICOLON);
-    }
-
-    pub fn write_float64(&mut self, f: f64) {
-        if f.is_nan() {
-            self.buf.push(TAG_NAN);
-            return
-        }
-        if f.is_infinite() {
-            self.buf.push(TAG_INFINITY);
-            self.buf.push(if f.is_sign_negative() { TAG_NEG } else { TAG_POS });
-            return
-        }
-        self.buf.push(TAG_DOUBLE);
-        dtoa::write(&mut self.buf, f).unwrap();
-        self.buf.push(TAG_SEMICOLON);
-    }
-
-    pub fn write_string(&mut self, s: &str) {
-        // todo: add length -1 handler
-        let length = utf16_length(s);
-        match length {
-            0 => self.buf.push(TAG_EMPTY),
-            1 => {
-                self.buf.push(TAG_UTF8_CHAR);
-                self.buf.extend_from_slice(s.as_bytes());
-            },
-            _ => {
-                self.set_ref(ptr::null::<&str>());
-                self.write_string_inner(s, length)
-            }
-        }
-    }
-
-    pub fn write_bytes(&mut self, bytes: &[u8]) {
-        self.set_ref(ptr::null::<&[u8]>());
-        self.write_bytes_inner(bytes);
-    }
-
-    pub fn write_list<T: Encoder>(&mut self, lst: &Vec<T>) {
-        if self.write_ref(lst) {
-            return
-        }
-        self.set_ref(lst);
-        let count = lst.len();
-        if count == 0 {
-            self.write_empty_list();
-            return
-        }
-        self.write_list_header(count as i64);
-        for v in lst {
-            self.serialize(v);
-        }
-        self.write_list_footer();
-    }
-
-    pub fn write_slice<T: Encoder>(&mut self, slice: &[T]) {
-        self.set_ref(ptr::null::<&[T]>());
-        let count = slice.len();
-        if count == 0 {
-            self.write_empty_list();
-            return
-        }
-        self.write_list_header(count as i64);
-        for v in slice {
-            self.serialize(v);
-        }
-        self.write_list_footer();
-    }
-
-    // private functions
-
-    #[inline]
-    fn write_ref<T>(&mut self, p: *const T) -> bool {
-        let buf = &mut self.buf;
-        self.refer.as_mut().map_or(true, |r| r.write(buf, p))
-    }
-
-    #[inline]
-    fn set_ref<T>(&mut self, p: *const T) {
-        self.refer.as_mut().map(|r| r.set(p));
-    }
-
-    fn write_string_inner(&mut self, s: &str, length: i64) {
-        self.buf.push(TAG_STRING);
-        let mut buf: [u8; 20] = [0; 20];
-        self.buf.extend_from_slice(get_int_bytes(&mut buf, length));
-        self.buf.push(TAG_QUOTE);
-        self.buf.extend_from_slice(s.as_bytes());
-        self.buf.push(TAG_QUOTE);
-    }
-
-    fn write_bytes_inner(&mut self, bytes: &[u8]) {
-        let count = bytes.len();
-        if count == 0 {
-            self.buf.push(TAG_BYTES);
-            self.buf.push(TAG_QUOTE);
-            self.buf.push(TAG_QUOTE);
-            return
-        }
-        self.buf.push(TAG_BYTES);
-        let mut buf: [u8; 20] = [0; 20];
-        self.buf.extend_from_slice(get_int_bytes(&mut buf, count as i64));
-        self.buf.push(TAG_QUOTE);
-        self.buf.extend_from_slice(bytes);
-        self.buf.push(TAG_QUOTE);
-    }
-
-    fn write_list_header(&mut self, count: i64) {
-        self.buf.push(TAG_LIST);
-        let mut buf: [u8; 20] = [0; 20];
-        self.buf.extend_from_slice(get_int_bytes(&mut buf, count));
-        self.buf.push(TAG_OPENBRACE);
-    }
-
-    #[inline]
-    fn write_list_footer(&mut self) {
-        self.buf.push(TAG_CLOSEBRACE);
-    }
-
-    fn write_empty_list(&mut self) {
-        self.buf.push(TAG_LIST);
-        self.buf.push(TAG_OPENBRACE);
-        self.buf.push(TAG_CLOSEBRACE);
     }
 
     pub fn clear(&mut self) {
@@ -240,6 +64,161 @@ impl Writer {
             buf: Vec::with_capacity(1024),
             refer: if simple { None } else { Some(WriterRefer::new()) }
         }
+    }
+
+    // private functions
+
+    fn write_string(&mut self, s: &str, length: i64) {
+        self.buf.push(TAG_STRING);
+        let mut buf: [u8; 20] = [0; 20];
+        self.buf.extend_from_slice(get_int_bytes(&mut buf, length));
+        self.buf.push(TAG_QUOTE);
+        self.buf.extend_from_slice(s.as_bytes());
+        self.buf.push(TAG_QUOTE);
+    }
+
+    fn write_list_header(&mut self, len: usize) {
+        self.buf.push(TAG_LIST);
+        let mut buf: [u8; 20] = [0; 20];
+        self.buf.extend_from_slice(get_uint_bytes(&mut buf, len as u64));
+        self.buf.push(TAG_OPENBRACE);
+    }
+
+    #[inline]
+    fn write_list_footer(&mut self) {
+        self.buf.push(TAG_CLOSEBRACE);
+    }
+
+    #[inline]
+    fn write_empty_list(&mut self) {
+        self.buf.push(TAG_LIST);
+        self.buf.push(TAG_OPENBRACE);
+        self.buf.push(TAG_CLOSEBRACE);
+    }
+}
+
+impl Encoder for Writer {
+    fn write_nil(&mut self) {
+        self.buf.push(TAG_NULL);
+    }
+
+    fn write_bool(&mut self, b: bool) {
+        self.buf.push(if b { TAG_TRUE } else { TAG_FALSE });
+    }
+
+    fn write_int(&mut self, i: i64) {
+        if i >= 0 && i <= 9 {
+            self.buf.push(b'0' + i as u8);
+            return
+        }
+        if i >= i32::MIN as i64 && i <= i32::MAX as i64 {
+            self.buf.push(TAG_INTEGER);
+        } else {
+            self.buf.push(TAG_LONG);
+        }
+        let mut buf: [u8; 20] = [0; 20];
+        self.buf.extend_from_slice(get_int_bytes(&mut buf, i));
+        self.buf.push(TAG_SEMICOLON);
+    }
+
+    fn write_uint(&mut self, i: u64) {
+        if i <= 9 {
+            self.buf.push(b'0' + i as u8);
+            return
+        }
+        if i <= i32::MAX as u64 {
+            self.buf.push(TAG_INTEGER);
+        } else {
+            self.buf.push(TAG_LONG);
+        }
+        let mut buf: [u8; 20] = [0; 20];
+        self.buf.extend_from_slice(get_uint_bytes(&mut buf, i));
+        self.buf.push(TAG_SEMICOLON);
+    }
+
+    fn write_f32(&mut self, f: f32) {
+        if f.is_nan() {
+            self.buf.push(TAG_NAN);
+            return
+        }
+        if f.is_infinite() {
+            self.buf.push(TAG_INFINITY);
+            self.buf.push(if f.is_sign_negative() { TAG_NEG } else { TAG_POS });
+            return
+        }
+        self.buf.push(TAG_DOUBLE);
+        dtoa::write(&mut self.buf, f).unwrap();
+        self.buf.push(TAG_SEMICOLON);
+    }
+
+    fn write_f64(&mut self, f: f64) {
+        if f.is_nan() {
+            self.buf.push(TAG_NAN);
+            return
+        }
+        if f.is_infinite() {
+            self.buf.push(TAG_INFINITY);
+            self.buf.push(if f.is_sign_negative() { TAG_NEG } else { TAG_POS });
+            return
+        }
+        self.buf.push(TAG_DOUBLE);
+        dtoa::write(&mut self.buf, f).unwrap();
+        self.buf.push(TAG_SEMICOLON);
+    }
+
+    fn write_char(&mut self, c: char) {}
+
+    fn write_str(&mut self, s: &str) {
+        let length = utf16_length(s);
+        match length {
+            0 => self.buf.push(TAG_EMPTY),
+            -1 => self.write_bytes(s.as_bytes()),
+            1 => {
+                self.buf.push(TAG_UTF8_CHAR);
+                self.buf.extend_from_slice(s.as_bytes());
+            },
+            _ => {
+                self.set_ref(ptr::null::<&str>());
+                self.write_string(s, length)
+            }
+        }
+    }
+
+    fn write_bytes(&mut self, bytes: &[u8]) {
+        let count = bytes.len();
+        if count == 0 {
+            self.buf.push(TAG_BYTES);
+            self.buf.push(TAG_QUOTE);
+            self.buf.push(TAG_QUOTE);
+            return
+        }
+        self.buf.push(TAG_BYTES);
+        let mut buf: [u8; 20] = [0; 20];
+        self.buf.extend_from_slice(get_int_bytes(&mut buf, count as i64));
+        self.buf.push(TAG_QUOTE);
+        self.buf.extend_from_slice(bytes);
+        self.buf.push(TAG_QUOTE);
+    }
+
+    fn write_seq<F>(&mut self, len: usize, f: F) where F: FnOnce(&mut Writer) {
+        if len == 0 {
+            self.write_empty_list();
+            return
+        }
+        self.write_list_header(len);
+        f(self);
+        self.write_list_footer();
+    }
+
+    #[inline]
+    fn write_ref<T>(&mut self, p: *const T) -> bool {
+        let buf = &mut self.buf;
+        self.refer.as_mut().map_or(true, |r| r.write(buf, p))
+    }
+
+    #[inline]
+    fn set_ref<T>(&mut self, p: *const T) {
+        self.refer.as_mut().map(|r| r.set(p));
     }
 }
 
