@@ -17,23 +17,41 @@
  *                                                        *
 \**********************************************************/
 
+
 use super::tags;
-use super::decoder::{Decodable, Decoder};
+use super::*;
+
+use std::io;
 
 #[derive(Clone, PartialEq, Debug)]
-pub enum DecoderError {}
+pub enum ParserError {
+    /// msg, line, col
+    //    SyntaxError(ErrorCode, usize, usize),
+    IoError(io::ErrorKind, String),
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub enum DecoderError {
+    ParserError(ParserError)
+}
 
 pub type DecodeResult<T> = Result<T, DecoderError>;
 
 pub struct Reader {
-    buf: Vec<u8>
+    buf: Vec<u8>,
+    off: usize
+}
+
+pub trait ByteReader {
+    fn read_byte(&mut self) -> Result<u8, ParserError>;
 }
 
 impl Reader {
     #[inline]
     pub fn new(buf: Vec<u8>) -> Reader {
         Reader {
-            buf: buf
+            buf: buf,
+            off: 0
         }
     }
 
@@ -48,50 +66,66 @@ impl Reader {
     }
 }
 
+#[inline]
+fn io_error_to_error(io: io::Error) -> ParserError {
+    ParserError::IoError(io.kind(), io.to_string())
+}
+
+impl ByteReader for Reader {
+    fn read_byte(&mut self) -> Result<u8, ParserError> {
+        if self.off >= self.buf.len() {
+            return Err(io_error_to_error(io::Error::new(io::ErrorKind::UnexpectedEof, "")))
+        }
+        let b = self.buf[self.off];
+        self.off += 1;
+        return Ok(b)
+    }
+}
+
 impl Decoder for Reader {
     type Error = DecoderError;
 
-    fn read_nil(&mut self) -> Result<(), Self::Error> {
+    fn read_nil(&mut self) -> DecodeResult<()> {
         unimplemented!()
     }
 
-    fn read_bool(&mut self) -> Result<bool, Self::Error> {
+    fn read_bool(&mut self) -> DecodeResult<bool> {
         unimplemented!()
     }
 
-    fn read_i64(&mut self) -> Result<i64, Self::Error> {
+    fn read_i64(&mut self) -> DecodeResult<i64> {
         unimplemented!()
     }
 
-    fn read_u64(&mut self) -> Result<u64, Self::Error> {
+    fn read_u64(&mut self) -> DecodeResult<u64> {
         unimplemented!()
     }
 
-    fn read_f32(&mut self) -> Result<f32, Self::Error> {
+    fn read_f32(&mut self) -> DecodeResult<f32> {
         unimplemented!()
     }
 
-    fn read_f64(&mut self) -> Result<f64, Self::Error> {
+    fn read_f64(&mut self) -> DecodeResult<f64> {
         unimplemented!()
     }
 
-    fn read_char(&mut self) -> Result<char, Self::Error> {
+    fn read_char(&mut self) -> DecodeResult<char> {
         unimplemented!()
     }
 
-    fn read_str(&mut self) -> Result<String, Self::Error> {
+    fn read_str(&mut self) -> DecodeResult<String> {
         unimplemented!()
     }
 
-    fn read_bytes(&mut self) -> Result<Vec<u8>, Self::Error> {
+    fn read_bytes(&mut self) -> DecodeResult<Vec<u8>> {
         unimplemented!()
     }
 
-    fn read_option<T, F>(&mut self, f: F) -> Result<T, Self::Error> where F: FnMut(&mut Self, bool) -> Result<T, Self::Error> {
+    fn read_option<T, F>(&mut self, f: F) -> DecodeResult<T> where F: FnMut(&mut Self, bool) -> DecodeResult<T> {
         unimplemented!()
     }
 
-    fn read_seq<T, F>(&mut self, f: F) -> Result<T, Self::Error> where F: FnOnce(&mut Self, usize) -> Result<T, Self::Error> {
+    fn read_seq<T, F>(&mut self, f: F) -> DecodeResult<T> where F: FnOnce(&mut Self, usize) -> DecodeResult<T> {
         unimplemented!()
     }
 }
