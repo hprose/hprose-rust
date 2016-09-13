@@ -12,7 +12,7 @@
  *                                                        *
  * io util for Rust.                                      *
  *                                                        *
- * LastModified: Sep 12, 2016                             *
+ * LastModified: Sep 13, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -21,16 +21,16 @@ extern crate test;
 
 use std::i64;
 
-const DIGITS: &'static str = "0123456789";
+const DIGITS: &'static [u8] = b"0123456789";
 
-const DIGIT2: &'static str = "\
+const DIGIT2: &'static [u8] = b"\
     0001020304050607080910111213141516171819\
     2021222324252627282930313233343536373839\
     4041424344454647484950515253545556575859\
     6061626364656667686970717273747576777879\
     8081828384858687888990919293949596979899";
 
-const DIGIT3: &'static str = "\
+const DIGIT3: &'static [u8] = b"\
     000001002003004005006007008009010011012013014015016017018019\
     020021022023024025026027028029030031032033034035036037038039\
     040041042043044045046047048049050051052053054055056057058059\
@@ -91,7 +91,7 @@ pub fn get_int_bytes(buf: &mut [u8], mut i: i64) -> &[u8] {
     }
 
     if i == i64::MIN {
-        return MIN_I64_BUF.as_bytes()
+        return MIN_I64_BUF
     }
 
     let mut sign = '+';
@@ -108,21 +108,21 @@ pub fn get_int_bytes(buf: &mut [u8], mut i: i64) -> &[u8] {
         p = (i - (q * 1000)) * 3;
         i = q;
         off -= 3;
-        buf[off] = DIGIT3.as_bytes()[p as usize];
-        buf[off + 1] = DIGIT3.as_bytes()[p as usize + 1];
-        buf[off + 2] = DIGIT3.as_bytes()[p as usize + 2];
+        buf[off] = DIGIT3[p as usize];
+        buf[off + 1] = DIGIT3[p as usize + 1];
+        buf[off + 2] = DIGIT3[p as usize + 2];
     }
     if i >= 10 {
         q = i / 100;
         p = (i - (q * 100)) * 2;
         i = q;
         off -= 2;
-        buf[off] = DIGIT2.as_bytes()[p as usize];
-        buf[off + 1] = DIGIT2.as_bytes()[p as usize + 1];
+        buf[off] = DIGIT2[p as usize];
+        buf[off + 1] = DIGIT2[p as usize + 1];
     }
     if i > 0 {
         off -= 1;
-        buf[off] = DIGITS.as_bytes()[i as usize];
+        buf[off] = DIGITS[i as usize];
     }
     if sign == '-' {
         off -= 1;
@@ -145,28 +145,28 @@ pub fn get_uint_bytes(buf: &mut [u8], mut i: u64) -> &[u8] {
         p = (i - (q * 1000)) * 3;
         i = q;
         off -= 3;
-        buf[off] = DIGIT3.as_bytes()[p as usize];
-        buf[off + 1] = DIGIT3.as_bytes()[p as usize + 1];
-        buf[off + 2] = DIGIT3.as_bytes()[p as usize + 2];
+        buf[off] = DIGIT3[p as usize];
+        buf[off + 1] = DIGIT3[p as usize + 1];
+        buf[off + 2] = DIGIT3[p as usize + 2];
     }
     if i >= 10 {
         q = i / 100;
         p = (i - (q * 100)) * 2;
         i = q;
         off -= 2;
-        buf[off] = DIGIT2.as_bytes()[p as usize];
-        buf[off + 1] = DIGIT2.as_bytes()[p as usize + 1];
+        buf[off] = DIGIT2[p as usize];
+        buf[off + 1] = DIGIT2[p as usize + 1];
     }
     if i > 0 {
         off -= 1;
-        buf[off] = DIGITS.as_bytes()[i as usize];
+        buf[off] = DIGITS[i as usize];
     }
     return &buf[off..]
 }
 
 pub fn utf16_length(s: &str) -> i64 {
     let length = s.len();
-    let bytes = s.as_bytes();
+    let bytes = s;
     let mut n = length as i64;
     let mut p = 0;
     while p < length {

@@ -56,7 +56,7 @@ impl Writer {
 
     pub fn write_int(&mut self, i: i64) {
         if i >= 0 && i <= 9 {
-            self.buf.push('0' as u8 + i as u8);
+            self.buf.push(b'0' + i as u8);
             return
         }
         if i >= i32::MIN as i64 && i <= i32::MAX as i64 {
@@ -71,7 +71,7 @@ impl Writer {
 
     pub fn write_uint(&mut self, i: u64) {
         if i <= 9 {
-            self.buf.push('0' as u8 + i as u8);
+            self.buf.push(b'0' + i as u8);
             return
         }
         if i <= i32::MAX as u64 {
