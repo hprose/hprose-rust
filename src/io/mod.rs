@@ -12,7 +12,7 @@
  *                                                        *
  * hprose io module for Rust.                             *
  *                                                        *
- * LastModified: Sep 13, 2016                             *
+ * LastModified: Sep 14, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -20,8 +20,8 @@
 pub use self::formatter::*;
 pub use self::encoder::{Encoder, Encodable};
 pub use self::decoder::{Decoder, Decodable};
-pub use self::writer::Writer;
-pub use self::reader::{Reader, DecodeResult, DecoderError};
+pub use self::writer::{Writer, ByteWriter};
+pub use self::reader::{Reader, ByteReader, DecodeResult, DecoderError};
 
 mod tags;
 mod util;

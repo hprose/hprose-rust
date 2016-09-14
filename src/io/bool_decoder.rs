@@ -12,14 +12,13 @@
  *                                                        *
  * hprose bool decoder for Rust.                          *
  *                                                        *
- * LastModified: Sep 13, 2016                             *
+ * LastModified: Sep 14, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
 use super::*;
 use super::tags::*;
-use io::reader::ByteReader;
 
 pub fn bool_decoder(r: &mut Reader, tag: u8) -> Result<bool, DecoderError> {
     match tag {
