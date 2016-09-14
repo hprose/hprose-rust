@@ -12,11 +12,12 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 13, 2016                             *
+ * LastModified: Sep 14, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
+extern crate test;
 
 use super::tags;
 use super::*;
@@ -40,8 +41,8 @@ pub enum DecoderError {
 
 pub type DecodeResult<T> = Result<T, DecoderError>;
 
-pub struct Reader {
-    buf: Vec<u8>,
+pub struct Reader<'a> {
+    buf: &'a Vec<u8>,
     off: usize
 }
 
@@ -50,9 +51,9 @@ pub trait ByteReader {
     fn read_until(&mut self, tag: u8) -> Result<&[u8], ParserError>;
 }
 
-impl Reader {
+impl<'a> Reader<'a> {
     #[inline]
-    pub fn new(buf: Vec<u8>) -> Reader {
+    pub fn new(buf: &'a Vec<u8>) -> Reader<'a> {
         Reader {
             buf: buf,
             off: 0
@@ -75,7 +76,7 @@ fn io_error_to_error(io: io::Error) -> ParserError {
     ParserError::IoError(io.kind(), io.to_string())
 }
 
-impl ByteReader for Reader {
+impl<'a> ByteReader for Reader<'a> {
     fn read_byte(&mut self) -> Result<u8, ParserError> {
         if self.off >= self.buf.len() {
             return Err(io_error_to_error(io::Error::new(io::ErrorKind::UnexpectedEof, "")))
@@ -100,7 +101,7 @@ impl ByteReader for Reader {
     }
 }
 
-impl Decoder for Reader {
+impl<'a> Decoder for Reader<'a> {
     type Error = DecoderError;
 
     fn read_nil(&mut self) -> DecodeResult<()> {
@@ -145,5 +146,19 @@ impl Decoder for Reader {
 
     fn read_seq<T, F>(&mut self, f: F) -> DecodeResult<T> where F: FnOnce(&mut Self, usize) -> DecodeResult<T> {
         unimplemented!()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::test::Bencher;
+    use super::super::*;
+
+    #[bench]
+    fn benchmark_unserialize_bool(b: &mut Bencher) {
+        let bytes = Writer::new(true).serialize(&true).bytes();
+        b.iter(|| {
+            Reader::new(&bytes).unserialize::<bool>().unwrap();
+        });
     }
 }
