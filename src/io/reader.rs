@@ -39,7 +39,7 @@ pub enum ParserError {
 pub enum DecoderError {
     ParserError(ParserError),
     CastError(&'static str, &'static str),
-    UnexpectedTag(u8, Option<Vec<u8>>)
+    UnexpectedTag(u8, Option<Bytes>)
 }
 
 impl fmt::Display for DecoderError {
@@ -48,6 +48,7 @@ impl fmt::Display for DecoderError {
             DecoderError::CastError(srcType, dst_type) => write!(f, "can't convert {} to {}", srcType, dst_type),
             DecoderError::UnexpectedTag(tag, ref expect_tags_option) => {
                 match *expect_tags_option {
+                    // todo: format tag as 'c'(0xdd)
                     Some(ref expect_tags) => write!(f, "Tag '{:?}' expected, but '{}' found in stream", expect_tags, tag),
                     None => write!(f, "Unexpected serialize tag '{}' in stream", tag)
                 }
@@ -60,19 +61,25 @@ impl fmt::Display for DecoderError {
 pub type DecodeResult<T> = Result<T, DecoderError>;
 
 pub struct Reader<'a> {
-    buf: &'a Vec<u8>,
+    buf: &'a Bytes,
     off: usize
 }
 
 pub trait ByteReader {
     fn read_byte(&mut self) -> Result<u8, ParserError>;
+    fn read_i64_with_tag(&mut self, tag: u8) -> Result<i64, ParserError>;
+    fn read_i64(&mut self) -> Result<i64, ParserError>;
+    fn read_u64(&mut self) -> Result<i64, ParserError>;
+    fn read_len(&mut self) -> Result<usize, ParserError>;
     fn read_until(&mut self, tag: u8) -> Result<&[u8], ParserError>;
+    fn read_f32(&mut self) -> Result<f32, ParserError>;
+    fn read_f64(&mut self) -> Result<f64, ParserError>;
     fn read_inf(&mut self) -> Result<f64, ParserError>;
 }
 
 impl<'a> Reader<'a> {
     #[inline]
-    pub fn new(buf: &'a Vec<u8>) -> Reader<'a> {
+    pub fn new(buf: &'a Bytes) -> Reader<'a> {
         Reader {
             buf: buf,
             off: 0
@@ -105,6 +112,60 @@ impl<'a> ByteReader for Reader<'a> {
         return Ok(b)
     }
 
+    fn read_i64_with_tag(&mut self, tag: u8) -> Result<i64, ParserError> {
+        let mut i: i64 = 0;
+        self.read_byte().and_then(|b| {
+            if b == tag {
+                Ok(i)
+            } else {
+                let mut neg = false;
+                let next = match b {
+                    TAG_NEG => {
+                        neg = true;
+                        self.read_byte()
+                    },
+                    TAG_POS => self.read_byte(),
+                    _ => Ok(b)
+                };
+                if neg {
+                    next.and_then(|mut b| {
+                        while b != tag {
+                            i = i * 10 - (b as i64 - b'0' as i64);
+                            b = match self.read_byte() {
+                                Ok(b) => b,
+                                Err(e) => return Err(e)
+                            }
+                        }
+                        Ok(i)
+                    })
+                } else {
+                    next.and_then(|mut b| {
+                        while b != tag {
+                            i = i * 10 + (b as i64 - b'0' as i64);
+                            b = match self.read_byte() {
+                                Ok(b) => b,
+                                Err(e) => return Err(e)
+                            }
+                        }
+                        Ok(i)
+                    })
+                }
+            }
+        })
+    }
+
+    fn read_i64(&mut self) -> Result<i64, ParserError> {
+        unimplemented!()
+    }
+
+    fn read_u64(&mut self) -> Result<i64, ParserError> {
+        unimplemented!()
+    }
+
+    fn read_len(&mut self) -> Result<usize, ParserError> {
+        unimplemented!()
+    }
+
     fn read_until(&mut self, tag: u8) -> Result<&[u8], ParserError> {
         let result = &self.buf[self.off..];
         match result.iter().position(|x| *x == tag) {
@@ -117,6 +178,14 @@ impl<'a> ByteReader for Reader<'a> {
                 Err(io_error_to_error(io::Error::new(io::ErrorKind::UnexpectedEof, "")))
             }
         }
+    }
+
+    fn read_f32(&mut self) -> Result<f32, ParserError> {
+        unimplemented!()
+    }
+
+    fn read_f64(&mut self) -> Result<f64, ParserError> {
+        unimplemented!()
     }
 
     fn read_inf(&mut self) -> Result<f64, ParserError> {
@@ -159,7 +228,7 @@ impl<'a> Decoder for Reader<'a> {
         unimplemented!()
     }
 
-    fn read_bytes(&mut self) -> DecodeResult<Vec<u8>> {
+    fn read_bytes(&mut self) -> DecodeResult<Bytes> {
         unimplemented!()
     }
 

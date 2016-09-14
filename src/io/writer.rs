@@ -26,18 +26,19 @@ use std::num::FpCategory as Fp;
 use std::ptr;
 use std::string::String;
 
+use super::Bytes;
 use super::tags::*;
 use super::util::*;
 use super::encoder::*;
 use super::writer_refer::WriterRefer;
 
 pub struct Writer {
-    buf: Vec<u8>,
+    buf: Bytes,
     refer: Option<WriterRefer>
 }
 
 pub trait ByteWriter {
-    fn bytes(&mut self) -> Vec<u8>;
+    fn bytes(&mut self) -> Bytes;
     fn string(&mut self) -> String;
     fn clear(&mut self);
     fn len(&mut self) -> usize;
@@ -95,7 +96,7 @@ impl Writer {
 }
 
 impl ByteWriter for Writer {
-    fn bytes(&mut self) -> Vec<u8> {
+    fn bytes(&mut self) -> Bytes {
         self.buf.clone()
     }
 

@@ -51,21 +51,27 @@ pub fn u64_decode(r: &mut Reader, tag: u8) -> Result {
 fn read_u64(r: &mut Reader) -> Result {
     unimplemented!()
 }
+
 fn read_f64_as_u64(r: &mut Reader) -> Result {
     unimplemented!()
 }
+
 fn read_utf8_char_as_u64(r: &mut Reader) -> Result {
     unimplemented!()
 }
+
 fn read_string_as_u64(r: &mut Reader) -> Result {
     unimplemented!()
 }
+
 fn read_datetime_as_u64(r: &mut Reader) -> Result {
     unimplemented!()
 }
+
 fn read_time_as_u64(r: &mut Reader) -> Result {
     unimplemented!()
 }
+
 fn read_ref_as_u64(r: &mut Reader) -> Result {
     unimplemented!()
 }
