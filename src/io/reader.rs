@@ -19,24 +19,39 @@
 
 extern crate test;
 
-use super::tags;
+use super::tags::*;
 use super::*;
 
 use super::bool_decoder::bool_decoder;
 
+use std::fmt;
 use std::io;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum ParserError {
-    /// msg, line, col
-    //    SyntaxError(ErrorCode, usize, usize),
     IoError(io::ErrorKind, String),
 }
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum DecoderError {
     ParserError(ParserError),
-    CastError(u8, String)
+    CastError(&'static str, &'static str),
+    UnexpectedTag(u8, Option<Vec<u8>>)
+}
+
+impl fmt::Display for DecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            DecoderError::CastError(srcType, dst_type) => write!(f, "can't convert {} to {}", srcType, dst_type),
+            DecoderError::UnexpectedTag(tag, ref expect_tags_option) => {
+                match *expect_tags_option {
+                    Some(ref expect_tags) => write!(f, "Tag '{:?}' expected, but '{}' found in stream", expect_tags, tag),
+                    None => write!(f, "Unexpected serialize tag '{}' in stream", tag)
+                }
+            },
+            _ => fmt::Debug::fmt(self, f)
+        }
+    }
 }
 
 pub type DecodeResult<T> = Result<T, DecoderError>;
@@ -146,6 +161,29 @@ impl<'a> Decoder for Reader<'a> {
 
     fn read_seq<T, F>(&mut self, f: F) -> DecodeResult<T> where F: FnOnce(&mut Self, usize) -> DecodeResult<T> {
         unimplemented!()
+    }
+}
+
+pub fn tagToStr(tag: u8) -> Result<&'static str, DecoderError> {
+    match tag {
+        b'0'...b'9' | TAG_INTEGER => Ok("i32"),
+        TAG_LONG => Ok("big int"),
+        TAG_DOUBLE => Ok("f64"),
+        TAG_NULL => Ok("nil"),
+        TAG_EMPTY => Ok("empty string"),
+        TAG_TRUE => Ok("true"),
+        TAG_FALSE => Ok("false"),
+        TAG_NAN => Ok("NaN"),
+        TAG_INFINITY => Ok("Infinity"),
+        TAG_DATE | TAG_TIME => Ok("time"),
+        TAG_BYTES => Ok("bytes"),
+        TAG_UTF8_CHAR | TAG_STRING => Ok("string"),
+        TAG_GUID => Ok("GUID"),
+        TAG_LIST => Ok("slice"),
+        TAG_MAP => Ok("map"),
+        TAG_CLASS | TAG_OBJECT => Ok("struct"),
+        TAG_REF => Ok("reference"),
+        _ => Err(DecoderError::UnexpectedTag(tag, None))
     }
 }
 

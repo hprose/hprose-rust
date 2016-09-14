@@ -19,13 +19,14 @@
 
 use super::*;
 use super::tags::*;
+use super::reader::tagToStr;
 
 pub fn bool_decoder(r: &mut Reader, tag: u8) -> Result<bool, DecoderError> {
     match tag {
         b'0' | TAG_NULL | TAG_EMPTY | TAG_FALSE => Ok(false),
         b'1' ... b'9' | TAG_TRUE | TAG_NAN => Ok(true),
         TAG_INTEGER | TAG_LONG | TAG_DOUBLE => read_number_as_bool(r),
-        _ => Err(DecoderError::CastError(tag, "bool".to_string()))
+        _ => tagToStr(tag).and_then(|srcType| Err(DecoderError::CastError(srcType, "bool")))
     }
 }
 
