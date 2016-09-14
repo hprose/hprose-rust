@@ -26,6 +26,7 @@ use super::bool_decoder::bool_decoder;
 
 use std::fmt;
 use std::io;
+use std::f64;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum ParserError {
@@ -64,6 +65,7 @@ pub struct Reader<'a> {
 pub trait ByteReader {
     fn read_byte(&mut self) -> Result<u8, ParserError>;
     fn read_until(&mut self, tag: u8) -> Result<&[u8], ParserError>;
+    fn read_inf(&mut self) -> Result<f64, ParserError>;
 }
 
 impl<'a> Reader<'a> {
@@ -113,6 +115,10 @@ impl<'a> ByteReader for Reader<'a> {
                 Err(io_error_to_error(io::Error::new(io::ErrorKind::UnexpectedEof, "")))
             }
         }
+    }
+
+    fn read_inf(&mut self) -> Result<f64, ParserError> {
+        self.read_byte().and_then(|sign| Ok(if sign == TAG_POS { f64::INFINITY } else { f64::NEG_INFINITY }))
     }
 }
 
