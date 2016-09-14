@@ -22,7 +22,9 @@ extern crate test;
 use super::tags::*;
 use super::*;
 
-use super::bool_decoder::bool_decoder;
+use super::bool_decoder::bool_decode;
+use super::i64_decoder::i64_decode;
+use super::u64_decoder::u64_decode;
 
 use std::fmt;
 use std::io;
@@ -130,15 +132,15 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_bool(&mut self) -> DecodeResult<bool> {
-        self.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| bool_decoder(self, t))
+        self.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| bool_decode(self, t))
     }
 
     fn read_i64(&mut self) -> DecodeResult<i64> {
-        unimplemented!()
+        self.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| i64_decode(self, t))
     }
 
     fn read_u64(&mut self) -> DecodeResult<u64> {
-        unimplemented!()
+        self.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| u64_decode(self, t))
     }
 
     fn read_f32(&mut self) -> DecodeResult<f32> {
@@ -153,7 +155,7 @@ impl<'a> Decoder for Reader<'a> {
         unimplemented!()
     }
 
-    fn read_str(&mut self) -> DecodeResult<String> {
+    fn read_string(&mut self) -> DecodeResult<String> {
         unimplemented!()
     }
 

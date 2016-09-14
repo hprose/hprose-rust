@@ -29,6 +29,8 @@ mod util;
 mod encoder;
 mod decoder;
 mod bool_decoder;
+mod i64_decoder;
+mod u64_decoder;
 
 mod writer_refer;
 

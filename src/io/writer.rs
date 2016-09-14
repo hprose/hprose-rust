@@ -147,7 +147,7 @@ impl Encoder for Writer {
         self.write_byte(if b { TAG_TRUE } else { TAG_FALSE });
     }
 
-    fn write_int(&mut self, i: i64) {
+    fn write_i64(&mut self, i: i64) {
         if i >= 0 && i <= 9 {
             self.write_byte(b'0' + i as u8);
             return
@@ -162,7 +162,7 @@ impl Encoder for Writer {
         self.write_byte(TAG_SEMICOLON);
     }
 
-    fn write_uint(&mut self, i: u64) {
+    fn write_u64(&mut self, i: u64) {
         if i <= 9 {
             self.write_byte(b'0' + i as u8);
             return

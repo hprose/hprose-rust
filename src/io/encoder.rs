@@ -12,7 +12,7 @@
  *                                                        *
  * hprose encoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 13, 2016                             *
+ * LastModified: Sep 14, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -21,8 +21,8 @@ pub trait Encoder {
     // Primitive types:
     fn write_nil(&mut self);
     fn write_bool(&mut self, v: bool);
-    fn write_int(&mut self, v: i64);
-    fn write_uint(&mut self, v: u64);
+    fn write_i64(&mut self, v: i64);
+    fn write_u64(&mut self, v: u64);
     fn write_f32(&mut self, v: f32);
     fn write_f64(&mut self, v: f64);
     fn write_char(&mut self, v: char);
@@ -53,61 +53,61 @@ impl Encodable for bool {
 
 impl Encodable for i8 {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_int(*self as i64);
+        w.write_i64(*self as i64);
     }
 }
 
 impl Encodable for i16 {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_int(*self as i64);
+        w.write_i64(*self as i64);
     }
 }
 
 impl Encodable for i32 {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_int(*self as i64);
+        w.write_i64(*self as i64);
     }
 }
 
 impl Encodable for i64 {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_int(*self);
+        w.write_i64(*self);
     }
 }
 
 impl Encodable for isize {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_int(*self as i64);
+        w.write_i64(*self as i64);
     }
 }
 
 impl Encodable for u8 {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_uint(*self as u64);
+        w.write_u64(*self as u64);
     }
 }
 
 impl Encodable for u16 {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_uint(*self as u64);
+        w.write_u64(*self as u64);
     }
 }
 
 impl Encodable for u32 {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_uint(*self as u64);
+        w.write_u64(*self as u64);
     }
 }
 
 impl Encodable for u64 {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_uint(*self);
+        w.write_u64(*self);
     }
 }
 
 impl Encodable for usize {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_uint(*self as u64);
+        w.write_u64(*self as u64);
     }
 }
 
