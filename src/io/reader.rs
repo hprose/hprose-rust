@@ -276,4 +276,12 @@ mod tests {
             Reader::new(&bytes).unserialize::<bool>().unwrap();
         });
     }
+
+    #[bench]
+    fn benchmark_unserialize_i64(b: &mut Bencher) {
+        let bytes = Writer::new(true).serialize(&12345).bytes();
+        b.iter(|| {
+            Reader::new(&bytes).unserialize::<i64>().unwrap();
+        });
+    }
 }
