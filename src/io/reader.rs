@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 14, 2016                             *
+ * LastModified: Sep 17, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -32,6 +32,8 @@ use std::f64;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum ParserError {
+    BadUTF8Encode,
+    ParseBoolError,
     IoError(io::ErrorKind, String),
 }
 
@@ -74,6 +76,7 @@ pub trait ByteReader {
     fn read_until(&mut self, tag: u8) -> Result<&[u8], ParserError>;
     fn read_f32(&mut self) -> Result<f32, ParserError>;
     fn read_f64(&mut self) -> Result<f64, ParserError>;
+    fn read_u8_slice(&mut self, length: i64) -> Result<&[u8], ParserError>;
     fn read_inf(&mut self) -> Result<f64, ParserError>;
 }
 
@@ -186,6 +189,32 @@ impl<'a> ByteReader for Reader<'a> {
 
     fn read_f64(&mut self) -> Result<f64, ParserError> {
         unimplemented!()
+    }
+
+    fn read_u8_slice(&mut self, length: i64) -> Result<&[u8], ParserError> {
+        if length == 0 {
+            return Ok(&[])
+        }
+        let p = self.off;
+        let mut i: i64 = 0;
+        while i < length {
+            let b = self.buf[self.off];
+            match b >> 4 {
+                0...7 => self.off += 1,
+                12 | 13 => self.off += 2,
+                14 => self.off += 3,
+                15 => {
+                    if b & 8 == 8 {
+                        return Err(ParserError::BadUTF8Encode)
+                    }
+                    self.off += 4;
+                    i += 1
+                },
+                _ => return Err(ParserError::BadUTF8Encode)
+            }
+            i += 1;
+        }
+        Ok(&self.buf[p..self.off])
     }
 
     fn read_inf(&mut self) -> Result<f64, ParserError> {
