@@ -29,6 +29,8 @@ use super::u64_decoder::u64_decode;
 use std::fmt;
 use std::io;
 use std::f64;
+use std::str;
+use std::str::FromStr;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum ParserError {
@@ -71,12 +73,14 @@ pub trait ByteReader {
     fn read_byte(&mut self) -> Result<u8, ParserError>;
     fn read_i64_with_tag(&mut self, tag: u8) -> Result<i64, ParserError>;
     fn read_i64(&mut self) -> Result<i64, ParserError>;
-    fn read_u64(&mut self) -> Result<i64, ParserError>;
+    fn read_u64(&mut self) -> Result<u64, ParserError>;
     fn read_len(&mut self) -> Result<usize, ParserError>;
     fn read_until(&mut self, tag: u8) -> Result<&[u8], ParserError>;
     fn read_f32(&mut self) -> Result<f32, ParserError>;
     fn read_f64(&mut self) -> Result<f64, ParserError>;
-    fn read_u8_slice(&mut self, length: i64) -> Result<&[u8], ParserError>;
+    fn read_u8_slice(&mut self, length: usize) -> Result<&[u8], ParserError>;
+    fn read_u8_str(&mut self, length: usize) -> Result<String, ParserError>;
+    fn read_str(&mut self) -> Result<String, ParserError>;
     fn read_inf(&mut self) -> Result<f64, ParserError>;
 }
 
@@ -157,16 +161,19 @@ impl<'a> ByteReader for Reader<'a> {
         })
     }
 
+    #[inline]
     fn read_i64(&mut self) -> Result<i64, ParserError> {
-        unimplemented!()
+        self.read_i64_with_tag(TAG_SEMICOLON)
     }
 
-    fn read_u64(&mut self) -> Result<i64, ParserError> {
-        unimplemented!()
+    #[inline]
+    fn read_u64(&mut self) -> Result<u64, ParserError> {
+        self.read_i64_with_tag(TAG_SEMICOLON).map(|i| i as u64)
     }
 
+    #[inline]
     fn read_len(&mut self) -> Result<usize, ParserError> {
-        unimplemented!()
+        self.read_i64_with_tag(TAG_QUOTE).map(|i| i as usize)
     }
 
     fn read_until(&mut self, tag: u8) -> Result<&[u8], ParserError> {
@@ -191,12 +198,12 @@ impl<'a> ByteReader for Reader<'a> {
         unimplemented!()
     }
 
-    fn read_u8_slice(&mut self, length: i64) -> Result<&[u8], ParserError> {
+    fn read_u8_slice(&mut self, length: usize) -> Result<&[u8], ParserError> {
         if length == 0 {
             return Ok(&[])
         }
         let p = self.off;
-        let mut i: i64 = 0;
+        let mut i: usize = 0;
         while i < length {
             let b = self.buf[self.off];
             match b >> 4 {
@@ -217,8 +224,18 @@ impl<'a> ByteReader for Reader<'a> {
         Ok(&self.buf[p..self.off])
     }
 
+    fn read_u8_str(&mut self, length: usize) -> Result<String, ParserError> {
+        self.read_u8_slice(length).map(|s| String::from(unsafe { str::from_utf8_unchecked(s).clone() }))
+    }
+
+    fn read_str(&mut self) -> Result<String, ParserError> {
+        self.read_len()
+            .and_then(|len| self.read_u8_str(len))
+            .and_then(|s| self.read_byte().map(|_| s))
+    }
+
     fn read_inf(&mut self) -> Result<f64, ParserError> {
-        self.read_byte().and_then(|sign| Ok(if sign == TAG_POS { f64::INFINITY } else { f64::NEG_INFINITY }))
+        self.read_byte().map(|sign| if sign == TAG_POS { f64::INFINITY } else { f64::NEG_INFINITY })
     }
 }
 
@@ -251,6 +268,11 @@ impl<'a> Decoder for Reader<'a> {
 
     fn read_char(&mut self) -> DecodeResult<char> {
         unimplemented!()
+    }
+
+    fn read_string_without_tag(&mut self) -> DecodeResult<String> {
+        // todo: set reader ref
+        self.read_str().map_err(|e| DecoderError::ParserError(e))
     }
 
     fn read_string(&mut self) -> DecodeResult<String> {

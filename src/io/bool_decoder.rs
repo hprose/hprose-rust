@@ -44,23 +44,28 @@ pub fn bool_decode(r: &mut Reader, tag: u8) -> Result {
 fn read_number_as_bool(r: &mut Reader) -> Result {
     r
         .read_until(TAG_SEMICOLON)
+        .map(|bytes| if bytes.len() == 1 { bytes[0] != b'0' } else { true })
         .map_err(|e| DecoderError::ParserError(e))
-        .and_then(|bytes| Ok(if bytes.len() == 1 { bytes[0] != b'0' } else { true }))
 }
 
 fn read_infinity_as_bool(r: &mut Reader) -> Result {
-    r.read_inf().map_err(|e| DecoderError::ParserError(e)).and_then(|inf| Ok(true))
+    r
+        .read_inf()
+        .map(|_| true)
+        .map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_utf8_char_as_bool(r: &mut Reader) -> Result {
-    r.
-        read_u8_slice(1)
+    r
+        .read_u8_slice(1)
         .and_then(|s| parse_bool(unsafe { str::from_utf8_unchecked(s) }))
         .map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_string_as_bool(r: &mut Reader) -> Result {
-    unimplemented!()
+    r
+        .read_string_without_tag()
+        .and_then(|s| parse_bool(&s).map_err(|e| DecoderError::ParserError(e)))
 }
 
 fn read_ref_as_bool(r: &mut Reader) -> Result {

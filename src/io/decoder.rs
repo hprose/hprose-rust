@@ -12,7 +12,7 @@
  *                                                        *
  * hprose decoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 13, 2016                             *
+ * LastModified: Sep 17, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -28,6 +28,7 @@ pub trait Decoder {
     fn read_f32(&mut self) -> Result<f32, Self::Error>;
     fn read_f64(&mut self) -> Result<f64, Self::Error>;
     fn read_char(&mut self) -> Result<char, Self::Error>;
+    fn read_string_without_tag(&mut self) -> Result<String, Self::Error>;
     fn read_string(&mut self) -> Result<String, Self::Error>;
     fn read_bytes(&mut self) -> Result<Vec<u8>, Self::Error>;
 
