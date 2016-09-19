@@ -24,7 +24,6 @@ use super::reader::cast_error;
 
 use std::result;
 use std::str;
-use std::str::FromStr;
 
 type Result = result::Result<bool, DecoderError>;
 

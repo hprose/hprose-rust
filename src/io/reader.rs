@@ -30,7 +30,6 @@ use std::fmt;
 use std::io;
 use std::f64;
 use std::str;
-use std::str::FromStr;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum ParserError {
@@ -49,7 +48,7 @@ pub enum DecoderError {
 impl fmt::Display for DecoderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            DecoderError::CastError(srcType, dst_type) => write!(f, "can't convert {} to {}", srcType, dst_type),
+            DecoderError::CastError(src_type, dst_type) => write!(f, "can't convert {} to {}", src_type, dst_type),
             DecoderError::UnexpectedTag(tag, ref expect_tags_option) => {
                 match *expect_tags_option {
                     // todo: format tag as 'c'(0xdd)
@@ -317,7 +316,7 @@ fn tag_to_str(tag: u8) -> Result<&'static str, DecoderError> {
 
 pub fn cast_error(tag: u8, dst_type: &'static str) -> DecoderError {
     tag_to_str(tag)
-        .map(|src_type| DecoderError::CastError(src_type, "bool"))
+        .map(|src_type| DecoderError::CastError(src_type, dst_type))
         .unwrap_or_else(|e| e)
 }
 

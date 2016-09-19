@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 14, 2016                             *
+ * LastModified: Sep 19, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -21,7 +21,6 @@ extern crate test;
 extern crate dtoa;
 
 use std::{i32, f32, f64};
-use std::io::Write;
 use std::num::FpCategory as Fp;
 use std::ptr;
 use std::string::String;
