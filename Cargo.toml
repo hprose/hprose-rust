@@ -5,3 +5,7 @@ authors = ["Chen Fei <cf@hprose.com>"]
 
 [dependencies]
 dtoa = "0.2"
+
+[dependencies.hyper]
+version = "0.9"
+default-features = false

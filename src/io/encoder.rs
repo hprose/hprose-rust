@@ -12,10 +12,12 @@
  *                                                        *
  * hprose encoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 14, 2016                             *
+ * LastModified: Sep 19, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
+
+use super::Hprose;
 
 pub trait Encoder {
     // Primitive types:
@@ -183,5 +185,14 @@ impl<T: Encodable> Encodable for Option<T> {
                 Some(ref v) => v.encode(w)
             }
         })
+    }
+}
+
+impl Encodable for Hprose {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        match *self {
+            Hprose::String(ref s) => s.encode(w),
+            _ => ()
+        }
     }
 }
