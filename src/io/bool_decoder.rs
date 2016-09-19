@@ -22,8 +22,7 @@ use super::tags::*;
 use super::reader::ParserError;
 use super::reader::cast_error;
 
-use std::result;
-use std::str;
+use std::{result, str};
 
 type Result = result::Result<bool, DecoderError>;
 

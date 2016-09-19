@@ -19,9 +19,10 @@
 
 use super::*;
 use super::tags::*;
+use super::reader::ParserError;
 use super::reader::cast_error;
 
-use std::result;
+use std::{result, str};
 
 type Result = result::Result<u64, DecoderError>;
 
@@ -49,19 +50,26 @@ pub fn u64_decode(r: &mut Reader, tag: u8) -> Result {
 }
 
 fn read_u64(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.reader.read_u64_with_tag(TAG_SEMICOLON).map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_f64_as_u64(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.reader.read_f64().map(|f| f as u64).map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_utf8_char_as_u64(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.reader
+        .read_u8_slice(1)
+        .and_then(|s| unsafe { str::from_utf8_unchecked(s) }
+            .parse::<u64>()
+            .map_err(|e| ParserError::ParseIntError(e)))
+        .map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_string_as_u64(r: &mut Reader) -> Result {
-    unimplemented!()
+    r
+        .read_string_without_tag()
+        .and_then(|s| s.parse::<u64>().map_err(|e| ParserError::ParseIntError(e)).map_err(|e| DecoderError::ParserError(e)))
 }
 
 fn read_datetime_as_u64(r: &mut Reader) -> Result {

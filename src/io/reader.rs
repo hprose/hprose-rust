@@ -37,6 +37,7 @@ use std::str;
 pub enum ParserError {
     BadUTF8Encode,
     ParseBoolError,
+    ParseIntError(num::ParseIntError),
     ParseFloatError(num::ParseFloatError),
     IoError(io::ErrorKind, String),
 }

@@ -89,6 +89,11 @@ impl<'a> ByteReader<'a> {
     }
 
     #[inline]
+    pub fn read_u64_with_tag(&mut self, tag: u8) -> Result<u64, ParserError> {
+        self.read_i64_with_tag(tag).map(|i| i as u64)
+    }
+
+    #[inline]
     pub fn read_i64(&mut self) -> Result<i64, ParserError> {
         self.read_i64_with_tag(TAG_SEMICOLON)
     }

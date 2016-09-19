@@ -19,9 +19,10 @@
 
 use super::*;
 use super::tags::*;
+use super::reader::ParserError;
 use super::reader::cast_error;
 
-use std::result;
+use std::{result, str};
 
 type Result = result::Result<i64, DecoderError>;
 
@@ -57,11 +58,18 @@ fn read_f64_as_i64(r: &mut Reader) -> Result {
 }
 
 fn read_utf8_char_as_i64(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.reader
+        .read_u8_slice(1)
+        .and_then(|s| unsafe { str::from_utf8_unchecked(s) }
+            .parse::<i64>()
+            .map_err(|e| ParserError::ParseIntError(e)))
+        .map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_string_as_i64(r: &mut Reader) -> Result {
-    unimplemented!()
+    r
+        .read_string_without_tag()
+        .and_then(|s| s.parse::<i64>().map_err(|e| ParserError::ParseIntError(e)).map_err(|e| DecoderError::ParserError(e)))
 }
 
 fn read_datetime_as_i64(r: &mut Reader) -> Result {
