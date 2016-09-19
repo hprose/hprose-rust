@@ -12,14 +12,14 @@
  *                                                        *
  * io util for Rust.                                      *
  *                                                        *
- * LastModified: Sep 13, 2016                             *
+ * LastModified: Sep 19, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
 extern crate test;
 
-use std::i64;
+use std::{i64, str};
 
 const DIGITS: &'static [u8] = b"0123456789";
 
@@ -192,6 +192,11 @@ pub fn utf16_length(s: &str) -> i64 {
         }
     }
     n
+}
+
+#[inline]
+pub fn utf8_slice_to_str(v: &[u8]) -> &str {
+    unsafe { str::from_utf8_unchecked(v) }
 }
 
 #[cfg(test)]

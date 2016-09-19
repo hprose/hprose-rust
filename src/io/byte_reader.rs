@@ -19,9 +19,20 @@
 
 use super::*;
 use super::tags::*;
-use super::reader::ParserError;
+use super::util::utf8_slice_to_str;
 
-use std::{io, f64, str};
+use self::ParserError::*;
+
+use std::{io, num, f64};
+
+#[derive(Clone, PartialEq, Debug)]
+pub enum ParserError {
+    BadUTF8Encode,
+    ParseBoolError,
+    ParseIntError(num::ParseIntError),
+    ParseFloatError(num::ParseFloatError),
+    IoError(io::ErrorKind),
+}
 
 pub struct ByteReader<'a> {
     buf: &'a Bytes,
@@ -38,12 +49,13 @@ impl<'a> ByteReader<'a> {
     }
 
     pub fn read_byte(&mut self) -> Result<u8, ParserError> {
-        if self.off >= self.buf.len() {
-            return Err(io_error_to_error(io::Error::new(io::ErrorKind::UnexpectedEof, "")))
+        if self.off < self.buf.len() {
+            let b = self.buf[self.off];
+            self.off += 1;
+            Ok(b)
+        } else {
+            Err(IoError(io::ErrorKind::UnexpectedEof))
         }
-        let b = self.buf[self.off];
-        self.off += 1;
-        return Ok(b)
     }
 
     pub fn read_i64_with_tag(&mut self, tag: u8) -> Result<i64, ParserError> {
@@ -100,11 +112,11 @@ impl<'a> ByteReader<'a> {
 
     #[inline]
     pub fn read_u64(&mut self) -> Result<u64, ParserError> {
-        self.read_i64_with_tag(TAG_SEMICOLON).map(|i| i as u64)
+        self.read_u64_with_tag(TAG_SEMICOLON)
     }
 
     #[inline]
-    pub fn read_len(&mut self) -> Result<usize, ParserError> {
+    fn read_length(&mut self) -> Result<usize, ParserError> {
         self.read_i64_with_tag(TAG_QUOTE).map(|i| i as usize)
     }
 
@@ -117,23 +129,22 @@ impl<'a> ByteReader<'a> {
             },
             None => {
                 self.off = self.buf.len();
-                Err(io_error_to_error(io::Error::new(io::ErrorKind::UnexpectedEof, "")))
+                Ok(result)
             }
         }
     }
 
     pub fn read_f32(&mut self) -> Result<f32, ParserError> {
-        unimplemented!()
+        self.read_until(TAG_SEMICOLON)
+            .and_then(|v| utf8_slice_to_str(v).parse::<f32>().map_err(|e| ParseFloatError(e)))
     }
 
     pub fn read_f64(&mut self) -> Result<f64, ParserError> {
         self.read_until(TAG_SEMICOLON)
-            .and_then(|bytes| unsafe { str::from_utf8_unchecked(bytes) }
-                .parse::<f64>()
-                .map_err(|e| ParserError::ParseFloatError(e)))
+            .and_then(|v| utf8_slice_to_str(v).parse::<f64>().map_err(|e| ParseFloatError(e)))
     }
 
-    pub fn read_u8_slice(&mut self, length: usize) -> Result<&[u8], ParserError> {
+    pub fn read_utf8_slice(&mut self, length: usize) -> Result<&[u8], ParserError> {
         if length == 0 {
             return Ok(&[])
         }
@@ -147,34 +158,29 @@ impl<'a> ByteReader<'a> {
                 14 => self.off += 3,
                 15 => {
                     if b & 8 == 8 {
-                        return Err(ParserError::BadUTF8Encode)
+                        return Err(BadUTF8Encode)
                     }
                     self.off += 4;
                     i += 1
                 },
-                _ => return Err(ParserError::BadUTF8Encode)
+                _ => return Err(BadUTF8Encode)
             }
             i += 1;
         }
         Ok(&self.buf[p..self.off])
     }
 
-    pub fn read_u8_str(&mut self, length: usize) -> Result<String, ParserError> {
-        self.read_u8_slice(length).map(|s| String::from(unsafe { str::from_utf8_unchecked(s).clone() }))
+    pub fn read_utf8_str(&mut self, length: usize) -> Result<String, ParserError> {
+        self.read_utf8_slice(length).map(|s| String::from(utf8_slice_to_str(s).clone()))
     }
 
     pub fn read_str(&mut self) -> Result<String, ParserError> {
-        self.read_len()
-            .and_then(|len| self.read_u8_str(len))
+        self.read_length()
+            .and_then(|len| self.read_utf8_str(len))
             .and_then(|s| self.read_byte().map(|_| s))
     }
 
     pub fn read_inf(&mut self) -> Result<f64, ParserError> {
         self.read_byte().map(|sign| if sign == TAG_POS { f64::INFINITY } else { f64::NEG_INFINITY })
     }
-}
-
-#[inline]
-fn io_error_to_error(io: io::Error) -> ParserError {
-    ParserError::IoError(io.kind(), io.to_string())
 }

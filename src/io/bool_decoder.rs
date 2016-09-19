@@ -19,7 +19,7 @@
 
 use super::*;
 use super::tags::*;
-use super::reader::ParserError;
+use super::byte_reader::ParserError;
 use super::reader::cast_error;
 
 use std::{result, str};
@@ -55,7 +55,7 @@ fn read_inf_as_bool(r: &mut Reader) -> Result {
 
 fn read_utf8_char_as_bool(r: &mut Reader) -> Result {
     r.reader
-        .read_u8_slice(1)
+        .read_utf8_slice(1)
         .and_then(|s| parse_bool(unsafe { str::from_utf8_unchecked(s) }))
         .map_err(|e| DecoderError::ParserError(e))
 }

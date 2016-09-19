@@ -22,25 +22,15 @@ extern crate test;
 use super::tags::*;
 use super::*;
 
+use super::byte_reader::ParserError;
 use super::byte_reader::ByteReader;
 use super::bool_decoder::bool_decode;
 use super::i64_decoder::i64_decode;
 use super::u64_decoder::u64_decode;
 
 use std::fmt;
-use std::io;
 use std::f64;
-use std::num;
 use std::str;
-
-#[derive(Clone, PartialEq, Debug)]
-pub enum ParserError {
-    BadUTF8Encode,
-    ParseBoolError,
-    ParseIntError(num::ParseIntError),
-    ParseFloatError(num::ParseFloatError),
-    IoError(io::ErrorKind, String),
-}
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum DecoderError {
