@@ -53,6 +53,9 @@ mod decoder;
 mod bool_decoder;
 mod i64_decoder;
 mod u64_decoder;
+mod f32_decoder;
+mod f64_decoder;
+mod string_decoder;
 
 mod writer_refer;
 

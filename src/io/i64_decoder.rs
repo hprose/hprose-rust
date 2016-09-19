@@ -19,6 +19,7 @@
 
 use super::*;
 use super::tags::*;
+use super::util::utf8_slice_to_str;
 use super::byte_reader::ParserError;
 use super::reader::cast_error;
 
@@ -60,9 +61,7 @@ fn read_f64_as_i64(r: &mut Reader) -> Result {
 fn read_utf8_char_as_i64(r: &mut Reader) -> Result {
     r.reader
         .read_utf8_slice(1)
-        .and_then(|s| unsafe { str::from_utf8_unchecked(s) }
-            .parse::<i64>()
-            .map_err(|e| ParserError::ParseIntError(e)))
+        .and_then(|s| utf8_slice_to_str(s).parse::<i64>().map_err(|e| ParserError::ParseIntError(e)))
         .map_err(|e| DecoderError::ParserError(e))
 }
 

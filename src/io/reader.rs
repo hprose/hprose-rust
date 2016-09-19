@@ -27,6 +27,9 @@ use super::byte_reader::ByteReader;
 use super::bool_decoder::bool_decode;
 use super::i64_decoder::i64_decode;
 use super::u64_decoder::u64_decode;
+use super::f32_decoder::f32_decode;
+use super::f64_decoder::f64_decode;
+use super::string_decoder::string_decode;
 
 use std::fmt;
 use std::f64;
@@ -100,11 +103,11 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_f32(&mut self) -> DecodeResult<f32> {
-        unimplemented!()
+        self.reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| f32_decode(self, t))
     }
 
     fn read_f64(&mut self) -> DecodeResult<f64> {
-        unimplemented!()
+        self.reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| f64_decode(self, t))
     }
 
     fn read_char(&mut self) -> DecodeResult<char> {
@@ -117,7 +120,7 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_string(&mut self) -> DecodeResult<String> {
-        unimplemented!()
+        self.reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| string_decode(self, t))
     }
 
     fn read_bytes(&mut self) -> DecodeResult<Bytes> {
