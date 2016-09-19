@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 17, 2016                             *
+ * LastModified: Sep 19, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -292,7 +292,7 @@ impl<'a> Decoder for Reader<'a> {
     }
 }
 
-pub fn tagToStr(tag: u8) -> Result<&'static str, DecoderError> {
+fn tag_to_str(tag: u8) -> Result<&'static str, DecoderError> {
     match tag {
         b'0'...b'9' | TAG_INTEGER => Ok("i32"),
         TAG_LONG => Ok("big int"),
@@ -313,6 +313,12 @@ pub fn tagToStr(tag: u8) -> Result<&'static str, DecoderError> {
         TAG_REF => Ok("reference"),
         _ => Err(DecoderError::UnexpectedTag(tag, None))
     }
+}
+
+pub fn cast_error(tag: u8, dst_type: &'static str) -> DecoderError {
+    tag_to_str(tag)
+        .map(|src_type| DecoderError::CastError(src_type, "bool"))
+        .unwrap_or_else(|e| e)
 }
 
 #[cfg(test)]

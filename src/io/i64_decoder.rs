@@ -12,14 +12,14 @@
  *                                                        *
  * hprose i64 decoder for Rust.                           *
  *                                                        *
- * LastModified: Sep 14, 2016                             *
+ * LastModified: Sep 19, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
 use super::*;
 use super::tags::*;
-use super::reader::tagToStr;
+use super::reader::cast_error;
 
 use std::result;
 
@@ -44,7 +44,7 @@ pub fn i64_decode(r: &mut Reader, tag: u8) -> Result {
         TAG_DATE => read_datetime_as_i64(r),
         TAG_TIME => read_time_as_i64(r),
         TAG_REF => read_ref_as_i64(r),
-        _ => tagToStr(tag).and_then(|srcType| Err(DecoderError::CastError(srcType, "i64")))
+        _ => Err(cast_error(tag, "i64"))
     }
 }
 

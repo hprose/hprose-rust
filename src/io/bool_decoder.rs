@@ -12,7 +12,7 @@
  *                                                        *
  * hprose bool decoder for Rust.                          *
  *                                                        *
- * LastModified: Sep 17, 2016                             *
+ * LastModified: Sep 19, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -20,7 +20,7 @@
 use super::*;
 use super::tags::*;
 use super::reader::ParserError;
-use super::reader::tagToStr;
+use super::reader::cast_error;
 
 use std::result;
 use std::str;
@@ -33,11 +33,11 @@ pub fn bool_decode(r: &mut Reader, tag: u8) -> Result {
         b'0' | TAG_NULL | TAG_EMPTY | TAG_FALSE => Ok(false),
         b'1' ... b'9' | TAG_TRUE | TAG_NAN => Ok(true),
         TAG_INTEGER | TAG_LONG | TAG_DOUBLE => read_number_as_bool(r),
-        TAG_INFINITY => read_infinity_as_bool(r),
+        TAG_INFINITY => read_inf_as_bool(r),
         TAG_UTF8_CHAR => read_utf8_char_as_bool(r),
         TAG_STRING => read_string_as_bool(r),
         TAG_REF => read_ref_as_bool(r),
-        _ => tagToStr(tag).and_then(|srcType| Err(DecoderError::CastError(srcType, "bool")))
+        _ => Err(cast_error(tag, "bool"))
     }
 }
 
@@ -48,7 +48,7 @@ fn read_number_as_bool(r: &mut Reader) -> Result {
         .map_err(|e| DecoderError::ParserError(e))
 }
 
-fn read_infinity_as_bool(r: &mut Reader) -> Result {
+fn read_inf_as_bool(r: &mut Reader) -> Result {
     r
         .read_inf()
         .map(|_| true)
@@ -72,6 +72,9 @@ fn read_ref_as_bool(r: &mut Reader) -> Result {
     unimplemented!()
 }
 
+// parse_bool returns the boolean value represented by the string.
+// It accepts 1, t, T, TRUE, true, True, 0, f, F, FALSE, false, False.
+// Any other value returns an error.
 fn parse_bool(s: &str) -> result::Result<bool, ParserError> {
     match s {
         "1" | "t" | "T" | "true" | "TRUE" | "True" => Ok(true),
