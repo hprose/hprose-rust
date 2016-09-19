@@ -49,11 +49,11 @@ pub fn i64_decode(r: &mut Reader, tag: u8) -> Result {
 }
 
 fn read_i64(r: &mut Reader) -> Result {
-    r.read_i64_with_tag(TAG_SEMICOLON).map_err(|e| DecoderError::ParserError(e))
+    r.reader.read_i64_with_tag(TAG_SEMICOLON).map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_f64_as_i64(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.reader.read_f64().map(|f| f as i64).map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_utf8_char_as_i64(r: &mut Reader) -> Result {
