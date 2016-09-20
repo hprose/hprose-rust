@@ -12,7 +12,7 @@
  *                                                        *
  * hprose encoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 19, 2016                             *
+ * LastModified: Sep 20, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -134,6 +134,12 @@ impl Encodable for char {
 impl Encodable for str {
     fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_str(self);
+    }
+}
+
+impl<'a> Encodable for &'a str {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_str(*self);
     }
 }
 

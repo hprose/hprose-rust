@@ -20,12 +20,13 @@
 extern crate hyper;
 
 use self::hyper::client::Client as HyperClient;
+use self::hyper::Error as HyperError;
 
 use super::*;
-use io::Hprose;
-use io::Decodable;
+use io::{Hprose, Decodable, Encodable};
 
 use std::io::Read;
+use std::error::Error;
 
 pub struct HttpTransporter {
     client: HyperClient
@@ -41,11 +42,12 @@ impl HttpTransporter {
 }
 
 impl Transporter for HttpTransporter {
-    fn send_and_receive(&self, uri: &str, data: Vec<u8>) -> Vec<u8> {
-        let mut resp = self.client.post(uri).body(data.as_slice()).send().unwrap();
-        let mut ret = Vec::new();
-        resp.read_to_end(&mut ret);
-        ret
+    fn send_and_receive(&self, uri: &str, data: &[u8]) -> Result<Vec<u8>, InvokeError> {
+        self.client.post(uri).body(data).send().map(|mut resp| {
+            let mut ret = Vec::new();
+            resp.read_to_end(&mut ret);
+            ret
+        }).map_err(|e| InvokeError::TransError(String::from(e.description())))
     }
 }
 
@@ -62,8 +64,8 @@ impl HttpClient {
 }
 
 impl Client for HttpClient {
-    fn invoke<R: Decodable>(&self, name: String, args: Vec<Hprose>) -> R {
+    fn invoke<R: Decodable, A: Encodable>(&self, name: &str, args: Vec<A>) -> InvokeResult<R> {
         let context = ClientContext::new(self);
-        self.base_client.invoke::<R, HttpClient>(name, args, &context)
+        self.base_client.invoke::<R, A, HttpClient>(name, args, &context)
     }
 }
