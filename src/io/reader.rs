@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 19, 2016                             *
+ * LastModified: Sep 20, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -23,7 +23,6 @@ use super::tags::*;
 use super::*;
 
 use super::byte_reader::ParserError;
-use super::byte_reader::ByteReader;
 use super::bool_decoder::bool_decode;
 use super::i64_decoder::i64_decode;
 use super::u64_decoder::u64_decode;

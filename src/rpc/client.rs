@@ -12,21 +12,21 @@
  *                                                        *
  * hprose client for Rust.                                *
  *                                                        *
- * LastModified: Sep 19, 2016                             *
+ * LastModified: Sep 20, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
 use io::Hprose;
-use io::{Writer, ByteWriter, Encoder, Encodable};
+use io::{Writer, ByteWriter, Encoder, Encodable, Reader, ByteReader, Decoder, Decodable};
 use io::tags::*;
 
 pub trait Client {
-    fn invoke(&self, name: String, args: Vec<Hprose>);
+    fn invoke<R: Decodable>(&self, name: String, args: Vec<Hprose>) -> R;
 }
 
 pub trait Transporter {
-    fn send_and_receive(uri: String, data: Vec<u8>) -> Vec<u8>;
+    fn send_and_receive(&self, uri: &str, data: Vec<u8>) -> Vec<u8>;
 }
 
 pub struct ClientContext<'a, T: 'a + Client> {
@@ -56,7 +56,13 @@ impl<T: Transporter> BaseClient<T> {
         }
     }
 
-    pub fn do_output<C: Client>(&self, name: String, args: Vec<Hprose>, context: &ClientContext<C>) -> Vec<u8> {
+    pub fn invoke<R: Decodable, C: Client>(&self, name: String, args: Vec<Hprose>, context: &ClientContext<C>) -> R {
+        let odata = self.do_output(name, &args, context);
+        let idata = self.trans.send_and_receive(&self.url, odata);
+        self.do_input(idata, &args, context)
+    }
+
+    pub fn do_output<C: Client>(&self, name: String, args: &Vec<Hprose>, context: &ClientContext<C>) -> Vec<u8> {
         let mut w = Writer::new(true);
         w.write_byte(TAG_CALL);
         w.write_str(&name);
@@ -67,5 +73,11 @@ impl<T: Transporter> BaseClient<T> {
         });
         w.write_byte(TAG_END);
         w.bytes()
+    }
+
+    pub fn do_input<R: Decodable, C: Client>(&self, data: Vec<u8>, args: &Vec<Hprose>, context: &ClientContext<C>) -> R {
+        let mut r = Reader::new(&data);
+        r.reader.read_byte().unwrap();
+        r.unserialize::<R>().unwrap()
     }
 }

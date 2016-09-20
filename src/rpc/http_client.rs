@@ -12,45 +12,58 @@
  *                                                        *
  * hprose http client for Rust.                           *
  *                                                        *
- * LastModified: Sep 19, 2016                             *
+ * LastModified: Sep 20, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
 extern crate hyper;
 
+use self::hyper::client::Client as HyperClient;
+
 use super::*;
 use io::Hprose;
+use io::Decodable;
 
-pub struct HttpTransporter {}
+use std::io::Read;
+
+pub struct HttpTransporter {
+    client: HyperClient
+}
 
 impl HttpTransporter {
     #[inline]
     pub fn new() -> HttpTransporter {
-        HttpTransporter {}
+        HttpTransporter {
+            client: HyperClient::new()
+        }
     }
 }
 
 impl Transporter for HttpTransporter {
-    fn send_and_receive(uri: String, data: Vec<u8>) -> Vec<u8> {
-        unimplemented!()
+    fn send_and_receive(&self, uri: &str, data: Vec<u8>) -> Vec<u8> {
+        let mut resp = self.client.post(uri).body(data.as_slice()).send().unwrap();
+        let mut ret = Vec::new();
+        resp.read_to_end(&mut ret);
+        ret
     }
 }
 
 pub struct HttpClient {
     base_client: BaseClient<HttpTransporter>,
-    client: hyper::client::Client
 }
 
 impl HttpClient {
     pub fn new(url: String) -> HttpClient {
         HttpClient {
-            base_client: BaseClient::new(HttpTransporter::new(), url),
-            client: hyper::client::Client::new()
+            base_client: BaseClient::new(HttpTransporter::new(), url)
         }
     }
 }
 
 impl Client for HttpClient {
-    fn invoke(&self, name: String, args: Vec<Hprose>) {}
+    fn invoke<R: Decodable>(&self, name: String, args: Vec<Hprose>) -> R {
+        let context = ClientContext::new(self);
+        self.base_client.invoke::<R, HttpClient>(name, args, &context)
+    }
 }
