@@ -18,9 +18,13 @@
 \**********************************************************/
 
 use io;
-use io::Hprose;
-use io::{Writer, ByteWriter, Encoder, Encodable, Reader, ByteReader, Decoder, Decodable, DecodeResult};
+use io::{Writer, ByteWriter, Encoder, Encodable, Reader, Decoder, Decodable};
 use io::tags::*;
+
+pub struct InvokeOptions {
+    pub by_ref: bool,
+    pub simple_mode: bool
+}
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum InvokeError {
@@ -35,7 +39,7 @@ pub type InvokeResult<T> = Result<T, InvokeError>;
 use self::InvokeError::*;
 
 pub trait Client {
-    fn invoke<R: Decodable, A: Encodable>(&self, name: &str, args: Vec<A>) -> InvokeResult<R>;
+    fn invoke<R: Decodable, A: Encodable>(&self, name: &str, args: &mut Vec<A>, options: &InvokeOptions) -> InvokeResult<R>;
 }
 
 pub trait Transporter {
@@ -69,25 +73,32 @@ impl<T: Transporter> BaseClient<T> {
         }
     }
 
-    pub fn invoke<R: Decodable, A: Encodable, C: Client>(&self, name: &str, args: Vec<A>, context: &ClientContext<C>) -> InvokeResult<R> {
-        let odata = self.do_output(name, &args, context);
-        self.trans.send_and_receive(&self.url, &odata).and_then(|idata| self.do_input(idata, &args, context))
+    pub fn invoke<R: Decodable, A: Encodable, C: Client>(&self, name: &str, args: &mut Vec<A>, options: &InvokeOptions, context: &ClientContext<C>) -> InvokeResult<R> {
+        let odata = self.do_output(name, args, options, context);
+        self.trans.send_and_receive(&self.url, &odata).and_then(|idata| self.do_input(idata, args, context))
     }
 
-    pub fn do_output<A: Encodable, C: Client>(&self, name: &str, args: &Vec<A>, context: &ClientContext<C>) -> Vec<u8> {
+    pub fn do_output<A: Encodable, C: Client>(&self, name: &str, args: &mut Vec<A>, options: &InvokeOptions, context: &ClientContext<C>) -> Vec<u8> {
         let mut w = Writer::new(true);
         w.write_byte(TAG_CALL);
         w.write_str(name);
-        w.write_seq(args.len(), |w| {
-            for e in args {
-                e.encode(w);
+        let by_ref = options.by_ref;
+        let len = args.len();
+        if len > 0 || by_ref {
+            w.write_seq(args.len(), |w| {
+                for e in args {
+                    e.encode(w);
+                }
+            });
+            if by_ref {
+                w.write_bool(true);
             }
-        });
+        }
         w.write_byte(TAG_END);
         w.bytes()
     }
 
-    pub fn do_input<R: Decodable, A: Encodable, C: Client>(&self, data: Vec<u8>, args: &Vec<A>, context: &ClientContext<C>) -> InvokeResult<R> {
+    pub fn do_input<R: Decodable, A: Encodable, C: Client>(&self, data: Vec<u8>, args: &mut Vec<A>, context: &ClientContext<C>) -> InvokeResult<R> {
         let mut r = Reader::new(&data);
         r.reader.read_byte()
             .map_err(|e| DecoderError(io::DecoderError::ParserError(e)))

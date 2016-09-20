@@ -19,6 +19,9 @@
 
 use super::Hprose;
 
+use std::hash::{Hash, BuildHasher};
+use std::collections::HashMap;
+
 pub trait Encoder {
     // Primitive types:
     fn write_nil(&mut self);
@@ -37,6 +40,7 @@ pub trait Encoder {
     // Specialized types:
     fn write_option<F>(&mut self, f: F) where F: FnOnce(&mut Self);
     fn write_seq<F>(&mut self, len: usize, f: F) where F: FnOnce(&mut Self);
+    fn write_map<F>(&mut self, len: usize, f: F) where F: FnOnce(&mut Self);
 
     // Reference:
     fn write_ref<T>(&mut self, p: *const T) -> bool;
@@ -183,6 +187,21 @@ impl<T: Encodable> Encodable for Vec<T> {
     }
 }
 
+impl<K, V, S> Encodable for HashMap<K, V, S>
+where K: Encodable + Hash + Eq,
+      V: Encodable,
+      S: BuildHasher
+{
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_map(self.len(), |e| {
+            for (key, val) in self {
+                key.encode(e);
+                val.encode(e);
+            }
+        })
+    }
+}
+
 impl<T: Encodable> Encodable for Option<T> {
     fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_option(|w| {
@@ -197,6 +216,7 @@ impl<T: Encodable> Encodable for Option<T> {
 impl Encodable for Hprose {
     fn encode<W: Encoder>(&self, w: &mut W) {
         match *self {
+            Hprose::Nil => w.write_nil(),
             Hprose::String(ref s) => s.encode(w),
             _ => ()
         }

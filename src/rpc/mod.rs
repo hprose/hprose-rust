@@ -20,5 +20,5 @@
 mod client;
 mod http_client;
 
-pub use self::client::{InvokeResult, InvokeError, Client, Transporter, ClientContext, BaseClient};
+pub use self::client::{InvokeOptions, InvokeResult, InvokeError, Client, Transporter, ClientContext, BaseClient};
 pub use self::http_client::HttpClient;

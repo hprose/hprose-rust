@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 19, 2016                             *
+ * LastModified: Sep 20, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -91,6 +91,23 @@ impl Writer {
     #[inline]
     fn write_empty_list(&mut self) {
         self.write_from_slice(&[TAG_LIST, TAG_OPENBRACE, TAG_CLOSEBRACE]);
+    }
+
+    fn write_map_header(&mut self, len: usize) {
+        self.write_byte(TAG_MAP);
+        let mut buf: [u8; 20] = [0; 20];
+        self.write_from_slice(get_uint_bytes(&mut buf, len as u64));
+        self.write_byte(TAG_OPENBRACE);
+    }
+
+    #[inline]
+    fn write_map_footer(&mut self) {
+        self.write_byte(TAG_CLOSEBRACE);
+    }
+
+    #[inline]
+    fn write_empty_map(&mut self) {
+        self.write_from_slice(&[TAG_MAP, TAG_OPENBRACE, TAG_CLOSEBRACE]);
     }
 }
 
@@ -269,6 +286,16 @@ impl Encoder for Writer {
         self.write_list_header(len);
         f(self);
         self.write_list_footer();
+    }
+
+    fn write_map<F>(&mut self, len: usize, f: F) where F: FnOnce(&mut Self) {
+        if len == 0 {
+            self.write_empty_map();
+            return
+        }
+        self.write_map_header(len);
+        f(self);
+        self.write_map_footer();
     }
 
     #[inline]

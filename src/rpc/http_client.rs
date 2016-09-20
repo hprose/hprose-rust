@@ -20,10 +20,9 @@
 extern crate hyper;
 
 use self::hyper::client::Client as HyperClient;
-use self::hyper::Error as HyperError;
 
 use super::*;
-use io::{Hprose, Decodable, Encodable};
+use io::{Encodable, Decodable};
 
 use std::io::Read;
 use std::error::Error;
@@ -64,8 +63,8 @@ impl HttpClient {
 }
 
 impl Client for HttpClient {
-    fn invoke<R: Decodable, A: Encodable>(&self, name: &str, args: Vec<A>) -> InvokeResult<R> {
+    fn invoke<R: Decodable, A: Encodable>(&self, name: &str, args: &mut Vec<A>, options: &InvokeOptions) -> InvokeResult<R> {
         let context = ClientContext::new(self);
-        self.base_client.invoke::<R, A, HttpClient>(name, args, &context)
+        self.base_client.invoke::<R, A, HttpClient>(name, args, options, &context)
     }
 }
