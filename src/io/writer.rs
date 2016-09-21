@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 20, 2016                             *
+ * LastModified: Sep 21, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -31,6 +31,7 @@ use super::util::*;
 use super::encoder::*;
 use super::writer_refer::WriterRefer;
 
+/// Writer is a fine-grained operation struct for Hprose serialization
 pub struct Writer {
     buf: Bytes,
     refer: Option<WriterRefer>

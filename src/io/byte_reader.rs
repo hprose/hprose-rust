@@ -12,7 +12,7 @@
  *                                                        *
  * byte reader for Rust.                                  *
  *                                                        *
- * LastModified: Sep 20, 2016                             *
+ * LastModified: Sep 21, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -35,13 +35,13 @@ pub enum ParserError {
 }
 
 pub struct ByteReader<'a> {
-    buf: &'a Bytes,
+    buf: &'a [u8],
     off: usize
 }
 
 impl<'a> ByteReader<'a> {
     #[inline]
-    pub fn new(buf: &'a Bytes) -> ByteReader<'a> {
+    pub fn new(buf: &'a [u8]) -> ByteReader<'a> {
         ByteReader {
             buf: buf,
             off: 0

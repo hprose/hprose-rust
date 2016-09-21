@@ -12,7 +12,7 @@
  *                                                        *
  * hprose bool decoder for Rust.                          *
  *                                                        *
- * LastModified: Sep 19, 2016                             *
+ * LastModified: Sep 21, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -40,21 +40,21 @@ pub fn bool_decode(r: &mut Reader, tag: u8) -> Result {
 }
 
 fn read_number_as_bool(r: &mut Reader) -> Result {
-    r.reader
+    r.byte_reader
         .read_until(TAG_SEMICOLON)
         .map(|bytes| if bytes.len() == 1 { bytes[0] != b'0' } else { true })
         .map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_inf_as_bool(r: &mut Reader) -> Result {
-    r.reader
+    r.byte_reader
         .read_inf()
         .map(|_| true)
         .map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_utf8_char_as_bool(r: &mut Reader) -> Result {
-    r.reader
+    r.byte_reader
         .read_utf8_slice(1)
         .and_then(|s| parse_bool(unsafe { str::from_utf8_unchecked(s) }))
         .map_err(|e| DecoderError::ParserError(e))

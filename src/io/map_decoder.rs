@@ -42,13 +42,16 @@ pub fn map_decode<'a, T, F>(r: &mut Reader<'a>, tag: u8, f: F) -> Result<T>
 }
 
 fn read_list_as_map<T>(r: &mut Reader) -> Result<T> {
+//    r.byte_reader.read_count()
+//        .map_err(|e| DecoderError::ParserError(e))
+//        .and_then(|len| ())
     unimplemented!()
 }
 
 fn read_map<'a, T, F>(r: &mut Reader<'a>, f: F) -> Result<T>
     where F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
 {
-    r.reader.read_count()
+    r.byte_reader.read_count()
         .map_err(|e| DecoderError::ParserError(e))
         .and_then(|len| f(r, len))
 }

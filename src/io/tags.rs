@@ -12,12 +12,10 @@
  *                                                        *
  * hprose tags enum for Rust.                             *
  *                                                        *
- * LastModified: Sep 13, 2016                             *
+ * LastModified: Sep 21, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
-
-// Hprose Tags
 
 // Serialize Type;
 pub const TAG_INTEGER   :u8 = b'i';

@@ -46,6 +46,7 @@ pub enum Hprose {
     Map(self::Map)
 }
 
+/// Hprose Tags
 pub mod tags;
 mod util;
 

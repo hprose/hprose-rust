@@ -100,7 +100,7 @@ impl<T: Transporter> BaseClient<T> {
 
     pub fn do_input<R: Decodable, A: Encodable, C: Client>(&self, data: Vec<u8>, args: &mut Vec<A>, context: &ClientContext<C>) -> InvokeResult<R> {
         let mut r = Reader::new(&data);
-        r.reader.read_byte()
+        r.byte_reader.read_byte()
             .map_err(|e| DecoderError(io::DecoderError::ParserError(e)))
             .and_then(|tag| match tag {
                 TAG_RESULT => r.unserialize::<R>().map_err(|e| InvokeError::DecoderError(e)),

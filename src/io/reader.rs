@@ -35,6 +35,7 @@ use std::fmt;
 use std::f64;
 use std::str;
 
+/// A set of errors that can occur decoding byte slice
 #[derive(Clone, PartialEq, Debug)]
 pub enum DecoderError {
     ParserError(ParserError),
@@ -60,15 +61,16 @@ impl fmt::Display for DecoderError {
 
 pub type DecodeResult<T> = Result<T, DecoderError>;
 
+/// Reader is a fine-grained operation struct for Hprose unserialization
 pub struct Reader<'a> {
-    pub reader: ByteReader<'a>
+    pub byte_reader: ByteReader<'a>
 }
 
 impl<'a> Reader<'a> {
     #[inline]
-    pub fn new(buf: &'a Bytes) -> Reader<'a> {
+    pub fn new(buf: &'a [u8]) -> Reader<'a> {
         Reader {
-            reader: ByteReader::new(buf)
+            byte_reader: ByteReader::new(buf)
         }
     }
 
@@ -91,23 +93,23 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_bool(&mut self) -> DecodeResult<bool> {
-        self.reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| bool_decode(self, t))
+        self.byte_reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| bool_decode(self, t))
     }
 
     fn read_i64(&mut self) -> DecodeResult<i64> {
-        self.reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| i64_decode(self, t))
+        self.byte_reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| i64_decode(self, t))
     }
 
     fn read_u64(&mut self) -> DecodeResult<u64> {
-        self.reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| u64_decode(self, t))
+        self.byte_reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| u64_decode(self, t))
     }
 
     fn read_f32(&mut self) -> DecodeResult<f32> {
-        self.reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| f32_decode(self, t))
+        self.byte_reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| f32_decode(self, t))
     }
 
     fn read_f64(&mut self) -> DecodeResult<f64> {
-        self.reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| f64_decode(self, t))
+        self.byte_reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| f64_decode(self, t))
     }
 
     fn read_char(&mut self) -> DecodeResult<char> {
@@ -116,11 +118,11 @@ impl<'a> Decoder for Reader<'a> {
 
     fn read_string_without_tag(&mut self) -> DecodeResult<String> {
         // todo: set reader ref
-        self.reader.read_str().map_err(|e| DecoderError::ParserError(e))
+        self.byte_reader.read_str().map_err(|e| DecoderError::ParserError(e))
     }
 
     fn read_string(&mut self) -> DecodeResult<String> {
-        self.reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| string_decode(self, t))
+        self.byte_reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| string_decode(self, t))
     }
 
     fn read_bytes(&mut self) -> DecodeResult<Bytes> {
@@ -138,7 +140,7 @@ impl<'a> Decoder for Reader<'a> {
     fn read_map<T, F>(&mut self, f: F) -> DecodeResult<T>
         where F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
     {
-        self.reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| map_decode(self, t, |d, len| f(d, len)))
+        self.byte_reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| map_decode(self, t, |d, len| f(d, len)))
     }
 }
 
@@ -176,6 +178,8 @@ mod tests {
     use super::test::Bencher;
     use super::super::*;
 
+    use std::collections::HashMap;
+
     #[bench]
     fn benchmark_unserialize_bool(b: &mut Bencher) {
         let bytes = Writer::new(true).serialize(&true).bytes();
@@ -189,6 +193,17 @@ mod tests {
         let bytes = Writer::new(true).serialize(&12345).bytes();
         b.iter(|| {
             Reader::new(&bytes).unserialize::<i64>().unwrap();
+        });
+    }
+
+    #[bench]
+    fn benchmark_unserialize_map(b: &mut Bencher) {
+        let mut map = HashMap::new();
+        map.insert("name", "Tom");
+        map.insert("国家", "🇨🇳");
+        let bytes = Writer::new(true).serialize(&map).bytes();
+        b.iter(|| {
+            Reader::new(&bytes).unserialize::<HashMap<String, String>>().unwrap();
         });
     }
 }

@@ -12,7 +12,7 @@
  *                                                        *
  * hprose u64 decoder for Rust.                           *
  *                                                        *
- * LastModified: Sep 19, 2016                             *
+ * LastModified: Sep 21, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -51,15 +51,15 @@ pub fn u64_decode(r: &mut Reader, tag: u8) -> Result {
 }
 
 fn read_u64(r: &mut Reader) -> Result {
-    r.reader.read_u64_with_tag(TAG_SEMICOLON).map_err(|e| DecoderError::ParserError(e))
+    r.byte_reader.read_u64_with_tag(TAG_SEMICOLON).map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_f64_as_u64(r: &mut Reader) -> Result {
-    r.reader.read_f64().map(|f| f as u64).map_err(|e| DecoderError::ParserError(e))
+    r.byte_reader.read_f64().map(|f| f as u64).map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_utf8_char_as_u64(r: &mut Reader) -> Result {
-    r.reader
+    r.byte_reader
         .read_utf8_slice(1)
         .and_then(|s| utf8_slice_to_str(s).parse::<u64>().map_err(|e| ParserError::ParseIntError(e)))
         .map_err(|e| DecoderError::ParserError(e))
