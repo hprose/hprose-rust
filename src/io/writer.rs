@@ -302,7 +302,7 @@ impl Encoder for Writer {
     #[inline]
     fn write_ref<T>(&mut self, p: *const T) -> bool {
         let buf = &mut self.buf;
-        self.refer.as_mut().map_or(true, |r| r.write(buf, p))
+        self.refer.as_mut().map_or(false, |r| r.write(buf, p))
     }
 
     #[inline]
@@ -315,9 +315,20 @@ impl Encoder for Writer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::super::Hprose;
     use super::test::Bencher;
 
     use std::{f32, f64};
+    use std::collections::HashMap;
+
+    #[bench]
+    fn benchmark_serialize_nil(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        b.bytes = 1;
+        b.iter(|| {
+            w.serialize(&());
+        });
+    }
 
     #[test]
     fn test_serialize_bool() {
@@ -463,12 +474,61 @@ mod tests {
     }
 
     #[bench]
+    fn benchmark_serialize_int_array(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let array = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 1, 2, 3, 4, 0, 1, 2, 3, 4];
+        b.iter(|| {
+            w.serialize(&array);
+        });
+    }
+
+    #[bench]
     fn benchmark_serialize_int_slice(b: &mut Bencher) {
         let mut w = Writer::new(true);
         let array = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 1, 2, 3, 4, 0, 1, 2, 3, 4];
         let slice = &array[..];
         b.iter(|| {
             w.serialize(slice);
+        });
+    }
+
+    #[test]
+    fn test_serialize_vec() {
+        let mut w = Writer::new(true);
+        let mut v: Vec<Hprose> = Vec::new();
+        assert_eq!(w.serialize(&v).string(), "a{}");
+        w.clear();
+        let mut v = vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)];
+        assert_eq!(w.serialize(&v).string(), "a4{1s5\"hello\"nd3.14159;}");
+    }
+
+    #[bench]
+    fn benchmark_serialize_vec(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let mut v = vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)];
+        b.iter(|| {
+            w.serialize(&v);
+        });
+    }
+
+    #[bench]
+    fn benchmark_serialize_empty_map(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let mut map: HashMap<i32, i32> = HashMap::new();
+        b.iter(|| {
+            w.serialize(&map);
+        });
+    }
+
+    #[bench]
+    fn benchmark_serialize_string_key_map(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let mut map = HashMap::new();
+        map.insert("name", Hprose::String(String::from("tom")));
+        map.insert("age", Hprose::I64(36));
+        map.insert("male", Hprose::Boolean(true));
+        b.iter(|| {
+            w.serialize(&map);
         });
     }
 }

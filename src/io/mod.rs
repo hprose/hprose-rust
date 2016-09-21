@@ -38,6 +38,7 @@ pub enum Hprose {
     Boolean(bool),
     I64(i64),
     U64(u64),
+    F32(f32),
     F64(f64),
     DateTime(SystemTime),
     Bytes(self::Bytes),

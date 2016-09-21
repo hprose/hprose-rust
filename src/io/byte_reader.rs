@@ -175,13 +175,13 @@ impl<'a> ByteReader<'a> {
         Ok(&self.buf[p..self.off])
     }
 
-    pub fn read_utf8_str(&mut self, length: usize) -> Result<String, ParserError> {
-        self.read_utf8_slice(length).map(|s| String::from(utf8_slice_to_str(s).clone()))
+    pub fn read_utf8_string(&mut self, length: usize) -> Result<String, ParserError> {
+        self.read_utf8_slice(length).map(|s| unsafe { String::from_utf8_unchecked(s.to_owned()) })
     }
 
-    pub fn read_str(&mut self) -> Result<String, ParserError> {
+    pub fn read_string(&mut self) -> Result<String, ParserError> {
         self.read_length()
-            .and_then(|len| self.read_utf8_str(len))
+            .and_then(|len| self.read_utf8_string(len))
             .and_then(|s| self.read_byte().map(|_| s))
     }
 

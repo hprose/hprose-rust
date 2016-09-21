@@ -248,7 +248,11 @@ impl Encodable for Hprose {
     fn encode<W: Encoder>(&self, w: &mut W) {
         match *self {
             Hprose::Nil => w.write_nil(),
-            Hprose::String(ref s) => s.encode(w),
+            Hprose::Boolean(b) => w.write_bool(b),
+            Hprose::I64(i) => w.write_i64(i),
+            Hprose::F32(f) => w.write_f32(f),
+            Hprose::F64(f) => w.write_f64(f),
+            Hprose::String(ref s) => w.write_str(s),
             _ => ()
         }
     }

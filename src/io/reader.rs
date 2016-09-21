@@ -118,7 +118,7 @@ impl<'a> Decoder for Reader<'a> {
 
     fn read_string_without_tag(&mut self) -> DecodeResult<String> {
         // todo: set reader ref
-        self.byte_reader.read_str().map_err(|e| DecoderError::ParserError(e))
+        self.byte_reader.read_string().map_err(|e| DecoderError::ParserError(e))
     }
 
     fn read_string(&mut self) -> DecodeResult<String> {
@@ -183,6 +183,7 @@ mod tests {
     #[bench]
     fn benchmark_unserialize_bool(b: &mut Bencher) {
         let bytes = Writer::new(true).serialize(&true).bytes();
+        b.bytes = bytes.len() as u64;
         b.iter(|| {
             Reader::new(&bytes).unserialize::<bool>().unwrap();
         });
@@ -191,8 +192,18 @@ mod tests {
     #[bench]
     fn benchmark_unserialize_i64(b: &mut Bencher) {
         let bytes = Writer::new(true).serialize(&12345).bytes();
+        b.bytes = bytes.len() as u64;
         b.iter(|| {
             Reader::new(&bytes).unserialize::<i64>().unwrap();
+        });
+    }
+
+    #[bench]
+    fn benchmark_unserialize_str(b: &mut Bencher) {
+        let bytes = Writer::new(true).serialize("你好，🇨🇳").bytes();
+        b.bytes = bytes.len() as u64;
+        b.iter(|| {
+            Reader::new(&bytes).unserialize::<String>().unwrap();
         });
     }
 
@@ -202,6 +213,7 @@ mod tests {
         map.insert("name", "Tom");
         map.insert("国家", "🇨🇳");
         let bytes = Writer::new(true).serialize(&map).bytes();
+        b.bytes = bytes.len() as u64;
         b.iter(|| {
             Reader::new(&bytes).unserialize::<HashMap<String, String>>().unwrap();
         });
