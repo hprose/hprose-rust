@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 20, 2016                             *
+ * LastModified: Sep 21, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -29,6 +29,7 @@ use super::u64_decoder::u64_decode;
 use super::f32_decoder::f32_decode;
 use super::f64_decoder::f64_decode;
 use super::string_decoder::string_decode;
+use super::map_decoder::map_decode;
 
 use std::fmt;
 use std::f64;
@@ -126,12 +127,18 @@ impl<'a> Decoder for Reader<'a> {
         unimplemented!()
     }
 
-    fn read_option<T, F>(&mut self, f: F) -> DecodeResult<T> where F: FnMut(&mut Self, bool) -> DecodeResult<T> {
+    fn read_option<T, F>(&mut self, f: F) -> DecodeResult<T> where F: FnMut(&mut Reader<'a>, bool) -> DecodeResult<T> {
         unimplemented!()
     }
 
-    fn read_seq<T, F>(&mut self, f: F) -> DecodeResult<T> where F: FnOnce(&mut Self, usize) -> DecodeResult<T> {
+    fn read_seq<T, F>(&mut self, f: F) -> DecodeResult<T> where F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T> {
         unimplemented!()
+    }
+
+    fn read_map<T, F>(&mut self, f: F) -> DecodeResult<T>
+        where F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
+    {
+        self.reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| map_decode(self, t, |d, len| f(d, len)))
     }
 }
 

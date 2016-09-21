@@ -12,10 +12,13 @@
  *                                                        *
  * hprose decoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 17, 2016                             *
+ * LastModified: Sep 21, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
+
+use std::hash::{Hash, BuildHasher};
+use std::collections::HashMap;
 
 pub trait Decoder {
     type Error;
@@ -40,6 +43,9 @@ pub trait Decoder {
         where F: FnMut(&mut Self, bool) -> Result<T, Self::Error>;
 
     fn read_seq<T, F>(&mut self, f: F) -> Result<T, Self::Error>
+        where F: FnOnce(&mut Self, usize) -> Result<T, Self::Error>;
+
+    fn read_map<T, F>(&mut self, f: F) -> Result<T, Self::Error>
         where F: FnOnce(&mut Self, usize) -> Result<T, Self::Error>;
 
     // Reference:
@@ -99,6 +105,25 @@ impl<T:Decodable> Decodable for Option<T> {
             } else {
                 Ok(None)
             }
+        })
+    }
+}
+
+impl<K, V, S> Decodable for HashMap<K, V, S>
+where K: Decodable + Hash + Eq,
+      V: Decodable,
+      S: BuildHasher + Default
+{
+    fn decode<D: Decoder>(d: &mut D) -> Result<HashMap<K, V, S>, D::Error> {
+        d.read_map(|d, len| {
+            let state = Default::default();
+            let mut map = HashMap::with_capacity_and_hasher(len, state);
+            for i in 0..len {
+                let key = Decodable::decode(d)?;
+                let val = Decodable::decode(d)?;
+                map.insert(key, val);
+            }
+            Ok(map)
         })
     }
 }
