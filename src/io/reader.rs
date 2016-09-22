@@ -67,7 +67,7 @@ pub struct Reader<'a> {
 
 impl<'a> Reader<'a> {
     #[inline]
-    pub fn new(buf: &'a [u8]) -> Reader<'a> {
+    pub fn new(buf: &'a [u8], simple: bool) -> Reader<'a> {
         Reader {
             byte_reader: ByteReader::new(buf)
         }

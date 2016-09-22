@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for Rust.                           *
  *                                                        *
- * LastModified: Sep 20, 2016                             *
+ * LastModified: Sep 22, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -50,6 +50,7 @@ impl Transporter for HttpTransporter {
     }
 }
 
+/// HttpClient is hprose http client
 pub struct HttpClient {
     base_client: BaseClient<HttpTransporter>,
 }

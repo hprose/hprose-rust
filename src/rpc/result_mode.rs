@@ -8,19 +8,23 @@
 \**********************************************************/
 /**********************************************************\
  *                                                        *
- * rpc/mod.rs                                             *
+ * rpc/result_mode.rs                                     *
  *                                                        *
- * hprose rpc module for Rust.                            *
+ * hprose ResultMode enum for Rust.                       *
  *                                                        *
  * LastModified: Sep 22, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
-mod client;
-mod http_client;
-mod result_mode;
-
-pub use self::client::{InvokeOptions, InvokeResult, InvokeError, Client, Transporter, ClientContext, BaseClient};
-pub use self::http_client::HttpClient;
-pub use self::result_mode::ResultMode;
+/// ResultMode is result mode
+pub enum ResultMode {
+    /// Normal is default mode
+    Normal,
+    /// Serialized means the result is serialized
+    Serialized,
+    /// Raw means the result is the raw bytes data
+    Raw,
+    /// RawWithEndTag means the result is the raw bytes data with the end tag
+    RawWithEndTag
+}

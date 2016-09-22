@@ -21,9 +21,13 @@ use io;
 use io::{Writer, ByteWriter, Encoder, Encodable, Reader, Decoder, Decodable};
 use io::tags::*;
 
+use super::ResultMode;
+
+/// InvokeOptions is the invoke options of hprose client
 pub struct InvokeOptions {
     pub by_ref: bool,
-    pub simple_mode: bool
+    pub simple_mode: bool,
+    pub result_mode: ResultMode
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -38,14 +42,17 @@ pub type InvokeResult<T> = Result<T, InvokeError>;
 
 use self::InvokeError::*;
 
+/// Client is hprose client
 pub trait Client {
     fn invoke<R: Decodable, A: Encodable>(&self, name: &str, args: &mut Vec<A>, options: &InvokeOptions) -> InvokeResult<R>;
 }
 
+/// Transporter is the hprose client transporter
 pub trait Transporter {
     fn send_and_receive(&self, uri: &str, data: &[u8]) -> Result<Vec<u8>, InvokeError>;
 }
 
+/// ClientContext is the hprose client context
 pub struct ClientContext<'a, T: 'a + Client> {
     client: &'a T
 }
@@ -59,6 +66,7 @@ impl<'a, T: 'a + Client> ClientContext<'a, T> {
     }
 }
 
+/// BaseClient is the hprose base client
 pub struct BaseClient<T: Transporter> {
     trans: T,
     url: String
@@ -99,7 +107,7 @@ impl<T: Transporter> BaseClient<T> {
     }
 
     pub fn do_input<R: Decodable, A: Encodable, C: Client>(&self, data: Vec<u8>, args: &mut Vec<A>, context: &ClientContext<C>) -> InvokeResult<R> {
-        let mut r = Reader::new(&data);
+        let mut r = Reader::new(&data, false);
         r.byte_reader.read_byte()
             .map_err(|e| DecoderError(io::DecoderError::ParserError(e)))
             .and_then(|tag| match tag {
