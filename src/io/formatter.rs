@@ -12,7 +12,7 @@
  *                                                        *
  * io Formatter for Rust.                                 *
  *                                                        *
- * LastModified: Sep 21, 2016                             *
+ * LastModified: Sep 22, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -25,7 +25,19 @@ pub fn serialize<T: Encodable>(v: &T, simple: bool) -> Vec<u8> {
     Writer::new(simple).serialize(v).bytes()
 }
 
+/// Marshal data
+#[inline]
+pub fn marshal<T: Encodable>(v: &T) -> Vec<u8> {
+    serialize(v, true)
+}
+
 /// Unserialize data
-pub fn unserialize<T: Decodable>(buf: & Vec<u8>) -> DecodeResult<T> {
-    Reader::new(buf).read()
+pub fn unserialize<T: Decodable>(buf: &Vec<u8>, simple: bool) -> DecodeResult<T> {
+    Reader::new(buf, simple).read()
+}
+
+/// Unmarshal data
+#[inline]
+pub fn unmarshal<T: Decodable>(buf: &Vec<u8>) -> DecodeResult<T> {
+    unserialize(buf, true)
 }

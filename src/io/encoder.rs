@@ -12,15 +12,20 @@
  *                                                        *
  * hprose encoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 21, 2016                             *
+ * LastModified: Sep 22, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
 use super::Hprose;
 
+use std::rc::Rc;
+use std::sync::Arc;
+use std::borrow::Cow;
+use std::marker::PhantomData;
+use std::cell::{Cell, RefCell};
 use std::hash::{Hash, BuildHasher};
-use std::collections::HashMap;
+use std::collections::{LinkedList, VecDeque, BTreeMap, BTreeSet, HashMap, HashSet};
 
 pub trait Encoder {
     // Primitive types:
@@ -165,6 +170,42 @@ impl<T: ?Sized + Encodable> Encodable for Box<T> {
     }
 }
 
+impl<T: Encodable> Encodable for Rc<T> {
+    #[inline]
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        (**self).encode(w)
+    }
+}
+
+impl<T: Encodable> Encodable for Arc<T> {
+    #[inline]
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        (**self).encode(w)
+    }
+}
+
+impl<'a, T: Encodable + ToOwned + ?Sized> Encodable for Cow<'a, T> {
+    #[inline]
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        (**self).encode(w)
+    }
+}
+
+impl<T: Encodable + Copy> Encodable for Cell<T> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        self.get().encode(w)
+    }
+}
+
+// Should use `try_borrow`, returning a
+// `encoder.error("attempting to Encode borrowed RefCell")`
+// from `encode` when `try_borrow` returns `None`.
+impl<T: Encodable> Encodable for RefCell<T> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        self.borrow().encode(w)
+    }
+}
+
 macro_rules! array {
     () => ();
     ($($size:expr), +) => (
@@ -217,12 +258,87 @@ impl<T: Encodable> Encodable for Vec<T> {
     }
 }
 
+impl<T: Encodable> Encodable for LinkedList<T> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        if w.write_ref(self) {
+            return
+        }
+        w.set_ref(self);
+        w.write_seq(self.len(), |w| {
+            for (i, e) in self.iter().enumerate() {
+                e.encode(w);
+            }
+        })
+    }
+}
+
+impl<T: Encodable> Encodable for VecDeque<T> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        if w.write_ref(self) {
+            return
+        }
+        w.set_ref(self);
+        w.write_seq(self.len(), |w| {
+            for (i, e) in self.iter().enumerate() {
+                e.encode(w);
+            }
+        })
+    }
+}
+
+impl<T: Encodable + Ord> Encodable for BTreeSet<T> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        if w.write_ref(self) {
+            return
+        }
+        w.set_ref(self);
+        w.write_seq(self.len(), |w| {
+            for e in self.iter() {
+                e.encode(w);
+            }
+        })
+    }
+}
+
+impl<T> Encodable for HashSet<T> where T: Encodable + Hash + Eq {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        if w.write_ref(self) {
+            return
+        }
+        w.set_ref(self);
+        w.write_seq(self.len(), |w| {
+            for e in self.iter() {
+                e.encode(w);
+            }
+        })
+    }
+}
+
+impl<K: Encodable + Ord, V: Encodable> Encodable for BTreeMap<K, V> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        if w.write_ref(self) {
+            return
+        }
+        w.set_ref(self);
+        w.write_map(self.len(), |e| {
+            for (key, val) in self.iter() {
+                key.encode(e);
+                val.encode(e);
+            }
+        })
+    }
+}
+
 impl<K, V, S> Encodable for HashMap<K, V, S>
 where K: Encodable + Hash + Eq,
       V: Encodable,
       S: BuildHasher
 {
     fn encode<W: Encoder>(&self, w: &mut W) {
+        if w.write_ref(self) {
+            return
+        }
+        w.set_ref(self);
         w.write_map(self.len(), |e| {
             for (key, val) in self {
                 key.encode(e);
@@ -240,6 +356,12 @@ impl<T: Encodable> Encodable for Option<T> {
                 Some(ref v) => v.encode(w)
             }
         })
+    }
+}
+
+impl<T> Encodable for PhantomData<T> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_nil()
     }
 }
 
