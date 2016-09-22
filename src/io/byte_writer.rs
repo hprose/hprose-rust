@@ -20,6 +20,7 @@
 use super::Bytes;
 
 use std::ptr;
+use std::string::FromUtf8Error;
 
 pub struct ByteWriter {
     pub buf: Bytes
@@ -40,8 +41,8 @@ impl ByteWriter {
     }
 
     #[inline]
-    pub fn string(&mut self) -> String {
-        String::from_utf8(self.buf.clone()).unwrap()
+    pub fn string(&mut self) -> Result<String, FromUtf8Error> {
+        String::from_utf8(self.bytes())
     }
 
     /// Clears the buf, Removing all bytes.

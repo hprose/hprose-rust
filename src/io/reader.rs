@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 21, 2016                             *
+ * LastModified: Sep 22, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -22,7 +22,6 @@ extern crate test;
 use super::tags::*;
 use super::*;
 
-use super::byte_reader::ParserError;
 use super::bool_decoder::bool_decode;
 use super::i64_decoder::i64_decode;
 use super::u64_decoder::u64_decode;

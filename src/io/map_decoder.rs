@@ -12,14 +12,13 @@
  *                                                        *
  * hprose map decoder for Rust.                           *
  *                                                        *
- * LastModified: Sep 21, 2016                             *
+ * LastModified: Sep 22, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
 use super::*;
 use super::tags::*;
-use super::byte_reader::ParserError;
 use super::reader::cast_error;
 
 use std::{result, str};

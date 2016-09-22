@@ -20,10 +20,9 @@
 extern crate test;
 extern crate dtoa;
 
-use std::{i32, f32, f64};
+use std::{i32, f32, f64, ptr};
 use std::num::FpCategory as Fp;
-use std::ptr;
-use std::string::String;
+use std::string::{String, FromUtf8Error};
 
 use super::{Bytes, ByteWriter};
 use super::tags::*;
@@ -52,7 +51,7 @@ impl Writer {
     }
 
     #[inline]
-    pub fn string(&mut self) -> String {
+    pub fn string(&mut self) -> Result<String, FromUtf8Error> {
         self.byte_writer.string()
     }
 
@@ -303,10 +302,10 @@ mod tests {
     fn test_serialize_bool() {
         let mut w = Writer::new(true);
         w.serialize(&true);
-        assert_eq!(w.string(), "t");
+        assert_eq!(w.string().unwrap(), "t");
         w.clear();
         w.serialize(&false);
-        assert_eq!(w.string(), "f");
+        assert_eq!(w.string().unwrap(), "f");
     }
 
     #[bench]
@@ -322,10 +321,10 @@ mod tests {
     fn test_serialize_int() {
         let mut w = Writer::new(true);
         w.serialize(&8);
-        assert_eq!(w.string(), "8");
+        assert_eq!(w.string().unwrap(), "8");
         w.clear();
         w.serialize(&88);
-        assert_eq!(w.string(), "i88;");
+        assert_eq!(w.string().unwrap(), "i88;");
     }
 
     #[bench]
@@ -349,7 +348,7 @@ mod tests {
         let mut w = Writer::new(true);
         for test_case in &test_cases {
             w.serialize(&test_case.0);
-            assert_eq!(w.string(), test_case.1);
+            assert_eq!(w.string().unwrap(), test_case.1);
             w.clear();
         }
     }
@@ -375,7 +374,7 @@ mod tests {
         let mut w = Writer::new(true);
         for test_case in &test_cases {
             w.serialize(&test_case.0);
-            assert_eq!(w.string(), test_case.1);
+            assert_eq!(w.string().unwrap(), test_case.1);
             w.clear();
         }
     }
@@ -403,7 +402,7 @@ mod tests {
         let mut w = Writer::new(true);
         for test_case in &test_cases {
             w.serialize(test_case.0);
-            assert_eq!(w.string(), test_case.1);
+            assert_eq!(w.string().unwrap(), test_case.1);
             w.clear();
         }
     }
@@ -427,7 +426,7 @@ mod tests {
         let mut w = Writer::new(true);
         for test_case in &test_cases {
             w.serialize(test_case.0);
-            assert_eq!(w.string(), test_case.1);
+            assert_eq!(w.string().unwrap(), test_case.1);
             w.clear();
         }
     }
@@ -465,10 +464,10 @@ mod tests {
     fn test_serialize_vec() {
         let mut w = Writer::new(true);
         let mut v: Vec<Hprose> = Vec::new();
-        assert_eq!(w.serialize(&v).string(), "a{}");
+        assert_eq!(w.serialize(&v).string().unwrap(), "a{}");
         w.clear();
         let mut v = vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)];
-        assert_eq!(w.serialize(&v).string(), "a4{1s5\"hello\"nd3.14159;}");
+        assert_eq!(w.serialize(&v).string().unwrap(), "a4{1s5\"hello\"nd3.14159;}");
     }
 
     #[bench]
