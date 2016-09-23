@@ -12,7 +12,7 @@
  *                                                        *
  * hprose encoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 22, 2016                             *
+ * LastModified: Sep 23, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -40,7 +40,8 @@ pub trait Encoder {
     fn write_bytes(&mut self, v: &[u8]);
 
     // Compound types:
-
+    fn write_struct(&mut self, name: &str, len: usize);
+    fn write_struct_field<T: Encodable>(&mut self, key: &str, value: T);
 
     // Specialized types:
     fn write_option<F>(&mut self, f: F) where F: FnOnce(&mut Self);

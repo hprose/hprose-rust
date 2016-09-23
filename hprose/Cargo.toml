@@ -4,11 +4,20 @@ version = "0.1.0"
 authors = ["Chen Fei <cf@hprose.com>"]
 
 [dependencies]
+num = "0.1"
+time = "0.1"
+uuid = "0.3"
 dtoa = "0.2"
+custom_derive = "0.1"
 
 [dependencies.hyper]
 version = "0.9"
 default-features = false
+
+[dependencies.hprose_codegen]
+version = "0.1"
+default-features = false
+path = "../hprose_codegen"
 
 [[bin]]
 name = "hprose"

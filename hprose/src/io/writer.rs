@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 22, 2016                             *
+ * LastModified: Sep 23, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -241,6 +241,14 @@ impl Encoder for Writer {
         self.byte_writer.write_byte(TAG_QUOTE);
         self.byte_writer.write(bytes);
         self.byte_writer.write_byte(TAG_QUOTE);
+    }
+
+    fn write_struct(&mut self, name: &str, len: usize) {
+        println!("struct name {}", name);
+    }
+
+    fn write_struct_field<T: Encodable>(&mut self, key: &str, value: T) {
+        println!("struct field {}", key);
     }
 
     fn write_option<F>(&mut self, f: F) where F: FnOnce(&mut Writer) {
