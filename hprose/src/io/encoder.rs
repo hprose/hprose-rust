@@ -42,6 +42,7 @@ pub trait Encoder {
     // Compound types:
     fn write_struct(&mut self, name: &str, len: usize);
     fn write_struct_field<T: Encodable>(&mut self, key: &str, value: T);
+    fn write_struct_end(&mut self);
 
     // Specialized types:
     fn write_option<F>(&mut self, f: F) where F: FnOnce(&mut Self);

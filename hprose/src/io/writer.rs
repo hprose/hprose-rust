@@ -244,11 +244,16 @@ impl Encoder for Writer {
     }
 
     fn write_struct(&mut self, name: &str, len: usize) {
-        println!("struct name {}", name);
+        self.byte_writer.write_byte(TAG_OBJECT);
+        self.byte_writer.write_byte(TAG_OPENBRACE);
     }
 
     fn write_struct_field<T: Encodable>(&mut self, key: &str, value: T) {
-        println!("struct field {}", key);
+        value.encode(self);
+    }
+
+    fn write_struct_end(&mut self) {
+        self.byte_writer.write_byte(TAG_CLOSEBRACE);
     }
 
     fn write_option<F>(&mut self, f: F) where F: FnOnce(&mut Writer) {
