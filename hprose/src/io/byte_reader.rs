@@ -17,7 +17,6 @@
  *                                                        *
 \**********************************************************/
 
-use super::*;
 use super::tags::*;
 use super::util::utf8_slice_to_str;
 

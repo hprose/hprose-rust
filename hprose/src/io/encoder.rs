@@ -257,7 +257,7 @@ macro_rules! array {
 
 array! { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 }
 
-use std::{mem, ptr};
+use std::ptr;
 
 impl<T: Encodable> Encodable for [T] {
     default fn encode<W: Encoder>(&self, w: &mut W) {
@@ -308,7 +308,7 @@ impl<T: Encodable> Encodable for LinkedList<T> {
         }
         w.set_ref(self);
         w.write_seq(self.len(), |w| {
-            for (i, e) in self.iter().enumerate() {
+            for (_, e) in self.iter().enumerate() {
                 e.encode(w);
             }
         })
@@ -322,7 +322,7 @@ impl<T: Encodable> Encodable for VecDeque<T> {
         }
         w.set_ref(self);
         w.write_seq(self.len(), |w| {
-            for (i, e) in self.iter().enumerate() {
+            for (_, e) in self.iter().enumerate() {
                 e.encode(w);
             }
         })

@@ -33,7 +33,7 @@ pub fn bool_decode(r: &mut Reader, tag: u8) -> Result {
         TAG_INFINITY => read_inf_as_bool(r),
         TAG_UTF8_CHAR => read_utf8_char_as_bool(r),
         TAG_STRING => read_string_as_bool(r),
-        TAG_REF => read_ref_as_bool(r),
+        TAG_REF => r.read_ref(),
         _ => Err(cast_error(tag, "bool"))
     }
 }
@@ -63,10 +63,6 @@ fn read_string_as_bool(r: &mut Reader) -> Result {
     r
         .read_string_without_tag()
         .and_then(|s| parse_bool(&s).map_err(|e| DecoderError::ParserError(e)))
-}
-
-fn read_ref_as_bool(r: &mut Reader) -> Result {
-    r.read_ref()
 }
 
 // parse_bool returns the boolean value represented by the string.

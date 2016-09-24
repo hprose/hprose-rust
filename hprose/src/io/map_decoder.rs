@@ -12,7 +12,7 @@
  *                                                        *
  * hprose map decoder for Rust.                           *
  *                                                        *
- * LastModified: Sep 22, 2016                             *
+ * LastModified: Sep 24, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -22,12 +22,11 @@ use super::tags::*;
 use super::reader::cast_error;
 
 use std::{result, str};
-use std::collections::HashMap;
 
 type Result<T> = result::Result<T, DecoderError>;
 
 pub fn map_decode<'a, T, F>(r: &mut Reader<'a>, tag: u8, f: F) -> Result<T>
-    where F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
+    where T: Decodable, F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
 {
     match tag {
         //        TAG_NULL | TAG_EMPTY => Ok(),
@@ -35,7 +34,7 @@ pub fn map_decode<'a, T, F>(r: &mut Reader<'a>, tag: u8, f: F) -> Result<T>
         TAG_MAP => read_map(r, f),
         TAG_CLASS => read_struct_meta(r),
         TAG_OBJECT => read_struct_as_map(r),
-        TAG_REF => read_ref_as_map(r),
+        TAG_REF => r.read_ref(),
         _ => Err(cast_error(tag, "map"))
     }
 }
@@ -60,9 +59,5 @@ fn read_struct_meta<T>(r: &mut Reader) -> Result<T> {
 }
 
 fn read_struct_as_map<T>(r: &mut Reader) -> Result<T> {
-    unimplemented!()
-}
-
-fn read_ref_as_map<T>(r: &mut Reader) -> Result<T> {
     unimplemented!()
 }

@@ -374,13 +374,13 @@ mod tests {
     fn test_serialize_int() {
         let mut w = Writer::new(true);
         let mut rng = rand::thread_rng();
-        for i in 0..100 {
+        for _ in 0..100 {
             w.clear();
             let x: i32 = rng.gen_range(10, i32::MAX);
             w.serialize(&x);
             assert_eq!(w.string().unwrap(), format!("i{};", x));
         }
-        for i in 0..100 {
+        for _ in 0..100 {
             w.clear();
             let x: i64 = rng.gen_range(i32::MAX as i64 + 1, i64::MAX);
             w.serialize(&x);
@@ -422,13 +422,13 @@ mod tests {
     fn test_serialize_uint() {
         let mut w = Writer::new(true);
         let mut rng = rand::thread_rng();
-        for u in 0..100 {
+        for _ in 0..100 {
             w.clear();
             let x: u32 = rng.gen_range(10, i32::MAX as u32);
             w.serialize(&x);
             assert_eq!(w.string().unwrap(), format!("i{};", x));
         }
-        for u in 0..100 {
+        for _ in 0..100 {
             w.clear();
             let x: u64 = rng.gen_range(i32::MAX as u64 + 1, u64::MAX);
             w.serialize(&x);
@@ -614,14 +614,14 @@ mod tests {
         let mut v: Vec<Hprose> = Vec::new();
         assert_eq!(w.serialize(&v).string().unwrap(), "a{}");
         w.clear();
-        let mut v = vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)];
+        let v = vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)];
         assert_eq!(w.serialize(&v).string().unwrap(), r#"a4{1s5"hello"nd3.14159;}"#);
     }
 
     #[bench]
     fn benchmark_serialize_vec(b: &mut Bencher) {
         let mut w = Writer::new(true);
-        let mut v = vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)];
+        let v = vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)];
         b.iter(|| {
             w.serialize(&v);
         });
@@ -649,7 +649,7 @@ mod tests {
     #[bench]
     fn benchmark_serialize_empty_map(b: &mut Bencher) {
         let mut w = Writer::new(true);
-        let mut map: HashMap<i32, i32> = HashMap::new();
+        let map: HashMap<i32, i32> = HashMap::new();
         b.iter(|| {
             w.serialize(&map);
         });

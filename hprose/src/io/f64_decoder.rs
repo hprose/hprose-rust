@@ -8,18 +8,17 @@
 \**********************************************************/
 /**********************************************************\
  *                                                        *
- * io/string_decoder.rs                                   *
+ * io/f64_decoder.rs                                      *
  *                                                        *
- * hprose string decoder for Rust.                        *
+ * hprose f64 decoder for Rust.                           *
  *                                                        *
- * LastModified: Sep 22, 2016                             *
+ * LastModified: Sep 24, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
 use super::*;
 use super::tags::*;
-use super::util::utf8_slice_to_str;
 use super::reader::cast_error;
 
 use std::{result, str, f64};
@@ -46,7 +45,7 @@ pub fn f64_decode(r: &mut Reader, tag: u8) -> Result {
         TAG_STRING => read_string_as_f64(r),
         TAG_DATE => read_datetime_as_f64(r),
         TAG_TIME => read_time_as_f64(r),
-        TAG_REF => read_ref_as_f64(r),
+        TAG_REF => r.read_ref(),
         _ => Err(cast_error(tag, "f64"))
     }
 }
@@ -76,9 +75,5 @@ fn read_datetime_as_f64(r: &mut Reader) -> Result {
 }
 
 fn read_time_as_f64(r: &mut Reader) -> Result {
-    unimplemented!()
-}
-
-fn read_ref_as_f64(r: &mut Reader) -> Result {
     unimplemented!()
 }

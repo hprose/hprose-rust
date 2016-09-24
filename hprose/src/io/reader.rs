@@ -144,7 +144,7 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_map<T, F>(&mut self, f: F) -> DecodeResult<T>
-        where F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
+        where T: Decodable, F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
     {
         self.byte_reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| map_decode(self, t, |d, len| f(d, len)))
     }
@@ -207,7 +207,7 @@ mod tests {
             .serialize(&1)
             .serialize(&9)
             .serialize(&100)
-            .serialize(&100000000000000)
+            .serialize(&100000000000000i64)
             .serialize(&0.0)
             .serialize(&"t")
             .serialize(&"f")

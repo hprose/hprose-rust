@@ -51,7 +51,7 @@ pub trait Decoder {
         where F: FnOnce(&mut Self, usize) -> Result<T, Self::Error>;
 
     fn read_map<T, F>(&mut self, f: F) -> Result<T, Self::Error>
-        where F: FnOnce(&mut Self, usize) -> Result<T, Self::Error>;
+        where T: Decodable, F: FnOnce(&mut Self, usize) -> Result<T, Self::Error>;
 
     // Reference:
     fn read_ref<T: Decodable>(&mut self) -> Result<T, Self::Error>;
@@ -206,7 +206,7 @@ where K: Decodable + Hash + Eq,
         d.read_map(|d, len| {
             let state = Default::default();
             let mut map = HashMap::with_capacity_and_hasher(len, state);
-            for i in 0..len {
+            for _ in 0..len {
                 let key = Decodable::decode(d)?;
                 let val = Decodable::decode(d)?;
                 map.insert(key, val);
