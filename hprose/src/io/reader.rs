@@ -179,6 +179,33 @@ mod tests {
 
     use std::collections::HashMap;
 
+    #[test]
+    fn test_unserialize_bool() {
+        let true_value = "true";
+        let mut w = Writer::new(false);
+        w.serialize(&true)
+            .serialize(&false)
+            .serialize(&())
+            .serialize(&"")
+            .serialize(&0)
+            .serialize(&1)
+            .serialize(&9)
+            .serialize(&100)
+            .serialize(&100000000000000)
+            .serialize(&0.0)
+            .serialize(&"t")
+            .serialize(&"f")
+            .serialize(&true_value)
+            .serialize(&"false")
+            .serialize(&true_value);
+        let results = [true, false, false, false, false, true, true, true, true, false, true, false, true, false, true];
+        let bytes = w.bytes();
+        let mut r = Reader::new(&bytes, false);
+        for result in &results {
+            assert_eq!(r.unserialize::<bool>(), Ok(*result));
+        }
+    }
+
     #[bench]
     fn benchmark_unserialize_bool(b: &mut Bencher) {
         let bytes = Writer::new(true).serialize(&true).bytes();
