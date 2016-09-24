@@ -304,7 +304,7 @@ mod tests {
     use super::test::Bencher;
 
     use std::{i32, i64, u64, f32, f64};
-    use std::collections::HashMap;
+    use std::collections::{HashSet, HashMap};
 
     #[test]
     fn test_serialize_nil() {
@@ -539,15 +539,15 @@ mod tests {
     #[test]
     fn test_serialize_array() {
         let mut w = Writer::new(true);
-        test::<[i32;3]>(&mut w, [1, 2, 3], "a3{123}");
+        test::<[i32; 3]>(&mut w, [1, 2, 3], "a3{123}");
         test(&mut w, [1.0, 2.0, 3.0], "a3{d1;d2;d3;}");
         test(&mut w, [b'h', b'e', b'l', b'l', b'o'], r#"b5"hello""#);
-        test::<[u8;0]>(&mut w, [], r#"b"""#);
+        test::<[u8; 0]>(&mut w, [], r#"b"""#);
         test(&mut w, [Hprose::I64(1), Hprose::F64(2.0), Hprose::Nil, Hprose::Boolean(true)], "a4{1d2;nt}");
         test(&mut w, [true, false, true], "a3{tft}");
-        test::<[i32;0]>(&mut w, [], "a{}");
-        test::<[bool;0]>(&mut w, [], "a{}");
-        test::<[Hprose;0]>(&mut w, [], "a{}");
+        test::<[i32; 0]>(&mut w, [], "a{}");
+        test::<[bool; 0]>(&mut w, [], "a{}");
+        test::<[Hprose; 0]>(&mut w, [], "a{}");
     }
 
     #[bench]
@@ -557,6 +557,20 @@ mod tests {
         b.iter(|| {
             w.serialize(&array);
         });
+    }
+
+    #[test]
+    fn test_serialize_slice() {
+        let mut w = Writer::new(true);
+        test::<&[i32]>(&mut w, &[1, 2, 3], "a3{123}");
+        test::<&[f64]>(&mut w, &[1.0, 2.0, 3.0], "a3{d1;d2;d3;}");
+        test::<&[u8]>(&mut w, &[b'h', b'e', b'l', b'l', b'o'], r#"b5"hello""#);
+        test::<&[u8]>(&mut w, &[], r#"b"""#);
+        test::<&[Hprose]>(&mut w, &[Hprose::I64(1), Hprose::F64(2.0), Hprose::Nil, Hprose::Boolean(true)], "a4{1d2;nt}");
+        test::<&[bool]>(&mut w, &[true, false, true], "a3{tft}");
+        test::<&[i32]>(&mut w, &[], "a{}");
+        test::<&[bool]>(&mut w, &[], "a{}");
+        test::<&[Hprose]>(&mut w, &[], "a{}");
     }
 
     #[bench]
@@ -588,6 +602,25 @@ mod tests {
         });
     }
 
+    #[test]
+    fn test_serialize_map() {
+        let mut w = Writer::new(true);
+        let mut map = HashMap::new();
+        map.insert("name", Hprose::String(String::from("Tom")));
+        map.insert("age", Hprose::I64(36));
+        map.insert("male", Hprose::Boolean(true));
+        let expected = [
+            r#"m3{s4"name"s3"Tom"s3"age"i36;s4"male"t}"#,
+            r#"m3{s3"age"i36;s4"male"ts4"name"s3"Tom"}"#,
+            r#"m3{s3"age"i36;s4"name"s3"Tom"s4"male"t}"#,
+            r#"m3{s4"name"s3"Tom"s4"male"ts3"age"i36;}"#,
+            r#"m3{s4"male"ts3"age"i36;s4"name"s3"Tom"}"#,
+            r#"m3{s4"male"ts4"name"s3"Tom"s3"age"i36;}"#
+        ];
+        let result = w.serialize(&map).string().unwrap();
+        assert!(expected.iter().position(|s| *s == result).is_some() , "expected one of {:?}, but {} found", expected, result)
+    }
+
     #[bench]
     fn benchmark_serialize_empty_map(b: &mut Bencher) {
         let mut w = Writer::new(true);
@@ -601,7 +634,7 @@ mod tests {
     fn benchmark_serialize_string_key_map(b: &mut Bencher) {
         let mut w = Writer::new(true);
         let mut map = HashMap::new();
-        map.insert("name", Hprose::String(String::from("tom")));
+        map.insert("name", Hprose::String(String::from("Tom")));
         map.insert("age", Hprose::I64(36));
         map.insert("male", Hprose::Boolean(true));
         b.iter(|| {
