@@ -184,7 +184,7 @@ mod tests {
         let bytes = Writer::new(true).serialize(&true).bytes();
         b.bytes = bytes.len() as u64;
         b.iter(|| {
-            Reader::new(&bytes).unserialize::<bool>().unwrap();
+            Reader::new(&bytes, true).unserialize::<bool>().unwrap();
         });
     }
 
@@ -193,7 +193,7 @@ mod tests {
         let bytes = Writer::new(true).serialize(&12345).bytes();
         b.bytes = bytes.len() as u64;
         b.iter(|| {
-            Reader::new(&bytes).unserialize::<i64>().unwrap();
+            Reader::new(&bytes, true).unserialize::<i64>().unwrap();
         });
     }
 
@@ -202,7 +202,7 @@ mod tests {
         let bytes = Writer::new(true).serialize("你好，🇨🇳").bytes();
         b.bytes = bytes.len() as u64;
         b.iter(|| {
-            Reader::new(&bytes).unserialize::<String>().unwrap();
+            Reader::new(&bytes, true).unserialize::<String>().unwrap();
         });
     }
 
@@ -214,7 +214,7 @@ mod tests {
         let bytes = Writer::new(true).serialize(&map).bytes();
         b.bytes = bytes.len() as u64;
         b.iter(|| {
-            Reader::new(&bytes).unserialize::<HashMap<String, String>>().unwrap();
+            Reader::new(&bytes, true).unserialize::<HashMap<String, String>>().unwrap();
         });
     }
 }
