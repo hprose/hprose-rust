@@ -37,6 +37,7 @@ pub trait Encoder {
     fn write_f64(&mut self, v: f64);
     fn write_char(&mut self, v: char);
     fn write_str(&mut self, v: &str);
+    fn write_string(&mut self, v: &String);
     fn write_bytes(&mut self, v: &[u8]);
 
     // Compound types:
@@ -156,7 +157,7 @@ impl Encodable for str {
 
 impl Encodable for String {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_str(self);
+        w.write_string(self);
     }
 }
 

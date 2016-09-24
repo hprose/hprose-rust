@@ -78,10 +78,10 @@ impl Writer {
 
     // private functions
 
-    fn write_string(&mut self, s: &str, length: i64) {
+    fn write_str_with_len(&mut self, s: &str, len: i64) {
         self.byte_writer.write_byte(TAG_STRING);
         let mut buf: [u8; 20] = [0; 20];
-        self.byte_writer.write(get_int_bytes(&mut buf, length));
+        self.byte_writer.write(get_int_bytes(&mut buf, len));
         self.byte_writer.write_byte(TAG_QUOTE);
         self.byte_writer.write(s.as_bytes());
         self.byte_writer.write_byte(TAG_QUOTE);
@@ -173,7 +173,7 @@ impl Encoder for Writer {
             _ if f.fract() != 0f32 => {
                 self.byte_writer.write_byte(TAG_DOUBLE);
                 dtoa::write(&mut self.byte_writer.buf, f).unwrap();
-                // self.byte_writer.write_from_slice(f.to_string().as_bytes());
+                // self.byte_writer.write(f.to_string().as_bytes());
                 self.byte_writer.write_byte(TAG_SEMICOLON);
             }
             _ => {
@@ -224,7 +224,26 @@ impl Encoder for Writer {
             },
             _ => {
                 self.set_ref(ptr::null::<&str>());
-                self.write_string(s, length)
+                self.write_str_with_len(s, length)
+            }
+        }
+    }
+
+    fn write_string(&mut self, s: &String) {
+        let length = utf16_length(s);
+        match length {
+            0 => self.byte_writer.write_byte(TAG_EMPTY),
+            - 1 => self.write_bytes(s.as_bytes()),
+            1 => {
+                self.byte_writer.write_byte(TAG_UTF8_CHAR);
+                self.byte_writer.write(s.as_bytes());
+            },
+            _ => {
+                if self.write_ref(s) {
+                    return
+                }
+                self.set_ref(s);
+                self.write_str_with_len(s, length)
             }
         }
     }
