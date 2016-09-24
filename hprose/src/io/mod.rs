@@ -12,7 +12,7 @@
  *                                                        *
  * hprose io module for Rust.                             *
  *                                                        *
- * LastModified: Sep 22, 2016                             *
+ * LastModified: Sep 24, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -63,9 +63,10 @@ mod string_decoder;
 mod map_decoder;
 
 mod writer_refer;
+mod reader_refer;
 
 mod formatter;
 mod writer;
 mod reader;
-mod byte_reader;
 mod byte_writer;
+mod byte_reader;

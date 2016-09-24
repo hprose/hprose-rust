@@ -29,6 +29,7 @@ use super::f32_decoder::f32_decode;
 use super::f64_decoder::f64_decode;
 use super::string_decoder::string_decode;
 use super::map_decoder::map_decode;
+use super::reader_refer::ReaderRefer;
 
 use std::fmt;
 use std::f64;
@@ -39,7 +40,8 @@ use std::str;
 pub enum DecoderError {
     ParserError(ParserError),
     CastError(&'static str, &'static str),
-    UnexpectedTag(u8, Option<Bytes>)
+    UnexpectedTag(u8, Option<Bytes>),
+    ReferenceError
 }
 
 impl fmt::Display for DecoderError {
@@ -62,14 +64,16 @@ pub type DecodeResult<T> = Result<T, DecoderError>;
 
 /// Reader is a fine-grained operation struct for Hprose unserialization
 pub struct Reader<'a> {
-    pub byte_reader: ByteReader<'a>
+    pub byte_reader: ByteReader<'a>,
+    refer: Option<ReaderRefer<'a>>
 }
 
 impl<'a> Reader<'a> {
     #[inline]
     pub fn new(buf: &'a [u8], simple: bool) -> Reader<'a> {
         Reader {
-            byte_reader: ByteReader::new(buf)
+            byte_reader: ByteReader::new(buf),
+            refer: if simple { None } else { Some(ReaderRefer::new()) }
         }
     }
 
@@ -116,8 +120,11 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_string_without_tag(&mut self) -> DecodeResult<String> {
-        // todo: set reader ref
-        self.byte_reader.read_string().map_err(|e| DecoderError::ParserError(e))
+        let start = self.byte_reader.off - 1;
+        let result = self.byte_reader.read_string().map_err(|e| DecoderError::ParserError(e));
+        let reference = &self.byte_reader.buf[start..self.byte_reader.off];
+        self.refer.as_mut().map(|mut r| r.set(reference));
+        result
     }
 
     fn read_string(&mut self) -> DecodeResult<String> {
@@ -140,6 +147,15 @@ impl<'a> Decoder for Reader<'a> {
         where F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
     {
         self.byte_reader.read_byte().map_err(|e| DecoderError::ParserError(e)).and_then(|t| map_decode(self, t, |d, len| f(d, len)))
+    }
+
+    fn read_ref<T: Decodable>(&mut self) -> Result<T, DecoderError> {
+        self.read_i64().and_then(|i| {
+            match self.refer {
+                Some(ref mut r) => Reader::new(r.read(i as usize), true).unserialize::<T>(),
+                None => Err(DecoderError::ReferenceError)
+            }
+        })
     }
 }
 
@@ -181,7 +197,7 @@ mod tests {
 
     #[test]
     fn test_unserialize_bool() {
-        let true_value = "true";
+        let true_value = String::from("true");
         let mut w = Writer::new(false);
         w.serialize(&true)
             .serialize(&false)

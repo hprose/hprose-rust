@@ -12,7 +12,7 @@
  *                                                        *
  * hprose decoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 22, 2016                             *
+ * LastModified: Sep 24, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -54,6 +54,7 @@ pub trait Decoder {
         where F: FnOnce(&mut Self, usize) -> Result<T, Self::Error>;
 
     // Reference:
+    fn read_ref<T: Decodable>(&mut self) -> Result<T, Self::Error>;
 }
 
 pub trait Decodable: Sized {

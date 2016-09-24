@@ -12,7 +12,7 @@
  *                                                        *
  * hprose bool decoder for Rust.                          *
  *                                                        *
- * LastModified: Sep 22, 2016                             *
+ * LastModified: Sep 24, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -66,7 +66,7 @@ fn read_string_as_bool(r: &mut Reader) -> Result {
 }
 
 fn read_ref_as_bool(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.read_ref()
 }
 
 // parse_bool returns the boolean value represented by the string.
