@@ -300,7 +300,7 @@ mod tests {
     use self::rand::Rng;
 
     use super::*;
-    use super::super::Hprose;
+    use super::super::{Hprose, Encodable};
     use super::test::Bencher;
 
     use std::{i32, i64, u64, f32, f64};
@@ -536,6 +536,20 @@ mod tests {
         });
     }
 
+    #[test]
+    fn test_serialize_array() {
+        let mut w = Writer::new(true);
+        test::<[i32;3]>(&mut w, [1, 2, 3], "a3{123}");
+        test(&mut w, [1.0, 2.0, 3.0], "a3{d1;d2;d3;}");
+        test(&mut w, [b'h', b'e', b'l', b'l', b'o'], r#"b5"hello""#);
+        test::<[u8;0]>(&mut w, [], r#"b"""#);
+        test(&mut w, [Hprose::I64(1), Hprose::F64(2.0), Hprose::Nil, Hprose::Boolean(true)], "a4{1d2;nt}");
+        test(&mut w, [true, false, true], "a3{tft}");
+        test::<[i32;0]>(&mut w, [], "a{}");
+        test::<[bool;0]>(&mut w, [], "a{}");
+        test::<[Hprose;0]>(&mut w, [], "a{}");
+    }
+
     #[bench]
     fn benchmark_serialize_int_array(b: &mut Bencher) {
         let mut w = Writer::new(true);
@@ -593,5 +607,10 @@ mod tests {
         b.iter(|| {
             w.serialize(&map);
         });
+    }
+
+    fn test<T: Encodable>(w: &mut Writer, v: T, expected: &str) {
+        w.clear();
+        assert_eq!(w.serialize(&v).string().unwrap(), expected);
     }
 }

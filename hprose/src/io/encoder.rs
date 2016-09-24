@@ -12,7 +12,7 @@
  *                                                        *
  * hprose encoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 23, 2016                             *
+ * LastModified: Sep 24, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -212,13 +212,19 @@ macro_rules! array {
     () => ();
     ($($size:expr), +) => (
         $(impl<T: Encodable> Encodable for [T;($size)] {
-            fn encode<W: Encoder>(&self, w: &mut W) {
+            default fn encode<W: Encoder>(&self, w: &mut W) {
                 w.set_ref(ptr::null::<&[T]>());
                 w.write_seq(self.len(), |w| {
                     for e in self {
                         e.encode(w);
                     }
                 });
+            }
+        }
+        impl Encodable for [u8;($size)] {
+             fn encode<W: Encoder>(&self, w: &mut W) {
+                w.set_ref(ptr::null::<&[u8]>());
+                w.write_bytes(self);
             }
         })+
     )
@@ -229,25 +235,25 @@ array! { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
 use std::{mem, ptr};
 
 impl<T: Encodable> Encodable for [T] {
-    fn encode<W: Encoder>(&self, w: &mut W) {
+    default fn encode<W: Encoder>(&self, w: &mut W) {
         w.set_ref(ptr::null::<&[T]>());
-        // todo: check i8
-        if mem::size_of::<T>() == 1 {
-            w.write_bytes(unsafe {
-                mem::transmute::<&[T], &[u8]>(self)
-            });
-        } else {
-            w.write_seq(self.len(), |w| {
-                for e in self {
-                    e.encode(w);
-                }
-            });
-        }
+        w.write_seq(self.len(), |w| {
+            for e in self {
+                e.encode(w);
+            }
+        });
+    }
+}
+
+impl Encodable for [u8] {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.set_ref(ptr::null::<&[u8]>());
+        w.write_bytes(self);
     }
 }
 
 impl<T: Encodable> Encodable for Vec<T> {
-    fn encode<W: Encoder>(&self, w: &mut W) {
+    default fn encode<W: Encoder>(&self, w: &mut W) {
         if w.write_ref(self) {
             return
         }
@@ -257,6 +263,16 @@ impl<T: Encodable> Encodable for Vec<T> {
                 e.encode(w);
             }
         });
+    }
+}
+
+impl Encodable for Vec<u8> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        if w.write_ref(self) {
+            return
+        }
+        w.set_ref(self);
+        w.write_bytes(self);
     }
 }
 
