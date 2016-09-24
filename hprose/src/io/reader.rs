@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 22, 2016                             *
+ * LastModified: Sep 24, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/

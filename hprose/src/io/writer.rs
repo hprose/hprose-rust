@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 23, 2016                             *
+ * LastModified: Sep 24, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -295,12 +295,23 @@ impl Encoder for Writer {
 
 #[cfg(test)]
 mod tests {
+    extern crate rand;
+
+    use self::rand::Rng;
+
     use super::*;
     use super::super::Hprose;
     use super::test::Bencher;
 
-    use std::{f32, f64};
+    use std::{i32, i64, u64, f32, f64};
     use std::collections::HashMap;
+
+    #[test]
+    fn test_serialize_nil() {
+        let mut w = Writer::new(true);
+        w.serialize(&());
+        assert_eq!(w.string().unwrap(), "n");
+    }
 
     #[bench]
     fn benchmark_serialize_nil(b: &mut Bencher) {
@@ -331,13 +342,31 @@ mod tests {
     }
 
     #[test]
+    fn test_serialize_digit() {
+        let mut w = Writer::new(true);
+        for i in 0..10 {
+            w.clear();
+            w.serialize(&i);
+            assert_eq!(w.string().unwrap(), i.to_string());
+        }
+    }
+
+    #[test]
     fn test_serialize_int() {
         let mut w = Writer::new(true);
-        w.serialize(&8);
-        assert_eq!(w.string().unwrap(), "8");
-        w.clear();
-        w.serialize(&88);
-        assert_eq!(w.string().unwrap(), "i88;");
+        let mut rng = rand::thread_rng();
+        for i in 0..100 {
+            w.clear();
+            let x: i32 = rng.gen_range(10, i32::MAX);
+            w.serialize(&x);
+            assert_eq!(w.string().unwrap(), format!("i{};", x));
+        }
+        for i in 0..100 {
+            w.clear();
+            let x: i64 = rng.gen_range(i32::MAX as i64 + 1, i64::MAX);
+            w.serialize(&x);
+            assert_eq!(w.string().unwrap(), format!("l{};", x));
+        }
     }
 
     #[bench]
@@ -348,6 +377,59 @@ mod tests {
             w.serialize(&i);
             i += 1;
         });
+    }
+
+    #[test]
+    fn test_serialize_i8() {
+        let mut w = Writer::new(true);
+        for i in 0..10 {
+            w.clear();
+            w.serialize(&(i as i8));
+            assert_eq!(w.string().unwrap(), i.to_string());
+        }
+        for i in 10..128 {
+            w.clear();
+            w.serialize(&(i as i8));
+            assert_eq!(w.string().unwrap(), format!("i{};", i));
+        }
+        for i in -128..0 {
+            w.clear();
+            w.serialize(&(i as i8));
+            assert_eq!(w.string().unwrap(), format!("i{};", i));
+        }
+    }
+
+    #[test]
+    fn test_serialize_uint() {
+        let mut w = Writer::new(true);
+        let mut rng = rand::thread_rng();
+        for u in 0..100 {
+            w.clear();
+            let x: u32 = rng.gen_range(10, i32::MAX as u32);
+            w.serialize(&x);
+            assert_eq!(w.string().unwrap(), format!("i{};", x));
+        }
+        for u in 0..100 {
+            w.clear();
+            let x: u64 = rng.gen_range(i32::MAX as u64 + 1, u64::MAX);
+            w.serialize(&x);
+            assert_eq!(w.string().unwrap(), format!("l{};", x));
+        }
+    }
+
+    #[test]
+    fn test_serialize_u8() {
+        let mut w = Writer::new(true);
+        for u in 0..10 {
+            w.clear();
+            w.serialize(&(u as u8));
+            assert_eq!(w.string().unwrap(), u.to_string());
+        }
+        for u in 10..256 {
+            w.clear();
+            w.serialize(&(u as u8));
+            assert_eq!(w.string().unwrap(), format!("i{};", u));
+        }
     }
 
     #[test]
