@@ -12,7 +12,7 @@
  *                                                        *
  * io util for Rust.                                      *
  *                                                        *
- * LastModified: Sep 19, 2016                             *
+ * LastModified: Sep 24, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -214,7 +214,7 @@ mod tests {
         ];
         let mut buf: [u8; 20] = [0; 20];
         for i in &data {
-            assert!(get_int_bytes(&mut buf, *i) == i.to_string().as_bytes(), "b must be []byte(\"{:?}\")", i.to_string().as_bytes());
+            assert!(get_int_bytes(&mut buf, *i) == i.to_string().as_bytes(), r#"b must be []byte("{:?}")"#, i.to_string().as_bytes());
         }
     }
 
@@ -226,7 +226,7 @@ mod tests {
         ];
         let mut buf: [u8; 20] = [0; 20];
         for i in &data {
-            assert!(get_uint_bytes(&mut buf, *i) == i.to_string().as_bytes(), "b must be []byte(\"{:?}\")", i.to_string().as_bytes());
+            assert!(get_uint_bytes(&mut buf, *i) == i.to_string().as_bytes(), r#"b must be []byte("{:?}")"#, i.to_string().as_bytes());
         }
     }
 
@@ -241,7 +241,7 @@ mod tests {
             ("🇨🇳", 4)
         ];
         for test_case in &test_cases {
-            assert!(utf16_length(test_case.0) == test_case.1, "The UTF16Length of \"{}\" must be {}", test_case.0, test_case.1);
+            assert!(utf16_length(test_case.0) == test_case.1, r#"The UTF16Length of "{}" must be {}"#, test_case.0, test_case.1);
         }
     }
 }

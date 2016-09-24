@@ -490,9 +490,9 @@ mod tests {
             ("", "e"),
             ("π", "uπ"),
             ("你", "u你"),
-            ("你好", "s2\"你好\""),
-            ("你好啊,hello!", "s10\"你好啊,hello!\""),
-            ("🇨🇳", "s4\"🇨🇳\"")
+            ("你好", r#"s2"你好""#),
+            ("你好啊,hello!", r#"s10"你好啊,hello!""#),
+            ("🇨🇳", r#"s4"🇨🇳""#)
         ];
         let mut w = Writer::new(true);
         for test_case in &test_cases {
@@ -515,8 +515,8 @@ mod tests {
     #[test]
     fn test_serialize_bytes() {
         let test_cases = [
-            ("hello".as_bytes(), "b5\"hello\""),
-            ("".as_bytes(), "b\"\"")
+            ("hello".as_bytes(), r#"b5"hello""#),
+            ("".as_bytes(), r#"b"""#)
         ];
         let mut w = Writer::new(true);
         for test_case in &test_cases {
@@ -590,7 +590,7 @@ mod tests {
         assert_eq!(w.serialize(&v).string().unwrap(), "a{}");
         w.clear();
         let mut v = vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)];
-        assert_eq!(w.serialize(&v).string().unwrap(), "a4{1s5\"hello\"nd3.14159;}");
+        assert_eq!(w.serialize(&v).string().unwrap(), r#"a4{1s5"hello"nd3.14159;}"#);
     }
 
     #[bench]
@@ -618,7 +618,7 @@ mod tests {
             r#"m3{s4"male"ts4"name"s3"Tom"s3"age"i36;}"#
         ];
         let result = w.serialize(&map).string().unwrap();
-        assert!(expected.iter().position(|s| *s == result).is_some() , "expected one of {:?}, but {} found", expected, result)
+        assert!(expected.contains(&result.as_str()), "expected one of {:?}, but {} found", expected, result)
     }
 
     #[bench]
