@@ -208,6 +208,30 @@ impl<T: Encodable> Encodable for RefCell<T> {
     }
 }
 
+macro_rules! peel {
+    ($name:ident, $($other:ident,)*) => (tuple! { $($other,)* })
+}
+
+macro_rules! tuple {
+    () => ();
+    ($($name:ident,)+) => (
+        impl<$($name:Encodable),*> Encodable for ($($name,)*) {
+            #[allow(non_snake_case)]
+            fn encode<W: Encoder>(&self, w: &mut W) {
+                let ($(ref $name,)*) = *self;
+                let mut n = 0;
+                $(let $name = $name; n += 1;)*
+                w.write_seq(n, |w| {
+                    $($name.encode(w);)*
+                })
+            }
+        }
+        peel! { $($name,)* }
+    )
+}
+
+tuple! { L, K, J, I, H, G, F, E, D, C, B, A, }
+
 macro_rules! array {
     () => ();
     ($($size:expr), +) => (

@@ -537,6 +537,12 @@ mod tests {
     }
 
     #[test]
+    fn test_serialize_tuple() {
+        let mut w = Writer::new(true);
+        test(&mut w, (1, 3.14, true), "a3{1d3.14;t}");
+    }
+
+    #[test]
     fn test_serialize_array() {
         let mut w = Writer::new(true);
         test::<[i32; 3]>(&mut w, [1, 2, 3], "a3{123}");
