@@ -238,7 +238,7 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_ref<T: Decodable>(&mut self) -> Result<T, DecoderError> {
-        let i = try!(self.read_i64());
+        let i = try!(self.byte_reader.read_i64());
         match self.refer {
             Some(ref mut r) => Reader::new(r.read(i as usize), true).unserialize::<T>(),
             None => Err(DecoderError::ReferenceError)
@@ -284,7 +284,7 @@ mod tests {
     use std::collections::HashMap;
     use std::mem::transmute;
 
-    use time::Timespec;
+    use time::{Timespec, at_utc};
 
     macro_rules! test {
         ($ty:ty, $writer:expr, $($value:expr, $result:expr),+) => (
@@ -357,8 +357,8 @@ mod tests {
             "1", 1,
             "9", 9,
             int_value, 1234567,
-            Timespec::new(123, 456), 123000000456,
-            Timespec::new(1234567890, 123456789), 1234567890123456789,
+            at_utc(Timespec::new(123, 456)), 123000000456,
+            at_utc(Timespec::new(1234567890, 123456789)), 1234567890123456789,
             int_value, 1234567
         }
     }
