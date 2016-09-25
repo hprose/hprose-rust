@@ -43,7 +43,7 @@ pub trait Encoder {
     fn write_string(&mut self, v: &String);
     fn write_bytes(&mut self, v: &[u8]);
 
-    // extern crate types:
+    // Extern crate types:
     fn write_datetime(&mut self, v: &Tm);
     fn write_uuid(&mut self, v: &Uuid);
 

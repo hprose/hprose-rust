@@ -12,7 +12,7 @@
  *                                                        *
  * byte reader for Rust.                                  *
  *                                                        *
- * LastModified: Sep 24, 2016                             *
+ * LastModified: Sep 25, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -44,6 +44,17 @@ impl<'a> ByteReader<'a> {
         ByteReader {
             buf: buf,
             off: 0
+        }
+    }
+
+    pub fn next(&mut self, count: usize) -> Result<&[u8], ParserError> {
+        let p = self.off + count;
+        if p <= self.buf.len() {
+            let b = &self.buf[self.off..p];
+            self.off = p;
+            Ok(b)
+        } else {
+            Err(IoError(io::ErrorKind::UnexpectedEof))
         }
     }
 

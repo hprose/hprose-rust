@@ -21,12 +21,14 @@ extern crate test;
 
 use super::*;
 use super::tags::*;
+use super::util::*;
 use super::decoders::*;
 use super::reader_refer::ReaderRefer;
 
-use std::fmt;
-use std::f64;
-use std::str;
+use std::convert::From;
+use std::{fmt, f64, str};
+
+use time::{Tm, empty_tm};
 
 /// A set of errors that can occur decoding byte slice
 #[derive(Clone, PartialEq, Debug)]
@@ -35,6 +37,12 @@ pub enum DecoderError {
     CastError(&'static str, &'static str),
     UnexpectedTag(u8, Option<Bytes>),
     ReferenceError
+}
+
+impl From<ParserError> for DecoderError {
+    fn from(e: ParserError) -> Self {
+        DecoderError::ParserError(e)
+    }
 }
 
 impl fmt::Display for DecoderError {
@@ -126,6 +134,50 @@ impl<'a> Decoder for Reader<'a> {
 
     fn read_bytes(&mut self) -> DecodeResult<Bytes> {
         unimplemented!()
+    }
+
+    fn read_datetime_without_tag(&mut self) -> DecodeResult<Tm> {
+        let mut tm = empty_tm();
+        let mut tag = 0;
+        {
+            let bytes = try!(self.byte_reader.next(9));
+            tm.tm_year = bytes_to_diget4(&bytes[..4]) - 1900;
+            tm.tm_mon = bytes_to_diget2(&bytes[4..6]) - 1;
+            tm.tm_mday = bytes_to_diget2(&bytes[6..8]);
+            tag = bytes[8];
+        }
+        if tag == TAG_TIME {
+            {
+                let bytes = try!(self.byte_reader.next(7));
+                tm.tm_hour = bytes_to_diget2(&bytes[..2]);
+                tm.tm_min = bytes_to_diget2(&bytes[2..4]);
+                tm.tm_sec = bytes_to_diget2(&bytes[4..6]);
+                tag = bytes[6];
+            }
+            if tag == TAG_POINT {
+                {
+                    let bytes = try!(self.byte_reader.next(4));
+                    tm.tm_nsec = bytes_to_diget3(&bytes[..3]);
+                    tag = bytes[3];
+                }
+                if (tag >= b'0') && (tag <= b'9') {
+                    {
+                        let bytes = try!(self.byte_reader.next(4));
+                        tm.tm_nsec = tm.tm_nsec * 1000 + bytes_to_diget3(&bytes[..3]);
+                        tag = bytes[3];
+                    }
+                    if (tag >= b'0') && (tag <= b'9') {
+                        let bytes = try!(self.byte_reader.next(4));
+                        tm.tm_nsec = tm.tm_nsec * 1000 + bytes_to_diget3(&bytes[..3]);
+                        tag = bytes[3];
+                    }
+                }
+            }
+        };
+        if tag != TAG_UTC {
+            tm.tm_utcoff = get_utcoff();
+        }
+        Ok(tm)
     }
 
     fn read_option<T, F>(&mut self, f: F) -> DecodeResult<T> where F: FnMut(&mut Reader<'a>, bool) -> DecodeResult<T> {

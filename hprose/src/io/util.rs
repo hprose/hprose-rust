@@ -21,6 +21,8 @@ extern crate test;
 
 use std::{i64, str};
 
+use time::now;
+
 const DIGITS: &'static [u8] = b"0123456789";
 
 const DIGIT2: &'static [u8] = b"\
@@ -262,6 +264,34 @@ pub fn get_nsec_bytes(buf: &mut [u8], mut nsec: i32) -> &[u8] {
     buf[7] = DIGIT3[p as usize + 1];
     buf[8] = DIGIT3[p as usize + 2];
     &buf[..9]
+}
+
+#[inline]
+pub fn bytes_to_diget2(bytes: &[u8]) -> i32 {
+    bytes[0] as i32 * 10 + bytes[1] as i32
+}
+
+#[inline]
+pub fn bytes_to_diget3(bytes: &[u8]) -> i32 {
+    bytes[0] as i32 * 100 + bytes[1] as i32 * 10 + bytes[2] as i32
+}
+
+#[inline]
+pub fn bytes_to_diget4(bytes: &[u8]) -> i32 {
+    bytes[0] as i32 * 1000 + bytes[1] as i32 * 100 + bytes[2] as i32 * 10 + bytes[3] as i32
+}
+
+use std::cell::RefCell;
+
+thread_local! {
+    static UTCOFF: RefCell<Option<i32>> = RefCell::new(None);
+}
+
+pub fn get_utcoff() -> i32 {
+    UTCOFF.with(|f| {
+        if (*f.borrow()).is_none() { *f.borrow_mut() = Some(now().tm_utcoff); }
+            (*f.borrow()).unwrap()
+    })
 }
 
 #[cfg(test)]

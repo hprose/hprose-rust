@@ -12,7 +12,7 @@
  *                                                        *
  * hprose decoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 24, 2016                             *
+ * LastModified: Sep 25, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -24,6 +24,8 @@ use std::marker::PhantomData;
 use std::cell::{Cell, RefCell};
 use std::hash::{Hash, BuildHasher};
 use std::collections::HashMap;
+
+use time::Tm;
 
 pub trait Decoder {
     type Error;
@@ -39,6 +41,9 @@ pub trait Decoder {
     fn read_string_without_tag(&mut self) -> Result<String, Self::Error>;
     fn read_string(&mut self) -> Result<String, Self::Error>;
     fn read_bytes(&mut self) -> Result<Vec<u8>, Self::Error>;
+
+    // Extern crate types:
+    fn read_datetime_without_tag(&mut self) -> Result<Tm, Self::Error>;
 
     // Compound types:
 
