@@ -31,6 +31,7 @@ use super::encoder::*;
 use super::writer_refer::WriterRefer;
 
 use time::Tm;
+use uuid::Uuid;
 
 /// Writer is a fine-grained operation struct for Hprose serialization
 pub struct Writer {
@@ -293,6 +294,17 @@ impl Encoder for Writer {
             self.write_time(&mut buf, t.tm_hour, t.tm_min, t.tm_sec, t.tm_nsec);
         }
         self.byte_writer.write_byte(if t.tm_utcoff == 0 { TAG_UTC } else { TAG_SEMICOLON });
+    }
+
+    fn write_uuid(&mut self, u: &Uuid) {
+        if self.write_ref(u) {
+            return
+        }
+        self.set_ref(u);
+        self.byte_writer.write_byte(TAG_GUID);
+        self.byte_writer.write_byte(TAG_OPENBRACE);
+        self.byte_writer.write(u.hyphenated().to_string().as_bytes());
+        self.byte_writer.write_byte(TAG_CLOSEBRACE);
     }
 
     fn write_struct(&mut self, name: &str, len: usize) {

@@ -27,7 +27,8 @@ use std::cell::{Cell, RefCell};
 use std::hash::{Hash, BuildHasher};
 use std::collections::{LinkedList, VecDeque, BTreeMap, BTreeSet, HashMap, HashSet};
 
-use time::Tm;
+use time::{Tm, Timespec, at_utc};
+use uuid::Uuid;
 
 pub trait Encoder {
     // Primitive types:
@@ -44,6 +45,7 @@ pub trait Encoder {
 
     // extern crate types:
     fn write_datetime(&mut self, v: &Tm);
+    fn write_uuid(&mut self, v: &Uuid);
 
     // Compound types:
     fn write_struct(&mut self, name: &str, len: usize);
@@ -169,6 +171,18 @@ impl Encodable for String {
 impl Encodable for Tm {
     fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_datetime(self);
+    }
+}
+
+impl Encodable for Timespec {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_datetime(&at_utc(*self));
+    }
+}
+
+impl Encodable for Uuid {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_uuid(self);
     }
 }
 

@@ -22,6 +22,7 @@
 #![feature(test)]
 
 extern crate time;
+extern crate uuid;
 
 pub mod io;
 pub mod rpc;
