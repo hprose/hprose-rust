@@ -627,6 +627,15 @@ mod tests {
         }
     }
 
+    #[bench]
+    fn benchmark_serialize_datetime(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let time = strptime("1980-01-01 12:34:56.789456123Z", "%F %T.%f%z").unwrap();
+        b.iter(|| {
+            w.serialize(&time);
+        });
+    }
+
     #[test]
     fn test_serialize_tuple() {
         let mut w = Writer::new(true);
