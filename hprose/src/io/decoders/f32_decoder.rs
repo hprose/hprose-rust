@@ -51,14 +51,10 @@ pub fn f32_decode(r: &mut Reader, tag: u8) -> Result {
 }
 
 fn read_inf_as_f32(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.byte_reader.read_inf_32().map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_long_as_f32(r: &mut Reader) -> Result {
-    unimplemented!()
-}
-
-fn read_f32(r: &mut Reader) -> Result {
     unimplemented!()
 }
 

@@ -47,7 +47,7 @@ fn read_number_as_bool(r: &mut Reader) -> Result {
 
 fn read_inf_as_bool(r: &mut Reader) -> Result {
     r.byte_reader
-        .read_inf()
+        .read_inf_64()
         .map(|_| true)
         .map_err(|e| DecoderError::ParserError(e))
 }

@@ -23,7 +23,7 @@ pub use self::decoder::{Decoder, Decodable};
 pub use self::writer::Writer;
 pub use self::reader::{Reader, DecodeResult, DecoderError};
 pub use self::byte_writer::ByteWriter;
-pub use self::byte_reader::{ByteReader, ParserError};
+pub use self::byte_reader::{ByteReader, ParserError, ParserResult};
 
 use std::collections::HashMap;
 use std::time::SystemTime;

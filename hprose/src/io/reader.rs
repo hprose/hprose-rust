@@ -238,12 +238,11 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_ref<T: Decodable>(&mut self) -> Result<T, DecoderError> {
-        self.read_i64().and_then(|i| {
-            match self.refer {
-                Some(ref mut r) => Reader::new(r.read(i as usize), true).unserialize::<T>(),
-                None => Err(DecoderError::ReferenceError)
-            }
-        })
+        let i = try!(self.read_i64());
+        match self.refer {
+            Some(ref mut r) => Reader::new(r.read(i as usize), true).unserialize::<T>(),
+            None => Err(DecoderError::ReferenceError)
+        }
     }
 }
 

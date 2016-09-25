@@ -51,14 +51,10 @@ pub fn f64_decode(r: &mut Reader, tag: u8) -> Result {
 }
 
 fn read_inf_as_f64(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.byte_reader.read_inf_64().map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_long_as_f64(r: &mut Reader) -> Result {
-    unimplemented!()
-}
-
-fn read_f64(r: &mut Reader) -> Result {
     unimplemented!()
 }
 

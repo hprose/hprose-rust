@@ -22,7 +22,7 @@ use super::util::utf8_slice_to_str;
 
 use self::ParserError::*;
 
-use std::{io, num, f64};
+use std::{io, num, f32, f64};
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum ParserError {
@@ -32,6 +32,8 @@ pub enum ParserError {
     ParseFloatError(num::ParseFloatError),
     IoError(io::ErrorKind),
 }
+
+pub type ParserResult<T> = Result<T, ParserError>;
 
 pub struct ByteReader<'a> {
     pub buf: &'a [u8],
@@ -47,7 +49,7 @@ impl<'a> ByteReader<'a> {
         }
     }
 
-    pub fn next(&mut self, count: usize) -> Result<&[u8], ParserError> {
+    pub fn next(&mut self, count: usize) -> ParserResult<&[u8]> {
         let p = self.off + count;
         if p <= self.buf.len() {
             let b = &self.buf[self.off..p];
@@ -58,7 +60,7 @@ impl<'a> ByteReader<'a> {
         }
     }
 
-    pub fn read_byte(&mut self) -> Result<u8, ParserError> {
+    pub fn read_byte(&mut self) -> ParserResult<u8> {
         if self.off < self.buf.len() {
             let b = self.buf[self.off];
             self.off += 1;
@@ -68,74 +70,60 @@ impl<'a> ByteReader<'a> {
         }
     }
 
-    pub fn read_i64_with_tag(&mut self, tag: u8) -> Result<i64, ParserError> {
+    pub fn read_i64_with_tag(&mut self, tag: u8) -> ParserResult<i64> {
         let mut i: i64 = 0;
-        self.read_byte().and_then(|b| {
-            if b == tag {
-                Ok(i)
-            } else {
-                let mut neg = false;
-                let next = match b {
-                    TAG_NEG => {
-                        neg = true;
-                        self.read_byte()
-                    },
-                    TAG_POS => self.read_byte(),
-                    _ => Ok(b)
-                };
-                if neg {
-                    next.and_then(|mut b| {
-                        while b != tag {
-                            i = i.wrapping_mul(10).wrapping_sub(b as i64 - b'0' as i64);
-                            b = match self.read_byte() {
-                                Ok(b) => b,
-                                Err(e) => return Err(e)
-                            }
-                        }
-                        Ok(i)
-                    })
-                } else {
-                    next.and_then(|mut b| {
-                        while b != tag {
-                            i = i.wrapping_mul(10).wrapping_add(b as i64 - b'0' as i64);
-                            b = match self.read_byte() {
-                                Ok(b) => b,
-                                Err(e) => return Err(e)
-                            }
-                        }
-                        Ok(i)
-                    })
-                }
+        let mut b = try!(self.read_byte());
+        if b == tag {
+            return Ok(i)
+        }
+        let mut neg = false;
+        if b == TAG_NEG {
+            neg = true;
+            b = try!(self.read_byte());
+        } else if b == TAG_POS {
+            b = try!(self.read_byte());
+        }
+        if neg {
+            while b != tag {
+                i = i.wrapping_mul(10).wrapping_sub((b - b'0') as i64);
+                b = try!(self.read_byte());
             }
-        })
+            Ok(i)
+        } else {
+            while b != tag {
+                i = i.wrapping_mul(10).wrapping_add((b - b'0') as i64);
+                b = try!(self.read_byte());
+            }
+            Ok(i)
+        }
     }
 
     #[inline]
-    pub fn read_u64_with_tag(&mut self, tag: u8) -> Result<u64, ParserError> {
+    pub fn read_u64_with_tag(&mut self, tag: u8) -> ParserResult<u64> {
         self.read_i64_with_tag(tag).map(|i| i as u64)
     }
 
     #[inline]
-    pub fn read_i64(&mut self) -> Result<i64, ParserError> {
+    pub fn read_i64(&mut self) -> ParserResult<i64> {
         self.read_i64_with_tag(TAG_SEMICOLON)
     }
 
     #[inline]
-    pub fn read_u64(&mut self) -> Result<u64, ParserError> {
+    pub fn read_u64(&mut self) -> ParserResult<u64> {
         self.read_u64_with_tag(TAG_SEMICOLON)
     }
 
     #[inline]
-    fn read_length(&mut self) -> Result<usize, ParserError> {
+    fn read_length(&mut self) -> ParserResult<usize> {
         self.read_i64_with_tag(TAG_QUOTE).map(|i| i as usize)
     }
 
     #[inline]
-    pub fn read_count(&mut self) -> Result<usize, ParserError> {
+    pub fn read_count(&mut self) -> ParserResult<usize> {
         self.read_i64_with_tag(TAG_OPENBRACE).map(|i| i as usize)
     }
 
-    pub fn read_until(&mut self, tag: u8) -> Result<&[u8], ParserError> {
+    pub fn read_until(&mut self, tag: u8) -> ParserResult<&[u8]> {
         let result = &self.buf[self.off..];
         match result.iter().position(|x| *x == tag) {
             Some(idx) => {
@@ -149,17 +137,17 @@ impl<'a> ByteReader<'a> {
         }
     }
 
-    pub fn read_f32(&mut self) -> Result<f32, ParserError> {
+    pub fn read_f32(&mut self) -> ParserResult<f32> {
         self.read_until(TAG_SEMICOLON)
             .and_then(|v| utf8_slice_to_str(v).parse::<f32>().map_err(|e| ParseFloatError(e)))
     }
 
-    pub fn read_f64(&mut self) -> Result<f64, ParserError> {
+    pub fn read_f64(&mut self) -> ParserResult<f64> {
         self.read_until(TAG_SEMICOLON)
             .and_then(|v| utf8_slice_to_str(v).parse::<f64>().map_err(|e| ParseFloatError(e)))
     }
 
-    pub fn read_utf8_slice(&mut self, length: usize) -> Result<&[u8], ParserError> {
+    pub fn read_utf8_slice(&mut self, length: usize) -> ParserResult<&[u8]> {
         if length == 0 {
             return Ok(&[])
         }
@@ -185,17 +173,22 @@ impl<'a> ByteReader<'a> {
         Ok(&self.buf[p..self.off])
     }
 
-    pub fn read_utf8_string(&mut self, length: usize) -> Result<String, ParserError> {
+    pub fn read_utf8_string(&mut self, length: usize) -> ParserResult<String> {
         self.read_utf8_slice(length).map(|s| unsafe { String::from_utf8_unchecked(s.to_owned()) })
     }
 
-    pub fn read_string(&mut self) -> Result<String, ParserError> {
-        self.read_length()
-            .and_then(|len| self.read_utf8_string(len))
-            .and_then(|s| self.read_byte().map(|_| s))
+    pub fn read_string(&mut self) -> ParserResult<String> {
+        let len = try!(self.read_length());
+        let s = self.read_utf8_string(len);
+        try!(self.read_byte());
+        s
     }
 
-    pub fn read_inf(&mut self) -> Result<f64, ParserError> {
+    pub fn read_inf_32(&mut self) -> ParserResult<f32> {
+        self.read_byte().map(|sign| if sign == TAG_POS { f32::INFINITY } else { f32::NEG_INFINITY })
+    }
+
+    pub fn read_inf_64(&mut self) -> ParserResult<f64> {
         self.read_byte().map(|sign| if sign == TAG_POS { f64::INFINITY } else { f64::NEG_INFINITY })
     }
 }
