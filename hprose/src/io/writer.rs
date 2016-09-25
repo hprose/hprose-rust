@@ -358,6 +358,8 @@ mod tests {
     use std::{i32, i64, u64, f32, f64};
     use std::collections::{HashSet, HashMap};
 
+    use time::{Tm, strptime};
+
     #[test]
     fn test_serialize_nil() {
         let mut w = Writer::new(true);
@@ -586,6 +588,31 @@ mod tests {
         b.iter(|| {
             w.serialize(bytes);
         });
+    }
+
+    #[test]
+    fn test_serialize_datetime() {
+        let test_cases = [
+            (strptime("1980-12-01", "%F"), "D19801201Z"),
+            (strptime("1970-01-01 12:34:56Z", "%F %T%z"), "T123456Z"),
+            (strptime("1970-01-01 12:34:56.789000000Z", "%F %T.%f%z"), "T123456.789Z"),
+            (strptime("1970-01-01 12:34:56.789456000Z", "%F %T.%f%z"), "T123456.789456Z"),
+            (strptime("1970-01-01 12:34:56.789456123Z", "%F %T.%f%z"), "T123456.789456123Z"),
+            (strptime("1980-12-01 12:34:56Z", "%F %T%z"), "D19801201T123456Z"),
+            (strptime("1980-12-01 12:34:56.789000000Z", "%F %T.%f%z"), "D19801201T123456.789Z"),
+            (strptime("1980-12-01 12:34:56.789456000Z", "%F %T.%f%z"), "D19801201T123456.789456Z"),
+            (strptime("1980-12-01 12:34:56.789456123Z", "%F %T.%f%z"), "D19801201T123456.789456123Z"),
+            (strptime("1980-12-01+08:00", "%F%z"), "D19801201;"),
+            (strptime("1970-01-01 12:34:56+08:00", "%F %T%z"), "T123456;"),
+            (strptime("1980-12-01 12:34:56+08:00", "%F %T%z"), "D19801201T123456;"),
+            (strptime("1980-12-01 12:34:56.789456123+08:00", "%F %T.%f%z"), "D19801201T123456.789456123;")
+        ];
+        let mut w = Writer::new(true);
+        for test_case in &test_cases {
+            w.serialize(&test_case.0.unwrap());
+            assert_eq!(w.string().unwrap(), test_case.1);
+            w.clear();
+        }
     }
 
     #[test]
