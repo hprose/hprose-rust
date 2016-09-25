@@ -8,18 +8,18 @@
 \**********************************************************/
 /**********************************************************\
  *                                                        *
- * io/i64_decoder.rs                                      *
+ * io/decoders/string_decoder.rs                          *
  *                                                        *
- * hprose i64 decoder for Rust.                           *
+ * hprose string decoder for Rust.                        *
  *                                                        *
- * LastModified: Sep 24, 2016                             *
+ * LastModified: Sep 25, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
-use super::*;
-use super::tags::*;
-use super::reader::cast_error;
+use io::{Reader, Decoder, DecoderError, ParserError};
+use io::tags::*;
+use io::reader::cast_error;
 
 use std::{result, str};
 

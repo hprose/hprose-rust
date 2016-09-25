@@ -8,25 +8,25 @@
 \**********************************************************/
 /**********************************************************\
  *                                                        *
- * io/map_decoder.rs                                      *
+ * io/decoders/map_decoder.rs                             *
  *                                                        *
  * hprose map decoder for Rust.                           *
  *                                                        *
- * LastModified: Sep 24, 2016                             *
+ * LastModified: Sep 25, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
-use super::*;
-use super::tags::*;
-use super::reader::cast_error;
+use io::{Reader, Decoder, Decodable, DecodeResult,  DecoderError, ParserError};
+use io::tags::*;
+use io::reader::cast_error;
 
 use std::{result, str};
 
 type Result<T> = result::Result<T, DecoderError>;
 
 pub fn map_decode<'a, T, F>(r: &mut Reader<'a>, tag: u8, f: F) -> Result<T>
-    where T: Decodable, F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
+    where T: Decodable, F: FnOnce(&mut Reader<'a>, usize) -> Result<T>
 {
     match tag {
         //        TAG_NULL | TAG_EMPTY => Ok(),
@@ -47,7 +47,7 @@ fn read_list_as_map<T>(r: &mut Reader) -> Result<T> {
 }
 
 fn read_map<'a, T, F>(r: &mut Reader<'a>, f: F) -> Result<T>
-    where F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
+    where F: FnOnce(&mut Reader<'a>, usize) -> Result<T>
 {
     r.byte_reader.read_count()
         .map_err(|e| DecoderError::ParserError(e))
