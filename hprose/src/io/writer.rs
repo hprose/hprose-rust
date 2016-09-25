@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 24, 2016                             *
+ * LastModified: Sep 25, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -29,6 +29,8 @@ use super::tags::*;
 use super::util::*;
 use super::encoder::*;
 use super::writer_refer::WriterRefer;
+
+use time::Tm;
 
 /// Writer is a fine-grained operation struct for Hprose serialization
 pub struct Writer {
@@ -85,6 +87,20 @@ impl Writer {
         self.byte_writer.write_byte(TAG_QUOTE);
         self.byte_writer.write(s.as_bytes());
         self.byte_writer.write_byte(TAG_QUOTE);
+    }
+
+    fn write_date(&mut self, buf: &mut [u8], year: i32, month: i32, day: i32) {
+        self.byte_writer.write_byte(TAG_DATE);
+        self.byte_writer.write(get_date_bytes(buf, year, month, day));
+    }
+
+    fn write_time(&mut self, buf: &mut [u8], hour: i32, min: i32, sec: i32, nsec: i32) {
+        self.byte_writer.write_byte(TAG_TIME);
+        self.byte_writer.write(get_time_bytes(buf, hour, min, sec));
+        if nsec > 0 {
+            self.byte_writer.write_byte(TAG_POINT);
+            self.byte_writer.write(get_nsec_bytes(buf, nsec));
+        }
     }
 
     fn write_list_header(&mut self, len: usize) {
@@ -260,6 +276,23 @@ impl Encoder for Writer {
         self.byte_writer.write_byte(TAG_QUOTE);
         self.byte_writer.write(bytes);
         self.byte_writer.write_byte(TAG_QUOTE);
+    }
+
+    fn write_datetime(&mut self, t: &Tm) {
+        if self.write_ref(t) {
+            return
+        }
+        self.set_ref(t);
+        let mut buf: [u8; 9] = [0; 9];
+        if t.tm_hour == 0 && t.tm_min == 0 && t.tm_sec == 0 && t.tm_nsec == 0 {
+            self.write_date(&mut buf, 1900 + t.tm_year, t.tm_mon + 1, t.tm_mday);
+        } else if t.tm_year == 70 && t.tm_mon == 0 && t.tm_mday == 1 {
+            self.write_time(&mut buf, t.tm_hour, t.tm_min, t.tm_sec, t.tm_nsec);
+        } else {
+            self.write_date(&mut buf, 1900 + t.tm_year, t.tm_mon + 1, t.tm_mday);
+            self.write_time(&mut buf, t.tm_hour, t.tm_min, t.tm_sec, t.tm_nsec);
+        }
+        self.byte_writer.write_byte(if t.tm_utcoff == 0 { TAG_UTC } else { TAG_SEMICOLON });
     }
 
     fn write_struct(&mut self, name: &str, len: usize) {

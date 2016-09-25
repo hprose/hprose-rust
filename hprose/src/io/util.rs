@@ -12,7 +12,7 @@
  *                                                        *
  * io util for Rust.                                      *
  *                                                        *
- * LastModified: Sep 24, 2016                             *
+ * LastModified: Sep 25, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -197,6 +197,71 @@ pub fn utf16_length(s: &str) -> i64 {
 #[inline]
 pub fn utf8_slice_to_str(v: &[u8]) -> &str {
     unsafe { str::from_utf8_unchecked(v) }
+}
+
+// GetDateBytes returns the []byte representation of year, month and day.
+// The format of []byte returned is 20060102
+// buf length must be greater than or equal to 8
+pub fn get_date_bytes(buf: &mut [u8], year: i32, month: i32, day: i32) -> &[u8] {
+    let q = year / 100;
+    let mut p = q << 1;
+    buf[0] = DIGIT2[p as usize];
+    buf[1] = DIGIT2[p as usize + 1];
+    p = (year - q * 100) << 1;
+    buf[2] = DIGIT2[p as usize];
+    buf[3] = DIGIT2[p as usize + 1];
+    p = month << 1;
+    buf[4] = DIGIT2[p as usize];
+    buf[5] = DIGIT2[p as usize + 1];
+    p = day << 1;
+    buf[6] = DIGIT2[p as usize];
+    buf[7] = DIGIT2[p as usize + 1];
+    &buf[..8]
+}
+
+// GetTimeBytes returns the []byte representation of hour, min and sec.
+// The format of []byte returned is 150405
+// buf length must be greater than or equal to 6
+pub fn get_time_bytes(buf: &mut [u8], hour: i32, min: i32, sec: i32) -> &[u8] {
+    let mut p = hour << 1;
+    buf[0] = DIGIT2[p as usize];
+    buf[1] = DIGIT2[p as usize + 1];
+    p = min << 1;
+    buf[2] = DIGIT2[p as usize];
+    buf[3] = DIGIT2[p as usize + 1];
+    p = sec << 1;
+    buf[4] = DIGIT2[p as usize];
+    buf[5] = DIGIT2[p as usize + 1];
+    &buf[..6]
+}
+
+// GetNsecBytes returns the []byte representation of nsec.
+// The format of []byte returned is 123, 123456 or 123456789
+// buf length must be greater than or equal to 9
+pub fn get_nsec_bytes(buf: &mut [u8], mut nsec: i32) -> &[u8] {
+    let mut q = nsec / 1000000;
+    let mut p = q * 3;
+    nsec = nsec - q * 1000000;
+    buf[0] = DIGIT3[p as usize];
+    buf[1] = DIGIT3[p as usize + 1];
+    buf[2] = DIGIT3[p as usize + 2];
+    if nsec == 0 {
+        return &buf[..3]
+    }
+    q = nsec / 1000;
+    p = q * 3;
+    nsec = nsec - q * 1000;
+    buf[3] = DIGIT3[p as usize];
+    buf[4] = DIGIT3[p as usize + 1];
+    buf[5] = DIGIT3[p as usize + 2];
+    if nsec == 0 {
+        return &buf[..6];
+    }
+    p = nsec * 3;
+    buf[6] = DIGIT3[p as usize];
+    buf[7] = DIGIT3[p as usize + 1];
+    buf[8] = DIGIT3[p as usize + 2];
+    &buf[..9]
 }
 
 #[cfg(test)]

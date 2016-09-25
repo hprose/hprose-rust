@@ -12,7 +12,7 @@
  *                                                        *
  * hprose encoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 24, 2016                             *
+ * LastModified: Sep 25, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -27,6 +27,8 @@ use std::cell::{Cell, RefCell};
 use std::hash::{Hash, BuildHasher};
 use std::collections::{LinkedList, VecDeque, BTreeMap, BTreeSet, HashMap, HashSet};
 
+use time::Tm;
+
 pub trait Encoder {
     // Primitive types:
     fn write_nil(&mut self);
@@ -39,6 +41,9 @@ pub trait Encoder {
     fn write_str(&mut self, v: &str);
     fn write_string(&mut self, v: &String);
     fn write_bytes(&mut self, v: &[u8]);
+
+    // extern crate types:
+    fn write_datetime(&mut self, v: &Tm);
 
     // Compound types:
     fn write_struct(&mut self, name: &str, len: usize);
@@ -158,6 +163,12 @@ impl Encodable for str {
 impl Encodable for String {
     fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_string(self);
+    }
+}
+
+impl Encodable for Tm {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_datetime(self);
     }
 }
 
