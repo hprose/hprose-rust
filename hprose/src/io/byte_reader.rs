@@ -86,7 +86,7 @@ impl<'a> ByteReader<'a> {
                 if neg {
                     next.and_then(|mut b| {
                         while b != tag {
-                            i = i * 10 - (b as i64 - b'0' as i64);
+                            i = i.wrapping_mul(10).wrapping_sub(b as i64 - b'0' as i64);
                             b = match self.read_byte() {
                                 Ok(b) => b,
                                 Err(e) => return Err(e)
@@ -97,7 +97,7 @@ impl<'a> ByteReader<'a> {
                 } else {
                     next.and_then(|mut b| {
                         while b != tag {
-                            i = i * 10 + (b as i64 - b'0' as i64);
+                            i = i.wrapping_mul(10).wrapping_add(b as i64 - b'0' as i64);
                             b = match self.read_byte() {
                                 Ok(b) => b,
                                 Err(e) => return Err(e)
