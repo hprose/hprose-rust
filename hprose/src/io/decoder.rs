@@ -44,6 +44,7 @@ pub trait Decoder {
 
     // Extern crate types:
     fn read_datetime_without_tag(&mut self) -> Result<Tm, Self::Error>;
+    fn read_time_without_tag(&mut self) -> Result<Tm, Self::Error>;
 
     // Compound types:
 

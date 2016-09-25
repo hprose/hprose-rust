@@ -137,6 +137,7 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_datetime_without_tag(&mut self) -> DecodeResult<Tm> {
+        let start = self.byte_reader.off - 1;
         let mut tm = empty_tm();
         let mut tag = 0;
         {
@@ -177,6 +178,48 @@ impl<'a> Decoder for Reader<'a> {
         if tag != TAG_UTC {
             tm.tm_utcoff = get_utcoff();
         }
+        let reference = &self.byte_reader.buf[start..self.byte_reader.off];
+        self.refer.as_mut().map(|mut r| r.set(reference));
+        Ok(tm)
+    }
+
+    fn read_time_without_tag(&mut self) -> Result<Tm, Self::Error> {
+        let start = self.byte_reader.off - 1;
+        let mut tm = empty_tm();
+        let mut tag = 0;
+        tm.tm_year = 70;
+        tm.tm_mday = 1;
+        {
+            let bytes = try!(self.byte_reader.next(7));
+            tm.tm_hour = bytes_to_diget2(&bytes[..2]);
+            tm.tm_min = bytes_to_diget2(&bytes[2..4]);
+            tm.tm_sec = bytes_to_diget2(&bytes[4..6]);
+            tag = bytes[6];
+        }
+        if tag == TAG_POINT {
+            {
+                let bytes = try!(self.byte_reader.next(4));
+                tm.tm_nsec = bytes_to_diget3(&bytes[..3]);
+                tag = bytes[3];
+            }
+            if (tag >= b'0') && (tag <= b'9') {
+                {
+                    let bytes = try!(self.byte_reader.next(3));
+                    tm.tm_nsec = tm.tm_nsec * 1000 + (tag - b'0') as i32 * 100 + bytes_to_diget2(&bytes[..2]);
+                    tag = bytes[2];
+                }
+                if (tag >= b'0') && (tag <= b'9') {
+                    let bytes = try!(self.byte_reader.next(3));
+                    tm.tm_nsec = tm.tm_nsec * 1000 + (tag - b'0') as i32 * 100 + bytes_to_diget2(&bytes[..2]);
+                    tag = bytes[2];
+                }
+            }
+        }
+        if tag != TAG_UTC {
+            tm.tm_utcoff = get_utcoff();
+        }
+        let reference = &self.byte_reader.buf[start..self.byte_reader.off];
+        self.refer.as_mut().map(|mut r| r.set(reference));
         Ok(tm)
     }
 
@@ -315,7 +358,7 @@ mod tests {
             "1", 1,
             "9", 9,
             int_value, 1234567,
-//            Timespec::new(123, 456), 123000000456,
+            Timespec::new(123, 456), 123000000456,
             Timespec::new(1234567890, 123456789), 1234567890123456789,
             int_value, 1234567
         }
