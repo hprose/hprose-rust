@@ -162,14 +162,14 @@ impl<'a> Decoder for Reader<'a> {
                 }
                 if (tag >= b'0') && (tag <= b'9') {
                     {
-                        let bytes = try!(self.byte_reader.next(4));
-                        tm.tm_nsec = tm.tm_nsec * 1000 + bytes_to_diget3(&bytes[..3]);
-                        tag = bytes[3];
+                        let bytes = try!(self.byte_reader.next(3));
+                        tm.tm_nsec = tm.tm_nsec * 1000 + (tag - b'0') as i32 * 100 + bytes_to_diget2(&bytes[..2]);
+                        tag = bytes[2];
                     }
                     if (tag >= b'0') && (tag <= b'9') {
-                        let bytes = try!(self.byte_reader.next(4));
-                        tm.tm_nsec = tm.tm_nsec * 1000 + bytes_to_diget3(&bytes[..3]);
-                        tag = bytes[3];
+                        let bytes = try!(self.byte_reader.next(3));
+                        tm.tm_nsec = tm.tm_nsec * 1000 + (tag - b'0') as i32 * 100 + bytes_to_diget2(&bytes[..2]);
+                        tag = bytes[2];
                     }
                 }
             }
@@ -238,7 +238,24 @@ mod tests {
     use super::test::Bencher;
     use super::super::*;
 
+    use std::{i32, i64, u32, u64};
     use std::collections::HashMap;
+    use std::mem::transmute;
+
+    use time::Timespec;
+
+    macro_rules! test {
+        ($ty:ty, $writer:expr, $($value:expr, $result:expr),+) => (
+            $(
+                $writer.serialize(&$value);
+            )+
+            let bytes = $writer.bytes();
+            let mut r = Reader::new(&bytes, false);
+            $(
+                assert_eq!(r.unserialize::<$ty>(), Ok($result));
+            )+
+        )
+    }
 
     #[test]
     fn test_unserialize_bool() {
@@ -274,6 +291,34 @@ mod tests {
         b.iter(|| {
             Reader::new(&bytes, true).unserialize::<bool>().unwrap();
         });
+    }
+
+    #[test]
+    fn test_unserialize_i64() {
+        let int_value = String::from("1234567");
+        let mut w = Writer::new(false);
+        test! { i64, w,
+            true, 1,
+            false, 0,
+            (), 0,
+		    "", 0,
+            0, 0,
+            1, 1,
+            9, 9,
+            100, 100,
+            -100, -100,
+            i32::MIN, i32::MIN as i64,
+            i64::MAX, i64::MAX,
+            i64::MIN, i64::MIN,
+            u64::MAX, u64::MAX as i64,
+            0.0, 0,
+            "1", 1,
+            "9", 9,
+            int_value, 1234567,
+//            Timespec::new(123, 456), 123000000456,
+            Timespec::new(1234567890, 123456789), 1234567890123456789,
+            int_value, 1234567
+        }
     }
 
     #[bench]

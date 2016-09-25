@@ -268,17 +268,17 @@ pub fn get_nsec_bytes(buf: &mut [u8], mut nsec: i32) -> &[u8] {
 
 #[inline]
 pub fn bytes_to_diget2(bytes: &[u8]) -> i32 {
-    bytes[0] as i32 * 10 + bytes[1] as i32
+    (bytes[0] - b'0') as i32 * 10 + (bytes[1]  - b'0') as i32
 }
 
 #[inline]
 pub fn bytes_to_diget3(bytes: &[u8]) -> i32 {
-    bytes[0] as i32 * 100 + bytes[1] as i32 * 10 + bytes[2] as i32
+    (bytes[0]  - b'0') as i32 * 100 + (bytes[1] - b'0') as i32 * 10 + (bytes[2] - b'0') as i32
 }
 
 #[inline]
 pub fn bytes_to_diget4(bytes: &[u8]) -> i32 {
-    bytes[0] as i32 * 1000 + bytes[1] as i32 * 100 + bytes[2] as i32 * 10 + bytes[3] as i32
+    (bytes[0] - b'0') as i32 * 1000 + (bytes[1] - b'0') as i32 * 100 + (bytes[2] - b'0') as i32 * 10 + (bytes[3] - b'0') as i32
 }
 
 use std::cell::RefCell;

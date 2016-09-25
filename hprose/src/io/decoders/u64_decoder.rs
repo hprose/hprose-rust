@@ -71,7 +71,11 @@ fn read_string_as_u64(r: &mut Reader) -> Result {
 }
 
 fn read_datetime_as_u64(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.read_datetime_without_tag()
+        .map(|ref tm| {
+            let ts = tm.to_timespec();
+            ts.sec as u64 * 1_000_000_000 + (ts.nsec as u64)
+        })
 }
 
 fn read_time_as_u64(r: &mut Reader) -> Result {
