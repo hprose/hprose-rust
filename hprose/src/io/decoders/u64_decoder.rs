@@ -82,6 +82,6 @@ fn read_time_as_u64(r: &mut Reader) -> Result {
     r.read_time_without_tag()
         .map(|ref tm| {
             let ts = tm.to_timespec();
-            ts.sec * 1_000_000_000 + (ts.nsec as i64)
+            ts.sec as u64 * 1_000_000_000 + (ts.nsec as u64)
         })
 }
