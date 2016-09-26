@@ -142,7 +142,7 @@ impl<'a> ByteReader<'a> {
     }
 
     #[inline]
-    fn read_length(&mut self) -> ParserResult<usize> {
+    pub fn read_len(&mut self) -> ParserResult<usize> {
         self.read_i64_with_tag(TAG_QUOTE).map(|i| i as usize)
     }
 
@@ -206,7 +206,7 @@ impl<'a> ByteReader<'a> {
     }
 
     pub fn read_string(&mut self) -> ParserResult<String> {
-        let len = try!(self.read_length());
+        let len = try!(self.read_len());
         let s = self.read_utf8_string(len);
         try!(self.read_byte());
         s

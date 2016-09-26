@@ -22,7 +22,7 @@ use io::tags::*;
 use io::reader::cast_error;
 use io::util::utf8_slice_to_str;
 
-use std::{result, str, f64};
+use std::{result, f64};
 
 type Result = result::Result<f64, DecoderError>;
 

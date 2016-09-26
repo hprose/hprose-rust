@@ -12,7 +12,7 @@
  *                                                        *
  * hprose string decoder for Rust.                        *
  *                                                        *
- * LastModified: Sep 25, 2016                             *
+ * LastModified: Sep 26, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -20,6 +20,7 @@
 use io::{Reader, Decoder, DecoderError, ParserError};
 use io::tags::*;
 use io::reader::cast_error;
+use io::util::utf8_slice_to_str;
 
 use std::{result, str};
 
@@ -55,29 +56,52 @@ pub fn string_decode(r: &mut Reader, tag: u8) -> Result {
 }
 
 fn read_inf_as_string(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.byte_reader.read_byte()
+        .map(|sign| if sign == TAG_POS { String::from("+Inf") } else { String::from("-Inf") })
+        .map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_number_as_string(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.byte_reader.read_until(TAG_SEMICOLON)
+        .map(|bytes| utf8_slice_to_str(bytes).to_owned())
+        .map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_utf8_char_as_string(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.byte_reader
+        .read_utf8_slice(1)
+        .map(|bytes| utf8_slice_to_str(bytes).to_owned())
+        .map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_bytes_as_string(r: &mut Reader) -> Result {
-    unimplemented!()
+    let start = r.byte_reader.off - 1;
+    let len = {
+        try!(r.byte_reader.read_len())
+    };
+    let bytes = try!(r.byte_reader.next(len)).to_owned();
+    let s = try!(String::from_utf8(bytes).map_err(|e| ParserError::BadUTF8Encode));
+    try!(r.byte_reader.read_byte());
+    let reference = &r.byte_reader.buf[start..r.byte_reader.off];
+    r.refer.as_mut().map(|mut r| r.set(reference));
+    Ok(s)
 }
 
 fn read_guid_as_string(r: &mut Reader) -> Result {
-    unimplemented!()
+    let start = r.byte_reader.off - 1;
+    try!(r.byte_reader.read_byte());
+    let bytes = try!(r.byte_reader.next(36)).to_owned();
+    let s = try!(String::from_utf8(bytes).map_err(|e| ParserError::BadUTF8Encode));
+    try!(r.byte_reader.read_byte());
+    let reference = &r.byte_reader.buf[start..r.byte_reader.off];
+    r.refer.as_mut().map(|mut r| r.set(reference));
+    Ok(s)
 }
 
 fn read_datetime_as_string(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.read_datetime_without_tag().map(|ref tm| tm.strftime("%F %T.%f %z").unwrap().to_string())
 }
 
 fn read_time_as_string(r: &mut Reader) -> Result {
-    unimplemented!()
+    r.read_time_without_tag().map(|ref tm| tm.strftime("%F %T.%f %z").unwrap().to_string())
 }

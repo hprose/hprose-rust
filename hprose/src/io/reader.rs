@@ -66,7 +66,7 @@ pub type DecodeResult<T> = Result<T, DecoderError>;
 /// Reader is a fine-grained operation struct for Hprose unserialization
 pub struct Reader<'a> {
     pub byte_reader: ByteReader<'a>,
-    refer: Option<ReaderRefer<'a>>
+    pub refer: Option<ReaderRefer<'a>>
 }
 
 impl<'a> Reader<'a> {

@@ -12,7 +12,7 @@
  *                                                        *
  * hprose i64 decoder for Rust.                           *
  *                                                        *
- * LastModified: Sep 25, 2016                             *
+ * LastModified: Sep 26, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -22,7 +22,7 @@ use io::tags::*;
 use io::reader::cast_error;
 use io::util::utf8_slice_to_str;
 
-use std::{result, str};
+use std::result;
 
 type Result = result::Result<i64, DecoderError>;
 
