@@ -22,7 +22,7 @@ use io::tags::*;
 use io::reader::cast_error;
 use io::util::utf8_slice_to_str;
 
-use std::{result, str};
+use std::result;
 
 type Result = result::Result<String, DecoderError>;
 
@@ -80,7 +80,7 @@ fn read_bytes_as_string(r: &mut Reader) -> Result {
         try!(r.byte_reader.read_len())
     };
     let bytes = try!(r.byte_reader.next(len)).to_owned();
-    let s = try!(String::from_utf8(bytes).map_err(|e| ParserError::BadUTF8Encode));
+    let s = try!(String::from_utf8(bytes).map_err(|_| ParserError::BadUTF8Encode));
     try!(r.byte_reader.read_byte());
     let reference = &r.byte_reader.buf[start..r.byte_reader.off];
     r.refer.as_mut().map(|mut r| r.set(reference));
@@ -91,7 +91,7 @@ fn read_guid_as_string(r: &mut Reader) -> Result {
     let start = r.byte_reader.off - 1;
     try!(r.byte_reader.read_byte());
     let bytes = try!(r.byte_reader.next(36)).to_owned();
-    let s = try!(String::from_utf8(bytes).map_err(|e| ParserError::BadUTF8Encode));
+    let s = try!(String::from_utf8(bytes).map_err(|_| ParserError::BadUTF8Encode));
     try!(r.byte_reader.read_byte());
     let reference = &r.byte_reader.buf[start..r.byte_reader.off];
     r.refer.as_mut().map(|mut r| r.set(reference));

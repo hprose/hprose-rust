@@ -12,12 +12,12 @@
  *                                                        *
  * hprose map decoder for Rust.                           *
  *                                                        *
- * LastModified: Sep 25, 2016                             *
+ * LastModified: Sep 26, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
-use io::{Reader, Decoder, Decodable, DecodeResult,  DecoderError, ParserError};
+use io::{Reader, Decoder, Decodable,  DecoderError};
 use io::tags::*;
 use io::reader::cast_error;
 

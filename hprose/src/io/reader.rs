@@ -145,7 +145,7 @@ impl<'a> Decoder for Reader<'a> {
     fn read_datetime_without_tag(&mut self) -> DecodeResult<Tm> {
         let start = self.byte_reader.off - 1;
         let mut tm = empty_tm();
-        let mut tag = 0;
+        let mut tag: u8;
         {
             let bytes = try!(self.byte_reader.next(9));
             tm.tm_year = bytes_to_diget4(&bytes[..4]) - 1900;
@@ -192,7 +192,7 @@ impl<'a> Decoder for Reader<'a> {
     fn read_time_without_tag(&mut self) -> Result<Tm, Self::Error> {
         let start = self.byte_reader.off - 1;
         let mut tm = empty_tm();
-        let mut tag = 0;
+        let mut tag: u8;
         tm.tm_year = 70;
         tm.tm_mday = 1;
         {
@@ -417,7 +417,7 @@ mod tests {
             1, 1f64,
             9, 9f64,
             100, 100f64,
-            f32::MAX, f32::MAX as f64,
+            f32::MAX, 3.4028235e38f64,
             f64::MAX, f64::MAX,
             0.0, 0f64,
             "1", 1f64,

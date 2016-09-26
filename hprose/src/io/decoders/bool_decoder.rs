@@ -20,8 +20,9 @@
 use io::{Reader, Decoder, DecoderError, ParserError};
 use io::tags::*;
 use io::reader::cast_error;
+use io::util::utf8_slice_to_str;
 
-use std::{result, str};
+use std::result;
 
 type Result = result::Result<bool, DecoderError>;
 
@@ -55,7 +56,7 @@ fn read_inf_as_bool(r: &mut Reader) -> Result {
 fn read_utf8_char_as_bool(r: &mut Reader) -> Result {
     r.byte_reader
         .read_utf8_slice(1)
-        .and_then(|s| parse_bool(unsafe { str::from_utf8_unchecked(s) }))
+        .and_then(|s| parse_bool(utf8_slice_to_str(s)))
         .map_err(|e| DecoderError::ParserError(e))
 }
 
