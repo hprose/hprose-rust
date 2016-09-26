@@ -12,7 +12,7 @@
  *                                                        *
  * byte reader for Rust.                                  *
  *                                                        *
- * LastModified: Sep 25, 2016                             *
+ * LastModified: Sep 26, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -101,6 +101,34 @@ impl<'a> ByteReader<'a> {
     #[inline]
     pub fn read_u64_with_tag(&mut self, tag: u8) -> ParserResult<u64> {
         self.read_i64_with_tag(tag).map(|i| i as u64)
+    }
+
+    pub fn read_long_as_f64(&mut self) -> ParserResult<f64> {
+        let mut f = 0f64;
+        let mut b = try!(self.read_byte());
+        if b == TAG_SEMICOLON {
+            return Ok(f)
+        }
+        let mut neg = false;
+        if b == TAG_NEG {
+            neg = true;
+            b = try!(self.read_byte());
+        } else if b == TAG_POS {
+            b = try!(self.read_byte());
+        }
+        if neg {
+            while b != TAG_SEMICOLON {
+                f = f * 10f64 - (b - b'0') as f64;
+                b = try!(self.read_byte());
+            }
+            Ok(f)
+        } else {
+            while b != TAG_SEMICOLON {
+                f = f * 10f64 + (b - b'0') as f64;
+                b = try!(self.read_byte());
+            }
+            Ok(f)
+        }
     }
 
     #[inline]

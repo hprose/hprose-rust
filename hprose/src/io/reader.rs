@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 25, 2016                             *
+ * LastModified: Sep 26, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -287,7 +287,7 @@ mod tests {
     use super::test::Bencher;
     use super::super::*;
 
-    use std::{i32, i64, u32, u64};
+    use std::{i32, i64, u32, u64, f32, f64};
     use std::collections::HashMap;
     use std::mem::transmute;
 
@@ -350,7 +350,7 @@ mod tests {
             true, 1,
             false, 0,
             (), 0,
-		    "", 0,
+            "", 0,
             0, 0,
             1, 1,
             9, 9,
@@ -377,6 +377,56 @@ mod tests {
         b.iter(|| {
             Reader::new(&bytes, true).unserialize::<i64>().unwrap();
         });
+    }
+
+    #[test]
+    fn test_unserialize_f32() {
+        let f32_value = String::from("3.14159");
+        let mut w = Writer::new(false);
+        test! { f32, w,
+            true, 1f32,
+            false, 0f32,
+            (), 0f32,
+            "", 0f32,
+            0, 0f32,
+            1, 1f32,
+            9, 9f32,
+            100, 100f32,
+            i64::MAX, i64::MAX as f32,
+            f32::MAX, f32::MAX,
+            0.0, 0f32,
+            "1", 1f32,
+            "9", 9f32,
+            f32_value, 3.14159,
+            at_utc(Timespec::new(123, 456)), 123.000000456f32,
+            at_utc(Timespec::new(1234567890, 123456789)), 1234567890.123456789f32,
+            f32_value, 3.14159
+        }
+    }
+
+    #[test]
+    fn test_unserialize_f64() {
+        let f64_value = String::from("3.14159");
+        let mut w = Writer::new(false);
+        test! { f64, w,
+            true, 1f64,
+            false, 0f64,
+            (), 0f64,
+            "", 0f64,
+            0, 0f64,
+            1, 1f64,
+            9, 9f64,
+            100, 100f64,
+            f32::MAX, f32::MAX as f64,
+            f64::MAX, f64::MAX,
+            0.0, 0f64,
+            "1", 1f64,
+            "9", 9f64,
+            f64_value, 3.14159,
+            at_utc(Timespec::new(123, 456)), 123.000000456f64,
+            at_utc(Timespec::new(1234567890, 123456789)), 1234567890.123456789f64,
+            f64_value, 3.14159
+        }
     }
 
     #[bench]

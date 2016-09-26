@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 25, 2016                             *
+ * LastModified: Sep 26, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -20,7 +20,7 @@
 extern crate test;
 extern crate dtoa;
 
-use std::{i32, f32, f64, ptr};
+use std::{i32, i64, f32, f64, ptr};
 use std::num::FpCategory as Fp;
 use std::string::{String, FromUtf8Error};
 
@@ -187,16 +187,16 @@ impl Encoder for Writer {
                 self.byte_writer.write_byte(TAG_INFINITY);
                 self.byte_writer.write_byte(if f == f32::NEG_INFINITY { TAG_NEG } else { TAG_POS });
             },
-            _ if f.fract() != 0f32 => {
-                self.byte_writer.write_byte(TAG_DOUBLE);
-                dtoa::write(&mut self.byte_writer.buf, f).unwrap();
-                // self.byte_writer.write(f.to_string().as_bytes());
-                self.byte_writer.write_byte(TAG_SEMICOLON);
-            }
-            _ => {
+            _ if f.fract() == 0f32 && f >= i64::MIN as f32 && f <= i64::MAX as f32 => {
                 self.byte_writer.write_byte(TAG_DOUBLE);
                 let mut buf: [u8; 20] = [0; 20];
                 self.byte_writer.write(get_int_bytes(&mut buf, f as i64));
+                self.byte_writer.write_byte(TAG_SEMICOLON);
+            },
+            _ => {
+                self.byte_writer.write_byte(TAG_DOUBLE);
+                dtoa::write(&mut self.byte_writer.buf, f).unwrap();
+                // self.byte_writer.write(f.to_string().as_bytes());
                 self.byte_writer.write_byte(TAG_SEMICOLON);
             }
         };
@@ -209,16 +209,16 @@ impl Encoder for Writer {
                 self.byte_writer.write_byte(TAG_INFINITY);
                 self.byte_writer.write_byte(if f == f64::NEG_INFINITY { TAG_NEG } else { TAG_POS });
             },
-            _ if f.fract() != 0f64 => {
-                self.byte_writer.write_byte(TAG_DOUBLE);
-                dtoa::write(&mut self.byte_writer.buf, f).unwrap();
-                // self.byte_writer.write_from_slice(f.to_string().as_bytes());
-                self.byte_writer.write_byte(TAG_SEMICOLON);
-            }
-            _ => {
+            _ if f.fract() == 0f64 && f >= i64::MIN as f64 && f <= i64::MAX as f64 => {
                 self.byte_writer.write_byte(TAG_DOUBLE);
                 let mut buf: [u8; 20] = [0; 20];
                 self.byte_writer.write(get_int_bytes(&mut buf, f as i64));
+                self.byte_writer.write_byte(TAG_SEMICOLON);
+            },
+            _ => {
+                self.byte_writer.write_byte(TAG_DOUBLE);
+                dtoa::write(&mut self.byte_writer.buf, f).unwrap();
+                // self.byte_writer.write_from_slice(f.to_string().as_bytes());
                 self.byte_writer.write_byte(TAG_SEMICOLON);
             }
         };
