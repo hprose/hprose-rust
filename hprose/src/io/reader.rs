@@ -291,7 +291,7 @@ mod tests {
     use std::collections::HashMap;
     use std::mem::transmute;
 
-    use time::{Timespec, at_utc};
+    use time::{Timespec, at_utc, strptime};
 
     macro_rules! test {
         ($ty:ty, $writer:expr, $($value:expr, $result:expr),+) => (
@@ -301,7 +301,7 @@ mod tests {
             let bytes = $writer.bytes();
             let mut r = Reader::new(&bytes, false);
             $(
-                assert_eq!(r.unserialize::<$ty>(), Ok($result));
+                assert_eq!(r.unserialize::<$ty>().unwrap(), $result);
             )+
         )
     }
@@ -426,6 +426,31 @@ mod tests {
             at_utc(Timespec::new(123, 456)), 123.000000456f64,
             at_utc(Timespec::new(1234567890, 123456789)), 1234567890.123456789f64,
             f64_value, 3.14159
+        }
+    }
+
+    #[test]
+    fn test_unserialize_string() {
+        let str_value = "你好";
+        let mut w = Writer::new(false);
+        test! { String, w,
+		true,            "true",
+		false,           "false",
+		(),              "",
+		"",              "",
+		0,               "0",
+		1,               "1",
+		9,               "9",
+		100,             "100",
+		f32::MAX,        "3.4028235e38",
+		f64::MAX,        "1.7976931348623157e308",
+		0.0,             "0",
+		"1",             "1",
+		"9",             "9",
+		str_value,       "你好",
+		strptime("1980-12-01", "%F").unwrap(), "1980-12-01 00:00:00.000000000 -0000",
+		strptime("1970-01-01 12:34:56.789456123+08:00", "%F %T.%f%z").unwrap(), "1970-01-01 12:34:56.789456123 +0800",
+		strptime("2006-09-09 12:34:56.789456123Z", "%F %T.%f%z").unwrap(), "2006-09-09 12:34:56.789456123 -0000"
         }
     }
 
