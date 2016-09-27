@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 26, 2016                             *
+ * LastModified: Sep 27, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -25,7 +25,7 @@ use super::util::*;
 use super::decoders::*;
 use super::reader_refer::ReaderRefer;
 
-use std::convert::From;
+use std::convert;
 use std::{fmt, f64, str};
 
 use time::{Tm, empty_tm};
@@ -39,8 +39,8 @@ pub enum DecoderError {
     ReferenceError
 }
 
-impl From<ParserError> for DecoderError {
-    fn from(e: ParserError) -> Self {
+impl convert::From<ParserError> for DecoderError {
+    fn from(e: ParserError) -> DecoderError {
         DecoderError::ParserError(e)
     }
 }
@@ -87,13 +87,42 @@ impl<'a> Reader<'a> {
     pub fn read<T: Decodable>(&mut self) -> DecodeResult<T> {
         Decodable::decode(self)
     }
+
+    pub fn read_string_without_tag(&mut self) -> DecodeResult<String> {
+        let start = self.byte_reader.off - 1;
+        let s = try!(self.byte_reader.read_string());
+        let reference = &self.byte_reader.buf[start..self.byte_reader.off];
+        self.refer.as_mut().map(|mut r| r.set(reference));
+        Ok(s)
+    }
+
+    pub fn read_bytes_without_tag(&mut self) -> DecodeResult<Bytes> {
+        let start = self.byte_reader.off - 1;
+        let len = try!(self.byte_reader.read_len());
+        let bytes = try!(self.byte_reader.next(len)).to_owned();
+        try!(self.byte_reader.read_byte());
+        let reference = &self.byte_reader.buf[start..self.byte_reader.off];
+        self.refer.as_mut().map(|mut r| r.set(reference));
+        Ok(bytes)
+    }
+
+    #[inline]
+    pub fn read_count(&mut self) -> DecodeResult<usize> {
+        let count = try!(self.byte_reader.read_i64_with_tag(TAG_OPENBRACE));
+        Ok(count as usize)
+    }
+
+    pub fn reset(&mut self) {
+        self.refer.as_mut().map(|mut refer| refer.reset());
+    }
 }
 
 impl<'a> Decoder for Reader<'a> {
     type Error = DecoderError;
 
     fn read_nil(&mut self) -> DecodeResult<()> {
-        unimplemented!()
+        let b = try!(self.byte_reader.read_byte());
+        if b == TAG_NULL { Ok(()) } else { Err(DecoderError::UnexpectedTag(b, Some(vec!(TAG_NULL)))) }
     }
 
     fn read_bool(&mut self) -> DecodeResult<bool> {
@@ -123,14 +152,6 @@ impl<'a> Decoder for Reader<'a> {
 
     fn read_char(&mut self) -> DecodeResult<char> {
         unimplemented!()
-    }
-
-    fn read_string_without_tag(&mut self) -> DecodeResult<String> {
-        let start = self.byte_reader.off - 1;
-        let s = try!(self.byte_reader.read_string());
-        let reference = &self.byte_reader.buf[start..self.byte_reader.off];
-        self.refer.as_mut().map(|mut r| r.set(reference));
-        Ok(s)
     }
 
     fn read_string(&mut self) -> DecodeResult<String> {

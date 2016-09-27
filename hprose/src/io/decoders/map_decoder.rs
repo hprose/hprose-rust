@@ -12,7 +12,7 @@
  *                                                        *
  * hprose map decoder for Rust.                           *
  *                                                        *
- * LastModified: Sep 26, 2016                             *
+ * LastModified: Sep 27, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -49,9 +49,7 @@ fn read_list_as_map<T>(r: &mut Reader) -> Result<T> {
 fn read_map<'a, T, F>(r: &mut Reader<'a>, f: F) -> Result<T>
     where F: FnOnce(&mut Reader<'a>, usize) -> Result<T>
 {
-    r.byte_reader.read_count()
-        .map_err(|e| DecoderError::ParserError(e))
-        .and_then(|len| f(r, len))
+    r.read_count().and_then(|len| f(r, len))
 }
 
 fn read_struct_meta<T>(r: &mut Reader) -> Result<T> {

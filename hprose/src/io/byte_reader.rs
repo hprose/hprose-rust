@@ -12,7 +12,7 @@
  *                                                        *
  * byte reader for Rust.                                  *
  *                                                        *
- * LastModified: Sep 26, 2016                             *
+ * LastModified: Sep 27, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -144,11 +144,6 @@ impl<'a> ByteReader<'a> {
     #[inline]
     pub fn read_len(&mut self) -> ParserResult<usize> {
         self.read_i64_with_tag(TAG_QUOTE).map(|i| i as usize)
-    }
-
-    #[inline]
-    pub fn read_count(&mut self) -> ParserResult<usize> {
-        self.read_i64_with_tag(TAG_OPENBRACE).map(|i| i as usize)
     }
 
     pub fn read_until(&mut self, tag: u8) -> ParserResult<&[u8]> {
