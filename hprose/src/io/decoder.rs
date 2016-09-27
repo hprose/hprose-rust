@@ -214,6 +214,39 @@ impl<T: Decodable> Decodable for RefCell<T> {
     }
 }
 
+macro_rules! peel {
+    ($name:ident, $($other:ident,)*) => (tuple! { $($other,)* })
+}
+
+/// Evaluates to the number of identifiers passed to it, for example:
+/// `count_idents!(a, b, c) == 3
+macro_rules! count_idents {
+    () => { 0 };
+    ($_i:ident, $($rest:ident,)*) => { 1 + count_idents!($($rest,)*) }
+}
+
+macro_rules! tuple {
+    () => ();
+    ($($name:ident,)+) => (
+        impl<$($name:Decodable),*> Decodable for ($($name,)*) {
+            fn decode<D: Decoder>(d: &mut D) -> Result<($($name,)*), D::Error> {
+                let tuple_len: usize = count_idents!($($name,)*);
+                d.read_seq(|d, len| {
+                    if len != tuple_len {
+                        return Err(d.error("wrong tuple length"));
+                    }
+                    let mut i = 0;
+                    let ret = ($(try!( { Decodable::decode(d) as Result<$name,D::Error>} ),)*);
+                    return Ok(ret);
+                })
+            }
+        }
+        peel! { $($name,)* }
+    )
+}
+
+tuple! { T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, }
+
 macro_rules! array {
     ($zero:expr) => ();
     ($len:expr, $($idx:expr), *) => {

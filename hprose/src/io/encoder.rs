@@ -256,7 +256,7 @@ macro_rules! tuple {
     )
 }
 
-tuple! { L, K, J, I, H, G, F, E, D, C, B, A, }
+tuple! { T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, }
 
 macro_rules! array {
     () => ();
