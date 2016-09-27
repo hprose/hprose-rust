@@ -288,8 +288,8 @@ where K: Decodable + Hash + Eq,
             let state = Default::default();
             let mut map = HashMap::with_capacity_and_hasher(len, state);
             for _ in 0..len {
-                let key = Decodable::decode(d)?;
-                let val = Decodable::decode(d)?;
+                let key = try!(Decodable::decode(d));
+                let val = try!(Decodable::decode(d));
                 map.insert(key, val);
             }
             Ok(map)
