@@ -20,6 +20,8 @@
 #![feature(specialization)]
 #![feature(test)]
 
+extern crate test;
+
 extern crate time;
 extern crate uuid;
 

@@ -12,7 +12,7 @@
  *                                                        *
  * io util for Rust.                                      *
  *                                                        *
- * LastModified: Sep 25, 2016                             *
+ * LastModified: Sep 27, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -296,10 +296,9 @@ pub fn get_utcoff() -> i32 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use super::test::Bencher;
-
     use std::*;
+
+    use super::*;
 
     #[test]
     fn test_get_int_bytes() {

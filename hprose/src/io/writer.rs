@@ -12,12 +12,11 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 26, 2016                             *
+ * LastModified: Sep 27, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
-extern crate test;
 extern crate dtoa;
 
 use std::{i32, i64, f32, f64, ptr};
@@ -361,17 +360,16 @@ impl Encoder for Writer {
 mod tests {
     extern crate rand;
 
+    use std::{i32, i64, u64, f32, f64};
+    use std::collections::HashMap;
+    use std::marker::PhantomData;
+
     use self::rand::Rng;
 
     use super::*;
-    use super::super::{Hprose, Encodable};
-    use super::test::Bencher;
+    use super::super::Hprose;
 
-    use std::{i32, i64, u64, f32, f64};
-    use std::collections::{HashSet, HashMap};
-    use std::marker::PhantomData;
-
-    use time::{Tm, strptime};
+    use time::strptime;
 
     macro_rules! t {
         ($value:expr, $result:expr) => {
@@ -386,28 +384,11 @@ mod tests {
         t!(PhantomData::<()>, "n");
     }
 
-    #[bench]
-    fn benchmark_serialize_nil(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        b.bytes = 1;
-        b.iter(|| {
-            w.serialize(&());
-        });
-    }
 
     #[test]
     fn test_serialize_bool() {
         t!(true, "t");
         t!(false, "f");
-    }
-
-    #[bench]
-    fn benchmark_serialize_bool(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        b.bytes = 1;
-        b.iter(|| {
-            w.serialize(&true);
-        });
     }
 
     #[test]
@@ -428,16 +409,6 @@ mod tests {
             let i: i64 = rng.gen_range(i32::MAX as i64 + 1, i64::MAX);
             t!(i, format!("l{};", i));
         }
-    }
-
-    #[bench]
-    fn benchmark_serialize_int(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let mut i: i64 = 1;
-        b.iter(|| {
-            w.serialize(&i);
-            i += 1;
-        });
     }
 
     #[test]
@@ -484,32 +455,12 @@ mod tests {
         t!(f32::consts::PI, "d3.1415927;");
     }
 
-    #[bench]
-    fn benchmark_serialize_f32(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let mut i: f32 = 1.0;
-        b.iter(|| {
-            w.serialize(&i);
-            i += 1.1;
-        });
-    }
-
     #[test]
     fn test_serialize_f64() {
         t!(f64::NAN, "N");
         t!(f64::INFINITY, "I+");
         t!(f64::NEG_INFINITY, "I-");
         t!(f64::consts::PI, "d3.141592653589793;");
-    }
-
-    #[bench]
-    fn benchmark_serialize_f64(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let mut i: f64 = 1.0;
-        b.iter(|| {
-            w.serialize(&i);
-            i += 1.1;
-        });
     }
 
     #[test]
@@ -522,30 +473,10 @@ mod tests {
         t!("🇨🇳", r#"s4"🇨🇳""#);
     }
 
-    #[bench]
-    fn benchmark_serialize_str(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let s = "你好,hello!";
-        b.bytes = s.len() as u64;
-        b.iter(|| {
-            w.serialize(s);
-        });
-    }
-
     #[test]
     fn test_serialize_bytes() {
         t!("hello".as_bytes(), r#"b5"hello""#);
         t!("".as_bytes(), r#"b"""#);
-    }
-
-    #[bench]
-    fn benchmark_serialize_bytes(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let bytes = "你好,hello!".as_bytes();
-        b.bytes = bytes.len() as u64;
-        b.iter(|| {
-            w.serialize(bytes);
-        });
     }
 
     #[test]
@@ -565,80 +496,41 @@ mod tests {
         t!(strptime("1980-12-01 12:34:56.789456123+08:00", "%F %T.%f%z").unwrap(), "D19801201T123456.789456123;");
     }
 
-    #[bench]
-    fn benchmark_serialize_datetime(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let time = strptime("1980-01-01 12:34:56.789456123Z", "%F %T.%f%z").unwrap();
-        b.iter(|| {
-            w.serialize(&time);
-        });
-    }
-
     #[test]
     fn test_serialize_tuple() {
-        let mut w = Writer::new(true);
-        test(&mut w, (1, 3.14, true), "a3{1d3.14;t}");
+        t!((1, 3.14, true), "a3{1d3.14;t}");
     }
 
     #[test]
     fn test_serialize_array() {
-        t!([1, 2, 3] as [i32; 3], "a3{123}");
+        t!(&[1, 2, 3] as &[i32; 3], "a3{123}");
         t!([1.0, 2.0, 3.0], "a3{d1;d2;d3;}");
         t!([b'h', b'e', b'l', b'l', b'o'], r#"b5"hello""#);
-        t!([] as [u8; 0], r#"b"""#);
+        t!(&[] as &[u8; 0], r#"b"""#);
         t!([Hprose::I64(1), Hprose::F64(2.0), Hprose::Nil, Hprose::Boolean(true)], "a4{1d2;nt}");
         t!([true, false, true], "a3{tft}");
-        t!([] as [i32; 0], "a{}");
-        t!([] as [bool; 0], "a{}");
-        t!([] as [Hprose; 0], "a{}");
-    }
-
-    #[bench]
-    fn benchmark_serialize_int_array(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let array = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 1, 2, 3, 4, 0, 1, 2, 3, 4];
-        b.iter(|| {
-            w.serialize(&array);
-        });
+        t!(&[] as &[i32; 0], "a{}");
+        t!(&[] as &[bool; 0], "a{}");
+        t!(&[] as &[Hprose; 0], "a{}");
     }
 
     #[test]
     fn test_serialize_slice() {
-        let mut w = Writer::new(true);
-        test::<&[i32]>(&mut w, &[1, 2, 3], "a3{123}");
-        test::<&[f64]>(&mut w, &[1.0, 2.0, 3.0], "a3{d1;d2;d3;}");
-        test::<&[u8]>(&mut w, &[b'h', b'e', b'l', b'l', b'o'], r#"b5"hello""#);
-        test::<&[u8]>(&mut w, &[], r#"b"""#);
-        test::<&[Hprose]>(&mut w, &[Hprose::I64(1), Hprose::F64(2.0), Hprose::Nil, Hprose::Boolean(true)], "a4{1d2;nt}");
-        test::<&[bool]>(&mut w, &[true, false, true], "a3{tft}");
-        test::<&[i32]>(&mut w, &[], "a{}");
-        test::<&[bool]>(&mut w, &[], "a{}");
-        test::<&[Hprose]>(&mut w, &[], "a{}");
-    }
-
-    #[bench]
-    fn benchmark_serialize_int_slice(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let array = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 1, 2, 3, 4, 0, 1, 2, 3, 4];
-        let slice = &array[..];
-        b.iter(|| {
-            w.serialize(slice);
-        });
+        t!(&[1, 2, 3] as &[i32], "a3{123}");
+        t!(&[1.0, 2.0, 3.0] as &[f64], "a3{d1;d2;d3;}");
+        t!(&[b'h', b'e', b'l', b'l', b'o'] as &[u8], r#"b5"hello""#);
+        t!(&[] as &[u8], r#"b"""#);
+        t!(&[Hprose::I64(1), Hprose::F64(2.0), Hprose::Nil, Hprose::Boolean(true)] as &[Hprose], "a4{1d2;nt}");
+        t!(&[true, false, true] as &[bool], "a3{tft}");
+        t!(&[] as &[i32], "a{}");
+        t!(&[] as &[bool], "a{}");
+        t!(&[] as &[Hprose], "a{}");
     }
 
     #[test]
     fn test_serialize_vec() {
         t!(Vec::<Hprose>::new(), "a{}");
         t!(vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)], r#"a4{1s5"hello"nd3.14159;}"#);
-    }
-
-    #[bench]
-    fn benchmark_serialize_vec(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let v = vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)];
-        b.iter(|| {
-            w.serialize(&v);
-        });
     }
 
     #[test]
@@ -658,6 +550,123 @@ mod tests {
         ];
         let result = w.serialize(&map).string().unwrap();
         assert!(expected.contains(&result.as_str()), "expected one of {:?}, but {} found", expected, result)
+    }
+}
+
+#[cfg(test)]
+mod benchmarks {
+    use std::{i32, i64, u64, f32, f64};
+    use std::collections::HashMap;
+
+    use test::Bencher;
+    use time::strptime;
+
+    use super::*;
+    use super::super::Hprose;
+
+    #[bench]
+    fn benchmark_serialize_nil(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        b.bytes = 1;
+        b.iter(|| {
+            w.serialize(&());
+        });
+    }
+
+    #[bench]
+    fn benchmark_serialize_bool(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        b.bytes = 1;
+        b.iter(|| {
+            w.serialize(&true);
+        });
+    }
+
+    #[bench]
+    fn benchmark_serialize_int(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let mut i: i64 = 1;
+        b.iter(|| {
+            w.serialize(&i);
+            i += 1;
+        });
+    }
+
+    #[bench]
+    fn benchmark_serialize_f32(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let mut i: f32 = 1.0;
+        b.iter(|| {
+            w.serialize(&i);
+            i += 1.1;
+        });
+    }
+
+    #[bench]
+    fn benchmark_serialize_f64(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let mut i: f64 = 1.0;
+        b.iter(|| {
+            w.serialize(&i);
+            i += 1.1;
+        });
+    }
+
+    #[bench]
+    fn benchmark_serialize_str(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let s = "你好,hello!";
+        b.bytes = s.len() as u64;
+        b.iter(|| {
+            w.serialize(s);
+        });
+    }
+
+    #[bench]
+    fn benchmark_serialize_bytes(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let bytes = "你好,hello!".as_bytes();
+        b.bytes = bytes.len() as u64;
+        b.iter(|| {
+            w.serialize(bytes);
+        });
+    }
+
+    #[bench]
+    fn benchmark_serialize_datetime(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let time = strptime("1980-01-01 12:34:56.789456123Z", "%F %T.%f%z").unwrap();
+        b.iter(|| {
+            w.serialize(&time);
+        });
+    }
+
+    #[bench]
+    fn benchmark_serialize_int_array(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let array = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 1, 2, 3, 4, 0, 1, 2, 3, 4];
+        b.iter(|| {
+            w.serialize(&array);
+        });
+    }
+
+    #[bench]
+    fn benchmark_serialize_int_slice(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let array = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 1, 2, 3, 4, 0, 1, 2, 3, 4];
+        let slice = &array[..];
+        b.iter(|| {
+            w.serialize(slice);
+        });
+    }
+
+    #[bench]
+    fn benchmark_serialize_vec(b: &mut Bencher) {
+        let mut w = Writer::new(true);
+        let v = vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)];
+        b.iter(|| {
+            w.serialize(&v);
+        });
     }
 
     #[bench]
@@ -679,10 +688,5 @@ mod tests {
         b.iter(|| {
             w.serialize(&map);
         });
-    }
-
-    fn test<T: Encodable>(w: &mut Writer, v: T, expected: &str) {
-        w.clear();
-        assert_eq!(w.serialize(&v).string().unwrap(), expected);
     }
 }

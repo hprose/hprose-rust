@@ -235,7 +235,6 @@ macro_rules! tuple {
                     if len != tuple_len {
                         return Err(d.error("wrong tuple length"));
                     }
-                    let mut i = 0;
                     let ret = ($(try!( { Decodable::decode(d) as Result<$name,D::Error>} ),)*);
                     return Ok(ret);
                 })

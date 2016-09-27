@@ -324,14 +324,11 @@ pub fn cast_error(tag: u8, dst_type: &'static str) -> DecoderError {
 
 #[cfg(test)]
 mod tests {
-    use super::test::Bencher;
-    use super::super::*;
-
     use std::{i32, i64, u32, u64, f32, f64};
-    use std::collections::HashMap;
-    use std::mem::transmute;
 
     use time::{Timespec, at_utc, strptime};
+
+    use super::super::*;
 
     macro_rules! test {
         ($ty:ty, $writer:expr, $($value:expr, $result:expr),+) => (
@@ -373,15 +370,6 @@ mod tests {
         }
     }
 
-    #[bench]
-    fn benchmark_unserialize_bool(b: &mut Bencher) {
-        let bytes = Writer::new(true).serialize(&true).bytes();
-        b.bytes = bytes.len() as u64;
-        b.iter(|| {
-            Reader::new(&bytes, true).unserialize::<bool>().unwrap();
-        });
-    }
-
     #[test]
     fn test_unserialize_i64() {
         let int_value = String::from("1234567");
@@ -410,14 +398,6 @@ mod tests {
         }
     }
 
-    #[bench]
-    fn benchmark_unserialize_i64(b: &mut Bencher) {
-        let bytes = Writer::new(true).serialize(&12345).bytes();
-        b.bytes = bytes.len() as u64;
-        b.iter(|| {
-            Reader::new(&bytes, true).unserialize::<i64>().unwrap();
-        });
-    }
 
     #[test]
     fn test_unserialize_f32() {
@@ -492,6 +472,34 @@ mod tests {
 		strptime("1970-01-01 12:34:56.789456123+08:00", "%F %T.%f%z").unwrap(), "1970-01-01 12:34:56.789456123 +0800",
 		strptime("2006-09-09 12:34:56.789456123Z", "%F %T.%f%z").unwrap(), "2006-09-09 12:34:56.789456123 -0000"
         }
+    }
+}
+
+#[cfg(test)]
+mod benchmarks {
+    use std::{i32, i64, u64};
+    use std::collections::HashMap;
+
+    use test::Bencher;
+
+    use io::*;
+
+    #[bench]
+    fn benchmark_unserialize_bool(b: &mut Bencher) {
+        let bytes = Writer::new(true).serialize(&true).bytes();
+        b.bytes = bytes.len() as u64;
+        b.iter(|| {
+            Reader::new(&bytes, true).unserialize::<bool>().unwrap();
+        });
+    }
+
+    #[bench]
+    fn benchmark_unserialize_i64(b: &mut Bencher) {
+        let bytes = Writer::new(true).serialize(&12345).bytes();
+        b.bytes = bytes.len() as u64;
+        b.iter(|| {
+            Reader::new(&bytes, true).unserialize::<i64>().unwrap();
+        });
     }
 
     #[bench]
