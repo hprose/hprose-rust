@@ -369,14 +369,21 @@ mod tests {
 
     use std::{i32, i64, u64, f32, f64};
     use std::collections::{HashSet, HashMap};
+    use std::marker::PhantomData;
 
     use time::{Tm, strptime};
 
+    macro_rules! t {
+        ($value:expr, $result:expr) => {
+            assert_eq!(Writer::new(true).serialize(&$value).string().unwrap(), $result);
+        }
+    }
+
     #[test]
     fn test_serialize_nil() {
-        let mut w = Writer::new(true);
-        w.serialize(&());
-        assert_eq!(w.string().unwrap(), "n");
+        t!((), "n");
+        t!(None::<()>, "n");
+        t!(PhantomData::<()>, "n");
     }
 
     #[bench]
@@ -390,12 +397,8 @@ mod tests {
 
     #[test]
     fn test_serialize_bool() {
-        let mut w = Writer::new(true);
-        w.serialize(&true);
-        assert_eq!(w.string().unwrap(), "t");
-        w.clear();
-        w.serialize(&false);
-        assert_eq!(w.string().unwrap(), "f");
+        t!(true, "t");
+        t!(false, "f");
     }
 
     #[bench]
@@ -409,29 +412,21 @@ mod tests {
 
     #[test]
     fn test_serialize_digit() {
-        let mut w = Writer::new(true);
         for i in 0..10 {
-            w.clear();
-            w.serialize(&i);
-            assert_eq!(w.string().unwrap(), i.to_string());
+            t!(i, i.to_string());
         }
     }
 
     #[test]
     fn test_serialize_int() {
-        let mut w = Writer::new(true);
         let mut rng = rand::thread_rng();
         for _ in 0..100 {
-            w.clear();
-            let x: i32 = rng.gen_range(10, i32::MAX);
-            w.serialize(&x);
-            assert_eq!(w.string().unwrap(), format!("i{};", x));
+            let i: i32 = rng.gen_range(10, i32::MAX);
+            t!(i, format!("i{};", i));
         }
         for _ in 0..100 {
-            w.clear();
-            let x: i64 = rng.gen_range(i32::MAX as i64 + 1, i64::MAX);
-            w.serialize(&x);
-            assert_eq!(w.string().unwrap(), format!("l{};", x));
+            let i: i64 = rng.gen_range(i32::MAX as i64 + 1, i64::MAX);
+            t!(i, format!("l{};", i));
         }
     }
 
@@ -447,71 +442,46 @@ mod tests {
 
     #[test]
     fn test_serialize_i8() {
-        let mut w = Writer::new(true);
         for i in 0..10 {
-            w.clear();
-            w.serialize(&(i as i8));
-            assert_eq!(w.string().unwrap(), i.to_string());
+            t!(i, i.to_string());
         }
         for i in 10..128 {
-            w.clear();
-            w.serialize(&(i as i8));
-            assert_eq!(w.string().unwrap(), format!("i{};", i));
+            t!(i, format!("i{};", i));
         }
         for i in -128..0 {
-            w.clear();
-            w.serialize(&(i as i8));
-            assert_eq!(w.string().unwrap(), format!("i{};", i));
+            t!(i, format!("i{};", i));
         }
     }
 
     #[test]
     fn test_serialize_uint() {
-        let mut w = Writer::new(true);
         let mut rng = rand::thread_rng();
         for _ in 0..100 {
-            w.clear();
-            let x: u32 = rng.gen_range(10, i32::MAX as u32);
-            w.serialize(&x);
-            assert_eq!(w.string().unwrap(), format!("i{};", x));
+            let u: u32 = rng.gen_range(10, i32::MAX as u32);
+            t!(u, format!("i{};", u));
         }
         for _ in 0..100 {
-            w.clear();
-            let x: u64 = rng.gen_range(i32::MAX as u64 + 1, u64::MAX);
-            w.serialize(&x);
-            assert_eq!(w.string().unwrap(), format!("l{};", x));
+            let u: u64 = rng.gen_range(i32::MAX as u64 + 1, u64::MAX);
+            t!(u, format!("l{};", u));
         }
     }
 
     #[test]
     fn test_serialize_u8() {
-        let mut w = Writer::new(true);
         for u in 0..10 {
-            w.clear();
-            w.serialize(&(u as u8));
-            assert_eq!(w.string().unwrap(), u.to_string());
+            t!(u, u.to_string());
         }
         for u in 10..256 {
-            w.clear();
-            w.serialize(&(u as u8));
-            assert_eq!(w.string().unwrap(), format!("i{};", u));
+            t!(u, format!("i{};", u));
         }
     }
 
     #[test]
     fn test_serialize_f32() {
-        let test_cases = [
-            (f32::NAN, "N"),
-            (f32::INFINITY, "I+"),
-            (f32::NEG_INFINITY, "I-"),
-            (f32::consts::PI, "d3.1415927;")
-        ];
-        let mut w = Writer::new(true);
-        for test_case in &test_cases {
-            w.serialize(&test_case.0);
-            assert_eq!(w.string().unwrap(), test_case.1);
-            w.clear();
-        }
+        t!(f32::NAN, "N");
+        t!(f32::INFINITY, "I+");
+        t!(f32::NEG_INFINITY, "I-");
+        t!(f32::consts::PI, "d3.1415927;");
     }
 
     #[bench]
@@ -526,18 +496,10 @@ mod tests {
 
     #[test]
     fn test_serialize_f64() {
-        let test_cases = [
-            (f64::NAN, "N"),
-            (f64::INFINITY, "I+"),
-            (f64::NEG_INFINITY, "I-"),
-            (f64::consts::PI, "d3.141592653589793;")
-        ];
-        let mut w = Writer::new(true);
-        for test_case in &test_cases {
-            w.serialize(&test_case.0);
-            assert_eq!(w.string().unwrap(), test_case.1);
-            w.clear();
-        }
+        t!(f64::NAN, "N");
+        t!(f64::INFINITY, "I+");
+        t!(f64::NEG_INFINITY, "I-");
+        t!(f64::consts::PI, "d3.141592653589793;");
     }
 
     #[bench]
@@ -552,20 +514,12 @@ mod tests {
 
     #[test]
     fn test_serialize_str() {
-        let test_cases = [
-            ("", "e"),
-            ("π", "uπ"),
-            ("你", "u你"),
-            ("你好", r#"s2"你好""#),
-            ("你好啊,hello!", r#"s10"你好啊,hello!""#),
-            ("🇨🇳", r#"s4"🇨🇳""#)
-        ];
-        let mut w = Writer::new(true);
-        for test_case in &test_cases {
-            w.serialize(test_case.0);
-            assert_eq!(w.string().unwrap(), test_case.1);
-            w.clear();
-        }
+        t!("", "e");
+        t!("π", "uπ");
+        t!("你", "u你");
+        t!("你好", r#"s2"你好""#);
+        t!("你好啊,hello!", r#"s10"你好啊,hello!""#);
+        t!("🇨🇳", r#"s4"🇨🇳""#);
     }
 
     #[bench]
@@ -580,16 +534,8 @@ mod tests {
 
     #[test]
     fn test_serialize_bytes() {
-        let test_cases = [
-            ("hello".as_bytes(), r#"b5"hello""#),
-            ("".as_bytes(), r#"b"""#)
-        ];
-        let mut w = Writer::new(true);
-        for test_case in &test_cases {
-            w.serialize(test_case.0);
-            assert_eq!(w.string().unwrap(), test_case.1);
-            w.clear();
-        }
+        t!("hello".as_bytes(), r#"b5"hello""#);
+        t!("".as_bytes(), r#"b"""#);
     }
 
     #[bench]
@@ -604,27 +550,19 @@ mod tests {
 
     #[test]
     fn test_serialize_datetime() {
-        let test_cases = [
-            (strptime("1980-12-01", "%F"), "D19801201Z"),
-            (strptime("1970-01-01 12:34:56Z", "%F %T%z"), "T123456Z"),
-            (strptime("1970-01-01 12:34:56.789000000Z", "%F %T.%f%z"), "T123456.789Z"),
-            (strptime("1970-01-01 12:34:56.789456000Z", "%F %T.%f%z"), "T123456.789456Z"),
-            (strptime("1970-01-01 12:34:56.789456123Z", "%F %T.%f%z"), "T123456.789456123Z"),
-            (strptime("1980-12-01 12:34:56Z", "%F %T%z"), "D19801201T123456Z"),
-            (strptime("1980-12-01 12:34:56.789000000Z", "%F %T.%f%z"), "D19801201T123456.789Z"),
-            (strptime("1980-12-01 12:34:56.789456000Z", "%F %T.%f%z"), "D19801201T123456.789456Z"),
-            (strptime("1980-12-01 12:34:56.789456123Z", "%F %T.%f%z"), "D19801201T123456.789456123Z"),
-            (strptime("1980-12-01+08:00", "%F%z"), "D19801201;"),
-            (strptime("1970-01-01 12:34:56+08:00", "%F %T%z"), "T123456;"),
-            (strptime("1980-12-01 12:34:56+08:00", "%F %T%z"), "D19801201T123456;"),
-            (strptime("1980-12-01 12:34:56.789456123+08:00", "%F %T.%f%z"), "D19801201T123456.789456123;")
-        ];
-        let mut w = Writer::new(true);
-        for test_case in &test_cases {
-            w.serialize(&test_case.0.unwrap());
-            assert_eq!(w.string().unwrap(), test_case.1);
-            w.clear();
-        }
+        t!(strptime("1980-12-01", "%F").unwrap(), "D19801201Z");
+        t!(strptime("1970-01-01 12:34:56Z", "%F %T%z").unwrap(), "T123456Z");
+        t!(strptime("1970-01-01 12:34:56.789000000Z", "%F %T.%f%z").unwrap(), "T123456.789Z");
+        t!(strptime("1970-01-01 12:34:56.789456000Z", "%F %T.%f%z").unwrap(), "T123456.789456Z");
+        t!(strptime("1970-01-01 12:34:56.789456123Z", "%F %T.%f%z").unwrap(), "T123456.789456123Z");
+        t!(strptime("1980-12-01 12:34:56Z", "%F %T%z").unwrap(), "D19801201T123456Z");
+        t!(strptime("1980-12-01 12:34:56.789000000Z", "%F %T.%f%z").unwrap(), "D19801201T123456.789Z");
+        t!(strptime("1980-12-01 12:34:56.789456000Z", "%F %T.%f%z").unwrap(), "D19801201T123456.789456Z");
+        t!(strptime("1980-12-01 12:34:56.789456123Z", "%F %T.%f%z").unwrap(), "D19801201T123456.789456123Z");
+        t!(strptime("1980-12-01+08:00", "%F%z").unwrap(), "D19801201;");
+        t!(strptime("1970-01-01 12:34:56+08:00", "%F %T%z").unwrap(), "T123456;");
+        t!(strptime("1980-12-01 12:34:56+08:00", "%F %T%z").unwrap(), "D19801201T123456;");
+        t!(strptime("1980-12-01 12:34:56.789456123+08:00", "%F %T.%f%z").unwrap(), "D19801201T123456.789456123;");
     }
 
     #[bench]
@@ -644,16 +582,15 @@ mod tests {
 
     #[test]
     fn test_serialize_array() {
-        let mut w = Writer::new(true);
-        test::<[i32; 3]>(&mut w, [1, 2, 3], "a3{123}");
-        test(&mut w, [1.0, 2.0, 3.0], "a3{d1;d2;d3;}");
-        test(&mut w, [b'h', b'e', b'l', b'l', b'o'], r#"b5"hello""#);
-        test::<[u8; 0]>(&mut w, [], r#"b"""#);
-        test(&mut w, [Hprose::I64(1), Hprose::F64(2.0), Hprose::Nil, Hprose::Boolean(true)], "a4{1d2;nt}");
-        test(&mut w, [true, false, true], "a3{tft}");
-        test::<[i32; 0]>(&mut w, [], "a{}");
-        test::<[bool; 0]>(&mut w, [], "a{}");
-        test::<[Hprose; 0]>(&mut w, [], "a{}");
+        t!([1, 2, 3] as [i32; 3], "a3{123}");
+        t!([1.0, 2.0, 3.0], "a3{d1;d2;d3;}");
+        t!([b'h', b'e', b'l', b'l', b'o'], r#"b5"hello""#);
+        t!([] as [u8; 0], r#"b"""#);
+        t!([Hprose::I64(1), Hprose::F64(2.0), Hprose::Nil, Hprose::Boolean(true)], "a4{1d2;nt}");
+        t!([true, false, true], "a3{tft}");
+        t!([] as [i32; 0], "a{}");
+        t!([] as [bool; 0], "a{}");
+        t!([] as [Hprose; 0], "a{}");
     }
 
     #[bench]
@@ -691,12 +628,8 @@ mod tests {
 
     #[test]
     fn test_serialize_vec() {
-        let mut w = Writer::new(true);
-        let mut v: Vec<Hprose> = Vec::new();
-        assert_eq!(w.serialize(&v).string().unwrap(), "a{}");
-        w.clear();
-        let v = vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)];
-        assert_eq!(w.serialize(&v).string().unwrap(), r#"a4{1s5"hello"nd3.14159;}"#);
+        t!(Vec::<Hprose>::new(), "a{}");
+        t!(vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)], r#"a4{1s5"hello"nd3.14159;}"#);
     }
 
     #[bench]
