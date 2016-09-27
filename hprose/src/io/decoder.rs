@@ -27,6 +27,8 @@ use std::collections::HashMap;
 
 use time::Tm;
 
+use super::Bytes;
+
 pub trait Decoder {
     type Error;
 
@@ -39,7 +41,7 @@ pub trait Decoder {
     fn read_f64(&mut self) -> Result<f64, Self::Error>;
     fn read_char(&mut self) -> Result<char, Self::Error>;
     fn read_string(&mut self) -> Result<String, Self::Error>;
-    fn read_bytes(&mut self) -> Result<Vec<u8>, Self::Error>;
+    fn read_bytes(&mut self) -> Result<Bytes, Self::Error>;
 
     // Extern crate types:
     fn read_datetime_without_tag(&mut self) -> Result<Tm, Self::Error>;
@@ -49,7 +51,7 @@ pub trait Decoder {
 
 
     // Specialized types:
-    fn read_option<T, F>(&mut self, f: F) -> Result<T, Self::Error>
+    fn read_option<T, F>(&mut self, mut f: F) -> Result<T, Self::Error>
         where F: FnMut(&mut Self, bool) -> Result<T, Self::Error>;
 
     fn read_seq<T, F>(&mut self, f: F) -> Result<T, Self::Error>
@@ -225,7 +227,7 @@ impl<T: Decodable> Decodable for Option<T> {
     fn decode<D: Decoder>(d: &mut D) -> Result<Option<T>, D::Error> {
         d.read_option(|d, b| {
             if b {
-                Ok(Some(Decodable::decode(d)?))
+                Ok(Some(try!(Decodable::decode(d))))
             } else {
                 Ok(None)
             }

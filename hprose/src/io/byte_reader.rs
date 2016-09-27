@@ -70,6 +70,13 @@ impl<'a> ByteReader<'a> {
         }
     }
 
+    #[inline]
+    pub fn unread_byte(&mut self) {
+        if self.off > 0 {
+            self.off -= 1;
+        }
+    }
+
     pub fn read_i64_with_tag(&mut self, tag: u8) -> ParserResult<i64> {
         let mut i: i64 = 0;
         let mut b = try!(self.read_byte());

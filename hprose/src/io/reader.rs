@@ -250,8 +250,14 @@ impl<'a> Decoder for Reader<'a> {
         Ok(tm)
     }
 
-    fn read_option<T, F>(&mut self, f: F) -> DecodeResult<T> where F: FnMut(&mut Reader<'a>, bool) -> DecodeResult<T> {
-        unimplemented!()
+    fn read_option<T, F>(&mut self, mut f: F) -> DecodeResult<T> where F: FnMut(&mut Reader<'a>, bool) -> DecodeResult<T> {
+        let b = try!(self.byte_reader.read_byte());
+        if b == TAG_NULL {
+            f(self, false)
+        } else {
+            self.byte_reader.unread_byte();
+            f(self, true)
+        }
     }
 
     fn read_seq<T, F>(&mut self, f: F) -> DecodeResult<T> where F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T> {
