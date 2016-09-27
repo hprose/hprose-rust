@@ -8,29 +8,40 @@
 \**********************************************************/
 /**********************************************************\
  *                                                        *
- * io/decoders/mod.rs                                     *
+ * io/decoders/seq_decoder.rs                             *
  *                                                        *
- * hprose io decoders module for Rust.                    *
+ * hprose seq decoder for Rust.                           *
  *                                                        *
  * LastModified: Sep 27, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
-mod bool_decoder;
-mod i64_decoder;
-mod u64_decoder;
-mod f32_decoder;
-mod f64_decoder;
-mod string_decoder;
-mod seq_decoder;
-mod map_decoder;
+use io::{Reader, Decoder, Decodable, DecoderError};
+use io::tags::*;
+use io::reader::cast_error;
 
-pub use self::bool_decoder::bool_decode;
-pub use self::i64_decoder::i64_decode;
-pub use self::u64_decoder::u64_decode;
-pub use self::f32_decoder::f32_decode;
-pub use self::f64_decoder::f64_decode;
-pub use self::string_decoder::string_decode;
-pub use self::map_decoder::map_decode;
-pub use self::seq_decoder::seq_decode;
+use std::{result, str};
+
+type Result<T> = result::Result<T, DecoderError>;
+
+pub fn seq_decode<'a, T, F>(r: &mut Reader<'a>, tag: u8, f: F) -> Result<T>
+    where T: Decodable, F: FnOnce(&mut Reader<'a>, usize) -> Result<T>
+{
+    match tag {
+        TAG_BYTES => read_bytes_as_seq(r),
+        TAG_LIST => read_list_as_seq(r, f),
+        TAG_REF => r.read_ref(),
+        _ => Err(cast_error(tag, "seq"))
+    }
+}
+
+fn read_bytes_as_seq<T>(r: &mut Reader) -> Result<T> {
+    unimplemented!()
+}
+
+fn read_list_as_seq<'a, T, F>(r: &mut Reader<'a>, f: F) -> Result<T>
+    where F: FnOnce(&mut Reader<'a>, usize) -> Result<T>
+{
+    r.read_count().and_then(|len| f(r, len))
+}

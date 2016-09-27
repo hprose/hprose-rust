@@ -260,8 +260,16 @@ impl<'a> Decoder for Reader<'a> {
         }
     }
 
-    fn read_seq<T, F>(&mut self, f: F) -> DecodeResult<T> where F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T> {
-        unimplemented!()
+    fn read_seq<T, F>(&mut self, f: F) -> DecodeResult<T>
+        where T: Decodable, F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
+    {
+        let b = try!(self.byte_reader.read_byte());
+        seq_decode(self, b, |d, len| f(d, len))
+        //        let len = array.len();
+        //        for v in array.into_iter().rev() {
+        //            self.stack.push(v);
+        //        }
+        //        f(self, len)
     }
 
     fn read_map<T, F>(&mut self, f: F) -> DecodeResult<T>

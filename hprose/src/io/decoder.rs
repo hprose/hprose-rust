@@ -55,7 +55,7 @@ pub trait Decoder {
         where F: FnMut(&mut Self, bool) -> Result<T, Self::Error>;
 
     fn read_seq<T, F>(&mut self, f: F) -> Result<T, Self::Error>
-        where F: FnOnce(&mut Self, usize) -> Result<T, Self::Error>;
+        where T: Decodable, F: FnOnce(&mut Self, usize) -> Result<T, Self::Error>;
 
     fn read_map<T, F>(&mut self, f: F) -> Result<T, Self::Error>
         where T: Decodable, F: FnOnce(&mut Self, usize) -> Result<T, Self::Error>;
@@ -201,6 +201,18 @@ impl<T: Decodable + Copy> Decodable for Cell<T> {
 impl<T: Decodable> Decodable for RefCell<T> {
     fn decode<D: Decoder>(d: &mut D) -> Result<RefCell<T>, D::Error> {
         Ok(RefCell::new(try!(Decodable::decode(d))))
+    }
+}
+
+impl<T: Decodable> Decodable for Vec<T> {
+    fn decode<D: Decoder>(d: &mut D) -> Result<Vec<T>, D::Error> {
+        d.read_seq(|d, len| {
+            let mut v = Vec::with_capacity(len);
+            for _ in 0..len {
+                v.push(try!(Decodable::decode(d)));
+            }
+            Ok(v)
+        })
     }
 }
 
