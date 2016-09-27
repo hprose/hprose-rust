@@ -504,6 +504,15 @@ mod tests {
     }
 
     #[bench]
+    fn benchmark_unserialize_int_array(b: &mut Bencher) {
+        let bytes = Writer::new(true).serialize::<[i32; 5]>(&[1, 2, 3, 4, 5]).bytes();
+        b.bytes = bytes.len() as u64;
+        b.iter(|| {
+            Reader::new(&bytes, true).unserialize::<[i32; 5]>().unwrap();
+        });
+    }
+
+    #[bench]
     fn benchmark_unserialize_map(b: &mut Bencher) {
         let mut map = HashMap::new();
         map.insert("name", "Tom");
