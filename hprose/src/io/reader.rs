@@ -36,7 +36,8 @@ pub enum DecoderError {
     ParserError(ParserError),
     CastError(&'static str, &'static str),
     UnexpectedTag(u8, Option<Bytes>),
-    ReferenceError
+    ReferenceError,
+    ApplicationError(String),
 }
 
 impl convert::From<ParserError> for DecoderError {
@@ -285,6 +286,10 @@ impl<'a> Decoder for Reader<'a> {
             Some(ref mut r) => Reader::new(r.read(i as usize), true).unserialize::<T>(),
             None => Err(DecoderError::ReferenceError)
         }
+    }
+
+    fn error(&mut self, err: &str) -> DecoderError {
+        DecoderError::ApplicationError(err.to_string())
     }
 }
 

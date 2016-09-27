@@ -62,6 +62,9 @@ pub trait Decoder {
 
     // Reference:
     fn read_ref<T: Decodable>(&mut self) -> Result<T, Self::Error>;
+
+    // Failure
+    fn error(&mut self, err: &str) -> Self::Error;
 }
 
 pub trait Decodable: Sized {
@@ -170,7 +173,7 @@ impl<T: Decodable> Decodable for Box<T> {
     }
 }
 
-impl< T: Decodable> Decodable for Box<[T]> {
+impl<T: Decodable> Decodable for Box<[T]> {
     fn decode<D: Decoder>(d: &mut D) -> Result<Box<[T]>, D::Error> {
         let v: Vec<T> = try!(Decodable::decode(d));
         Ok(v.into_boxed_slice())
@@ -210,6 +213,25 @@ impl<T: Decodable> Decodable for RefCell<T> {
         Ok(RefCell::new(try!(Decodable::decode(d))))
     }
 }
+
+macro_rules! array {
+    ($zero:expr) => ();
+    ($len:expr, $($idx:expr), *) => {
+        impl<T:Decodable> Decodable for [T; $len] {
+            fn decode<D: Decoder>(d: &mut D) -> Result<[T; $len], D::Error> {
+                d.read_seq(|d, len| {
+                    if len != $len {
+                        return Err(d.error("wrong array length"));
+                    }
+                    Ok([$(try!({$idx; Decodable::decode(d)} )),+])
+                })
+            }
+        }
+        array! { $($idx),* }
+    }
+}
+
+array! { 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
 
 impl<T: Decodable> Decodable for Vec<T> {
     fn decode<D: Decoder>(d: &mut D) -> Result<Vec<T>, D::Error> {

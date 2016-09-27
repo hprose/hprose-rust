@@ -12,7 +12,7 @@
  *                                                        *
  * hprose encoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 25, 2016                             *
+ * LastModified: Sep 27, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -260,27 +260,27 @@ tuple! { L, K, J, I, H, G, F, E, D, C, B, A, }
 
 macro_rules! array {
     () => ();
-    ($($size:expr), +) => (
-        $(impl<T: Encodable> Encodable for [T;($size)] {
+    ($($len:expr), +) => {
+        $(impl<T: Encodable> Encodable for [T;($len)] {
             default fn encode<W: Encoder>(&self, w: &mut W) {
                 w.set_ref(ptr::null::<&[T]>());
-                w.write_seq(self.len(), |w| {
+                w.write_seq($len, |w| {
                     for e in self {
                         e.encode(w);
                     }
                 });
             }
         }
-        impl Encodable for [u8;($size)] {
+        impl Encodable for [u8;($len)] {
              fn encode<W: Encoder>(&self, w: &mut W) {
                 w.set_ref(ptr::null::<&[u8]>());
                 w.write_bytes(self);
             }
         })+
-    )
+    }
 }
 
-array! { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 }
+array! { 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
 
 use std::ptr;
 
