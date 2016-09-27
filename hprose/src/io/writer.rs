@@ -360,7 +360,7 @@ impl Encoder for Writer {
 mod tests {
     extern crate rand;
 
-    use std::{i32, i64, u64, f32, f64};
+    use std::*;
     use std::collections::HashMap;
     use std::marker::PhantomData;
 
@@ -425,6 +425,25 @@ mod tests {
     }
 
     #[test]
+    fn test_serialize_i16() {
+        t!(i16::MIN, format!("i{};", i16::MIN));
+        t!(i16::MAX, format!("i{};", i16::MAX));
+    }
+
+    #[test]
+    fn test_serialize_i32() {
+        t!(i32::MIN, format!("i{};", i32::MIN));
+        t!(i32::MAX, format!("i{};", i32::MAX));
+    }
+
+    #[test]
+    fn test_serialize_i64() {
+        t!(i32::MAX as i64, format!("i{};", i32::MAX));
+        t!(i64::MIN, format!("l{};", i64::MIN));
+        t!(i64::MAX, format!("l{};", i64::MAX));
+    }
+
+    #[test]
     fn test_serialize_uint() {
         let mut rng = rand::thread_rng();
         for _ in 0..100 {
@@ -445,6 +464,22 @@ mod tests {
         for u in 10..256 {
             t!(u, format!("i{};", u));
         }
+    }
+
+    #[test]
+    fn test_serialize_u16() {
+        t!(u16::MAX, format!("i{};", u16::MAX));
+    }
+
+    #[test]
+    fn test_serialize_u32() {
+        t!(u32::MAX, format!("l{};", u32::MAX));
+    }
+
+    #[test]
+    fn test_serialize_u64() {
+        t!(u32::MAX as u64, format!("l{};", u32::MAX));
+        t!(u64::MAX, format!("l{};", u64::MAX));
     }
 
     #[test]
@@ -504,11 +539,11 @@ mod tests {
     #[test]
     fn test_serialize_array() {
         t!(&[1, 2, 3] as &[i32; 3], "a3{123}");
-        t!([1.0, 2.0, 3.0], "a3{d1;d2;d3;}");
-        t!([b'h', b'e', b'l', b'l', b'o'], r#"b5"hello""#);
+        t!(&[1.0, 2.0, 3.0], "a3{d1;d2;d3;}");
+        t!(&[b'h', b'e', b'l', b'l', b'o'], r#"b5"hello""#);
         t!(&[] as &[u8; 0], r#"b"""#);
-        t!([Hprose::I64(1), Hprose::F64(2.0), Hprose::Nil, Hprose::Boolean(true)], "a4{1d2;nt}");
-        t!([true, false, true], "a3{tft}");
+        t!(&[Hprose::I64(1), Hprose::F64(2.0), Hprose::Nil, Hprose::Boolean(true)], "a4{1d2;nt}");
+        t!(&[true, false, true], "a3{tft}");
         t!(&[] as &[i32; 0], "a{}");
         t!(&[] as &[bool; 0], "a{}");
         t!(&[] as &[Hprose; 0], "a{}");
@@ -564,22 +599,25 @@ mod benchmarks {
     use super::*;
     use super::super::Hprose;
 
+    macro_rules! b {
+        ($b:expr, $value:expr) => {
+            let mut w = Writer::new(true);
+            let v = $value;
+            $b.bytes = w.serialize(&v).bytes().len() as u64;
+            $b.iter(|| {
+                w.serialize(&v);
+            });
+        }
+    }
+
     #[bench]
     fn benchmark_serialize_nil(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        b.bytes = 1;
-        b.iter(|| {
-            w.serialize(&());
-        });
+        b!(b, ());
     }
 
     #[bench]
     fn benchmark_serialize_bool(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        b.bytes = 1;
-        b.iter(|| {
-            w.serialize(&true);
-        });
+        b!(b, true);
     }
 
     #[bench]
@@ -614,79 +652,46 @@ mod benchmarks {
 
     #[bench]
     fn benchmark_serialize_str(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let s = "你好,hello!";
-        b.bytes = s.len() as u64;
-        b.iter(|| {
-            w.serialize(s);
-        });
+        b!(b, "你好,hello!");
     }
 
     #[bench]
     fn benchmark_serialize_bytes(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let bytes = "你好,hello!".as_bytes();
-        b.bytes = bytes.len() as u64;
-        b.iter(|| {
-            w.serialize(bytes);
-        });
+        b!(b, "你好,hello!".as_bytes());
     }
 
     #[bench]
     fn benchmark_serialize_datetime(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let time = strptime("1980-01-01 12:34:56.789456123Z", "%F %T.%f%z").unwrap();
-        b.iter(|| {
-            w.serialize(&time);
-        });
+        b!(b, strptime("1980-01-01 12:34:56.789456123Z", "%F %T.%f%z").unwrap());
     }
 
     #[bench]
     fn benchmark_serialize_int_array(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let array = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 1, 2, 3, 4, 0, 1, 2, 3, 4];
-        b.iter(|| {
-            w.serialize(&array);
-        });
+        b!(b, &[0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 1, 2, 3, 4, 0, 1, 2, 3, 4] as &[i32; 19]);
     }
 
     #[bench]
     fn benchmark_serialize_int_slice(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let array = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 1, 2, 3, 4, 0, 1, 2, 3, 4];
-        let slice = &array[..];
-        b.iter(|| {
-            w.serialize(slice);
-        });
+        b!(b, &[0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 1, 2, 3, 4, 0, 1, 2, 3, 4] as &[i32]);
     }
 
     #[bench]
     fn benchmark_serialize_vec(b: &mut Bencher) {
-        let mut w = Writer::new(true);
-        let v = vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)];
-        b.iter(|| {
-            w.serialize(&v);
-        });
+        b!(b,  vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)]);
     }
 
     #[bench]
     fn benchmark_serialize_empty_map(b: &mut Bencher) {
-        let mut w = Writer::new(true);
         let map: HashMap<i32, i32> = HashMap::new();
-        b.iter(|| {
-            w.serialize(&map);
-        });
+        b!(b, map);
     }
 
     #[bench]
     fn benchmark_serialize_string_key_map(b: &mut Bencher) {
-        let mut w = Writer::new(true);
         let mut map = HashMap::new();
         map.insert("name", Hprose::String(String::from("Tom")));
         map.insert("age", Hprose::I64(36));
         map.insert("male", Hprose::Boolean(true));
-        b.iter(|| {
-            w.serialize(&map);
-        });
+        b!(b, map);
     }
 }

@@ -484,51 +484,42 @@ mod benchmarks {
 
     use io::*;
 
+    macro_rules! b {
+        ($b:expr, $ty:ty, $value:expr) => {
+            let v: $ty = $value;
+            let bytes = Writer::new(true).serialize(&v).bytes();
+            $b.bytes = bytes.len() as u64;
+            $b.iter(|| {
+                Reader::new(&bytes, true).unserialize::<$ty>().unwrap();
+            });
+        }
+    }
+
     #[bench]
     fn benchmark_unserialize_bool(b: &mut Bencher) {
-        let bytes = Writer::new(true).serialize(&true).bytes();
-        b.bytes = bytes.len() as u64;
-        b.iter(|| {
-            Reader::new(&bytes, true).unserialize::<bool>().unwrap();
-        });
+        b!(b, bool, true);
     }
 
     #[bench]
     fn benchmark_unserialize_i64(b: &mut Bencher) {
-        let bytes = Writer::new(true).serialize(&12345).bytes();
-        b.bytes = bytes.len() as u64;
-        b.iter(|| {
-            Reader::new(&bytes, true).unserialize::<i64>().unwrap();
-        });
+        b!(b, i64, 12345);
     }
 
     #[bench]
-    fn benchmark_unserialize_str(b: &mut Bencher) {
-        let bytes = Writer::new(true).serialize("你好，🇨🇳").bytes();
-        b.bytes = bytes.len() as u64;
-        b.iter(|| {
-            Reader::new(&bytes, true).unserialize::<String>().unwrap();
-        });
+    fn benchmark_unserialize_string(b: &mut Bencher) {
+        b!(b, String, "你好，🇨🇳".to_string());
     }
 
     #[bench]
     fn benchmark_unserialize_int_array(b: &mut Bencher) {
-        let bytes = Writer::new(true).serialize::<[i32; 5]>(&[1, 2, 3, 4, 5]).bytes();
-        b.bytes = bytes.len() as u64;
-        b.iter(|| {
-            Reader::new(&bytes, true).unserialize::<[i32; 5]>().unwrap();
-        });
+        b!(b, [i32; 5], [1, 2, 3, 4, 5]);
     }
 
     #[bench]
     fn benchmark_unserialize_map(b: &mut Bencher) {
         let mut map = HashMap::new();
-        map.insert("name", "Tom");
-        map.insert("国家", "🇨🇳");
-        let bytes = Writer::new(true).serialize(&map).bytes();
-        b.bytes = bytes.len() as u64;
-        b.iter(|| {
-            Reader::new(&bytes, true).unserialize::<HashMap<String, String>>().unwrap();
-        });
+        map.insert("name".to_string(), "Tom".to_string());
+        map.insert("国家".to_string(), "🇨🇳".to_string());
+        b!(b, HashMap<String, String>, map);
     }
 }
