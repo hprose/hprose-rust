@@ -29,7 +29,6 @@ pub fn map_decode<'a, T, F>(r: &mut Reader<'a>, tag: u8, f: F) -> Result<T>
     where T: Decodable, F: FnOnce(&mut Reader<'a>, usize) -> Result<T>
 {
     match tag {
-        //        TAG_NULL | TAG_EMPTY => Ok(),
         TAG_LIST => read_list_as_map(r),
         TAG_MAP => read_map(r, f),
         TAG_CLASS => read_struct_meta(r),
@@ -40,16 +39,18 @@ pub fn map_decode<'a, T, F>(r: &mut Reader<'a>, tag: u8, f: F) -> Result<T>
 }
 
 fn read_list_as_map<T>(r: &mut Reader) -> Result<T> {
-//    r.byte_reader.read_count()
-//        .map_err(|e| DecoderError::ParserError(e))
-//        .and_then(|len| ())
     unimplemented!()
 }
 
 fn read_map<'a, T, F>(r: &mut Reader<'a>, f: F) -> Result<T>
     where F: FnOnce(&mut Reader<'a>, usize) -> Result<T>
 {
-    r.read_count().and_then(|len| f(r, len))
+    let start = r.byte_reader.off - 1;
+    let len = try!(r.read_count());
+    let map = try!(f(r, len));
+    let reference = &r.byte_reader.buf[start..r.byte_reader.off];
+    r.refer.as_mut().map(|mut r| r.set(reference));
+    Ok(map)
 }
 
 fn read_struct_meta<T>(r: &mut Reader) -> Result<T> {

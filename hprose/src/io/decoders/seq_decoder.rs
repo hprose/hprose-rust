@@ -43,5 +43,10 @@ fn read_bytes_as_seq<T>(r: &mut Reader) -> Result<T> {
 fn read_list_as_seq<'a, T, F>(r: &mut Reader<'a>, f: F) -> Result<T>
     where F: FnOnce(&mut Reader<'a>, usize) -> Result<T>
 {
-    r.read_count().and_then(|len| f(r, len))
+    let start = r.byte_reader.off - 1;
+    let len = try!(r.read_count());
+    let seq = try!(f(r, len));
+    let reference = &r.byte_reader.buf[start..r.byte_reader.off];
+    r.refer.as_mut().map(|mut r| r.set(reference));
+    Ok(seq)
 }
