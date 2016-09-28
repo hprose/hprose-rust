@@ -88,6 +88,11 @@ impl Writer {
         self.byte_writer.write_byte(TAG_QUOTE);
     }
 
+    #[inline]
+    fn write_empty_bytes(&mut self) {
+        self.byte_writer.write(&[TAG_BYTES, TAG_QUOTE, TAG_QUOTE]);
+    }
+
     fn write_date(&mut self, buf: &mut [u8], year: i32, month: i32, day: i32) {
         self.byte_writer.write_byte(TAG_DATE);
         self.byte_writer.write(get_date_bytes(buf, year, month, day));
@@ -255,13 +260,13 @@ impl Encoder for Writer {
     }
 
     fn write_bytes(&mut self, bytes: &[u8]) {
-        let count = bytes.len();
-        if count == 0 {
-            self.byte_writer.write(&[TAG_BYTES, TAG_QUOTE, TAG_QUOTE]);
+        let len = bytes.len();
+        if len == 0 {
+            self.write_empty_bytes();
             return
         }
         self.byte_writer.write_byte(TAG_BYTES);
-        self.byte_writer.write(get_int_bytes(&mut [0; 20], count as i64));
+        self.byte_writer.write(get_uint_bytes(&mut [0; 20], len as u64));
         self.byte_writer.write_byte(TAG_QUOTE);
         self.byte_writer.write(bytes);
         self.byte_writer.write_byte(TAG_QUOTE);
@@ -334,8 +339,8 @@ impl Encoder for Writer {
 
     #[inline]
     fn write_ref<T>(&mut self, p: *const T) -> bool {
-        let buf = &mut self.byte_writer.buf;
-        self.refer.as_mut().map_or(false, |r| r.write(buf, p))
+        let w = &mut self.byte_writer;
+        self.refer.as_mut().map_or(false, |r| r.write(w, p))
     }
 
     #[inline]
