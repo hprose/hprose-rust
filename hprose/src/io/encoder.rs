@@ -12,7 +12,7 @@
  *                                                        *
  * hprose encoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 27, 2016                             *
+ * LastModified: Sep 28, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -27,6 +27,7 @@ use std::cell::{Cell, RefCell};
 use std::hash::{Hash, BuildHasher};
 use std::collections::{LinkedList, VecDeque, BTreeMap, BTreeSet, HashMap, HashSet};
 
+use num::{BigInt, BigUint, BigRational, Complex};
 use time::{Tm, Timespec, at_utc};
 use uuid::Uuid;
 
@@ -44,6 +45,9 @@ pub trait Encoder {
     fn write_bytes(&mut self, v: &[u8]);
 
     // Extern crate types:
+    fn write_bigint(&mut self, v: &BigInt);
+    fn write_biguint(&mut self, v: &BigUint);
+    fn write_bigrat(&mut self, v: &BigRational);
     fn write_datetime(&mut self, v: &Tm);
     fn write_uuid(&mut self, v: &Uuid);
 
@@ -165,6 +169,24 @@ impl Encodable for str {
 impl Encodable for String {
     fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_string(self);
+    }
+}
+
+impl Encodable for BigInt {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_bigint(self);
+    }
+}
+
+impl Encodable for BigUint {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_biguint(self);
+    }
+}
+
+impl Encodable for BigRational {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_bigrat(self);
     }
 }
 

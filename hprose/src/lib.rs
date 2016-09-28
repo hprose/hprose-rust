@@ -12,7 +12,7 @@
  *                                                        *
  * hprose lib for Rust.                                   *
  *                                                        *
- * LastModified: Sep 27, 2016                             *
+ * LastModified: Sep 28, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -22,6 +22,7 @@
 
 extern crate test;
 
+extern crate num;
 extern crate time;
 extern crate uuid;
 

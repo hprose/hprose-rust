@@ -29,6 +29,7 @@ use super::util::*;
 use super::encoder::*;
 use super::writer_refer::WriterRefer;
 
+use num::{BigInt, BigUint, BigRational, Complex};
 use time::Tm;
 use uuid::Uuid;
 
@@ -284,6 +285,28 @@ impl Encoder for Writer {
         self.write_byte(TAG_QUOTE);
         self.write(bytes);
         self.write_byte(TAG_QUOTE);
+    }
+
+    fn write_bigint(&mut self, i: &BigInt) {
+        self.write_byte(TAG_LONG);
+        self.write(i.to_str_radix(10).as_bytes());
+        self.write_byte(TAG_SEMICOLON);
+    }
+
+    fn write_biguint(&mut self, u: &BigUint) {
+        self.write_byte(TAG_LONG);
+        self.write(u.to_str_radix(10).as_bytes());
+        self.write_byte(TAG_SEMICOLON);
+    }
+
+    fn write_bigrat(&mut self, r: &BigRational) {
+        if r.is_integer() {
+            self.write_bigint(&r.to_integer());
+        } else {
+            let s = r.to_string();
+            self.set_ref(ptr::null::<&BigRational>());
+            self.write_str_with_len(&s, s.len());
+        }
     }
 
     fn write_datetime(&mut self, t: &Tm) {
