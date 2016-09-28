@@ -161,7 +161,8 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_bytes(&mut self) -> DecodeResult<Bytes> {
-        unimplemented!()
+        let b = try!(self.byte_reader.read_byte());
+        bytes_decode(self, b)
     }
 
     fn read_datetime_without_tag(&mut self) -> DecodeResult<Tm> {
@@ -266,11 +267,6 @@ impl<'a> Decoder for Reader<'a> {
     {
         let b = try!(self.byte_reader.read_byte());
         seq_decode(self, b, |d, len| f(d, len))
-        //        let len = array.len();
-        //        for v in array.into_iter().rev() {
-        //            self.stack.push(v);
-        //        }
-        //        f(self, len)
     }
 
     fn read_map<T, F>(&mut self, f: F) -> DecodeResult<T>

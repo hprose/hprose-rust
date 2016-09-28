@@ -12,7 +12,7 @@
  *                                                        *
  * hprose decoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 27, 2016                             *
+ * LastModified: Sep 28, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -266,14 +266,20 @@ macro_rules! array {
 array! { 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
 
 impl<T: Decodable> Decodable for Vec<T> {
-    fn decode<D: Decoder>(d: &mut D) -> Result<Vec<T>, D::Error> {
+    default fn decode<D: Decoder>(d: &mut D) -> Result<Vec<T>, D::Error> {
         d.read_seq(|d, len| {
-            let mut v = Vec::with_capacity(len);
+            let mut v: Vec<T> = Vec::with_capacity(len);
             for _ in 0..len {
                 v.push(try!(Decodable::decode(d)));
             }
             Ok(v)
         })
+    }
+}
+
+impl Decodable for Vec<u8> {
+    fn decode<D: Decoder>(d: &mut D) -> Result<Vec<u8>, D::Error> {
+        d.read_bytes()
     }
 }
 
