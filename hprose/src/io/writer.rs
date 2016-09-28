@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 27, 2016                             *
+ * LastModified: Sep 28, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -82,8 +82,7 @@ impl Writer {
 
     fn write_str_with_len(&mut self, s: &str, len: i64) {
         self.byte_writer.write_byte(TAG_STRING);
-        let mut buf: [u8; 20] = [0; 20];
-        self.byte_writer.write(get_int_bytes(&mut buf, len));
+        self.byte_writer.write(get_int_bytes(&mut [0; 20], len));
         self.byte_writer.write_byte(TAG_QUOTE);
         self.byte_writer.write(s.as_bytes());
         self.byte_writer.write_byte(TAG_QUOTE);
@@ -105,8 +104,7 @@ impl Writer {
 
     fn write_list_header(&mut self, len: usize) {
         self.byte_writer.write_byte(TAG_LIST);
-        let mut buf: [u8; 20] = [0; 20];
-        self.byte_writer.write(get_uint_bytes(&mut buf, len as u64));
+        self.byte_writer.write(get_uint_bytes(&mut [0; 20], len as u64));
         self.byte_writer.write_byte(TAG_OPENBRACE);
     }
 
@@ -122,8 +120,7 @@ impl Writer {
 
     fn write_map_header(&mut self, len: usize) {
         self.byte_writer.write_byte(TAG_MAP);
-        let mut buf: [u8; 20] = [0; 20];
-        self.byte_writer.write(get_uint_bytes(&mut buf, len as u64));
+        self.byte_writer.write(get_uint_bytes(&mut [0; 20], len as u64));
         self.byte_writer.write_byte(TAG_OPENBRACE);
     }
 
@@ -159,8 +156,7 @@ impl Encoder for Writer {
         } else {
             self.byte_writer.write_byte(TAG_LONG);
         }
-        let mut buf: [u8; 20] = [0; 20];
-        self.byte_writer.write(get_int_bytes(&mut buf, i));
+        self.byte_writer.write(get_int_bytes(&mut [0; 20], i));
         self.byte_writer.write_byte(TAG_SEMICOLON);
     }
 
@@ -174,8 +170,7 @@ impl Encoder for Writer {
         } else {
             self.byte_writer.write_byte(TAG_LONG);
         }
-        let mut buf: [u8; 20] = [0; 20];
-        self.byte_writer.write(get_uint_bytes(&mut buf, i));
+        self.byte_writer.write(get_uint_bytes(&mut [0; 20], i));
         self.byte_writer.write_byte(TAG_SEMICOLON);
     }
 
@@ -188,8 +183,7 @@ impl Encoder for Writer {
             },
             _ if f.fract() == 0f32 && f >= i64::MIN as f32 && f <= i64::MAX as f32 => {
                 self.byte_writer.write_byte(TAG_DOUBLE);
-                let mut buf: [u8; 20] = [0; 20];
-                self.byte_writer.write(get_int_bytes(&mut buf, f as i64));
+                self.byte_writer.write(get_int_bytes(&mut [0; 20], f as i64));
                 self.byte_writer.write_byte(TAG_SEMICOLON);
             },
             _ => {
@@ -210,8 +204,7 @@ impl Encoder for Writer {
             },
             _ if f.fract() == 0f64 && f >= i64::MIN as f64 && f <= i64::MAX as f64 => {
                 self.byte_writer.write_byte(TAG_DOUBLE);
-                let mut buf: [u8; 20] = [0; 20];
-                self.byte_writer.write(get_int_bytes(&mut buf, f as i64));
+                self.byte_writer.write(get_int_bytes(&mut [0; 20], f as i64));
                 self.byte_writer.write_byte(TAG_SEMICOLON);
             },
             _ => {
@@ -225,8 +218,7 @@ impl Encoder for Writer {
 
     #[inline]
     fn write_char(&mut self, c: char) {
-        let s = c.to_string();
-        self.write_str(&s);
+        self.write_str(&c.to_string());
     }
 
     fn write_str(&mut self, s: &str) {
@@ -271,8 +263,7 @@ impl Encoder for Writer {
             return
         }
         self.byte_writer.write_byte(TAG_BYTES);
-        let mut buf: [u8; 20] = [0; 20];
-        self.byte_writer.write(get_int_bytes(&mut buf, count as i64));
+        self.byte_writer.write(get_int_bytes(&mut [0; 20], count as i64));
         self.byte_writer.write_byte(TAG_QUOTE);
         self.byte_writer.write(bytes);
         self.byte_writer.write_byte(TAG_QUOTE);
@@ -383,7 +374,6 @@ mod tests {
         t!(None::<()>, "n");
         t!(PhantomData::<()>, "n");
     }
-
 
     #[test]
     fn test_serialize_bool() {
@@ -510,8 +500,8 @@ mod tests {
 
     #[test]
     fn test_serialize_bytes() {
-        t!("hello".as_bytes(), r#"b5"hello""#);
-        t!("".as_bytes(), r#"b"""#);
+        t!(b"hello", r#"b5"hello""#);
+        t!(b"", r#"b"""#);
     }
 
     #[test]
