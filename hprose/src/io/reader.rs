@@ -339,30 +339,30 @@ mod tests {
         )
     }
 
+    macro_rules! time {
+        ($sec:expr, $nsec:expr) => (at_utc(Timespec::new($sec, $nsec)));
+    }
+
     #[test]
     fn test_unserialize_bool() {
         let true_value = String::from("true");
         let mut w = Writer::new(false);
-        w.serialize(&true)
-            .serialize(&false)
-            .serialize(&())
-            .serialize(&"")
-            .serialize(&0)
-            .serialize(&1)
-            .serialize(&9)
-            .serialize(&100)
-            .serialize(&100000000000000i64)
-            .serialize(&0.0)
-            .serialize(&"t")
-            .serialize(&"f")
-            .serialize(&true_value)
-            .serialize(&"false")
-            .serialize(&true_value);
-        let results = [true, false, false, false, false, true, true, true, true, false, true, false, true, false, true];
-        let bytes = w.bytes();
-        let mut r = Reader::new(&bytes, false);
-        for result in &results {
-            assert_eq!(r.unserialize::<bool>(), Ok(*result));
+        test! { bool, w,
+            true,               true,
+            false,              false,
+            (),                 false,
+            "",                 false,
+            0,                  false,
+            1,                  true,
+            9,                  true,
+            100,                true,
+            100000000000000i64, true,
+            0.0,                false,
+            "t",                true,
+            "f",                false,
+            true_value,         true,
+            "false",            false,
+            true_value,         true
         }
     }
 
@@ -371,52 +371,51 @@ mod tests {
         let int_value = String::from("1234567");
         let mut w = Writer::new(false);
         test! { i64, w,
-            true, 1,
-            false, 0,
-            (), 0,
-            "", 0,
-            0, 0,
-            1, 1,
-            9, 9,
-            100, 100,
-            -100, -100,
-            i32::MIN, i32::MIN as i64,
-            i64::MAX, i64::MAX,
-            i64::MIN, i64::MIN,
-            u64::MAX, u64::MAX as i64,
-            0.0, 0,
-            "1", 1,
-            "9", 9,
-            int_value, 1234567,
-            at_utc(Timespec::new(123, 456)), 123000000456,
-            at_utc(Timespec::new(1234567890, 123456789)), 1234567890123456789,
-            int_value, 1234567
+            true,                         1,
+            false,                        0,
+            (),                           0,
+            "",                           0,
+            0,                            0,
+            1,                            1,
+            9,                            9,
+            100,                          100,
+            -100,                         -100,
+            i32::MIN,                     i32::MIN as i64,
+            i64::MAX,                     i64::MAX,
+            i64::MIN,                     i64::MIN,
+            u64::MAX,                     u64::MAX as i64,
+            0.0,                          0,
+            "1",                          1,
+            "9",                          9,
+            int_value,                    1234567,
+            time!(123, 456),              123000000456,
+            time!(1234567890, 123456789), 1234567890123456789,
+            int_value,                    1234567
         }
     }
-
 
     #[test]
     fn test_unserialize_f32() {
         let f32_value = String::from("3.14159");
         let mut w = Writer::new(false);
         test! { f32, w,
-            true, 1f32,
-            false, 0f32,
-            (), 0f32,
-            "", 0f32,
-            0, 0f32,
-            1, 1f32,
-            9, 9f32,
-            100, 100f32,
-            i64::MAX, i64::MAX as f32,
-            f32::MAX, f32::MAX,
-            0.0, 0f32,
-            "1", 1f32,
-            "9", 9f32,
-            f32_value, 3.14159,
-            at_utc(Timespec::new(123, 456)), 123.000000456f32,
-            at_utc(Timespec::new(1234567890, 123456789)), 1234567890.123456789f32,
-            f32_value, 3.14159
+            true,                         1f32,
+            false,                        0f32,
+            (),                           0f32,
+            "",                           0f32,
+            0,                            0f32,
+            1,                            1f32,
+            9,                            9f32,
+            100,                          100f32,
+            i64::MAX,                     i64::MAX as f32,
+            f32::MAX,                     f32::MAX,
+            0.0,                          0f32,
+            "1",                          1f32,
+            "9",                          9f32,
+            f32_value,                    3.14159,
+            time!(123, 456),              123.000000456f32,
+            time!(1234567890, 123456789), 1234567890.123456789f32,
+            f32_value,                    3.14159
         }
     }
 
@@ -425,23 +424,23 @@ mod tests {
         let f64_value = String::from("3.14159");
         let mut w = Writer::new(false);
         test! { f64, w,
-            true, 1f64,
-            false, 0f64,
-            (), 0f64,
-            "", 0f64,
-            0, 0f64,
-            1, 1f64,
-            9, 9f64,
-            100, 100f64,
-            f32::MAX, 3.4028235e38f64,
-            f64::MAX, f64::MAX,
-            0.0, 0f64,
-            "1", 1f64,
-            "9", 9f64,
-            f64_value, 3.14159,
-            at_utc(Timespec::new(123, 456)), 123.000000456f64,
-            at_utc(Timespec::new(1234567890, 123456789)), 1234567890.123456789f64,
-            f64_value, 3.14159
+            true,                         1f64,
+            false,                        0f64,
+            (),                           0f64,
+            "",                           0f64,
+            0,                            0f64,
+            1,                            1f64,
+            9,                            9f64,
+            100,                          100f64,
+            f32::MAX,                     3.4028235e38f64,
+            f64::MAX,                     f64::MAX,
+            0.0,                          0f64,
+            "1",                          1f64,
+            "9",                          9f64,
+            f64_value,                    3.14159,
+            time!(123, 456),              123.000000456f64,
+            time!(1234567890, 123456789), 1234567890.123456789f64,
+            f64_value,                    3.14159
         }
     }
 
@@ -450,23 +449,23 @@ mod tests {
         let str_value = "你好";
         let mut w = Writer::new(false);
         test! { String, w,
-		true,            "true",
-		false,           "false",
-		(),              "",
-		"",              "",
-		0,               "0",
-		1,               "1",
-		9,               "9",
-		100,             "100",
-		f32::MAX,        "3.4028235e38",
-		f64::MAX,        "1.7976931348623157e308",
-		0.0,             "0",
-		"1",             "1",
-		"9",             "9",
-		str_value,       "你好",
-		strptime("1980-12-01", "%F").unwrap(), "1980-12-01 00:00:00.000000000 -0000",
-		strptime("1970-01-01 12:34:56.789456123+08:00", "%F %T.%f%z").unwrap(), "1970-01-01 12:34:56.789456123 +0800",
-		strptime("2006-09-09 12:34:56.789456123Z", "%F %T.%f%z").unwrap(), "2006-09-09 12:34:56.789456123 -0000"
+            true,            "true",
+            false,           "false",
+            (),              "",
+            "",              "",
+            0,               "0",
+            1,               "1",
+            9,               "9",
+            100,             "100",
+            f32::MAX,        "3.4028235e38",
+            f64::MAX,        "1.7976931348623157e308",
+            0.0,             "0",
+            "1",             "1",
+            "9",             "9",
+            str_value,       "你好",
+            strptime("1980-12-01", "%F").unwrap(), "1980-12-01 00:00:00.000000000 -0000",
+            strptime("1970-01-01 12:34:56.789456123+08:00", "%F %T.%f%z").unwrap(), "1970-01-01 12:34:56.789456123 +0800",
+            strptime("2006-09-09 12:34:56.789456123Z", "%F %T.%f%z").unwrap(), "2006-09-09 12:34:56.789456123 -0000"
         }
     }
 }
