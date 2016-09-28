@@ -81,11 +81,11 @@ impl<'a> Reader<'a> {
 
     #[inline]
     pub fn unserialize<T: Decodable>(&mut self) -> DecodeResult<T> {
-        self.read()
+        self.read_value()
     }
 
     #[inline]
-    pub fn read<T: Decodable>(&mut self) -> DecodeResult<T> {
+    pub fn read_value<T: Decodable>(&mut self) -> DecodeResult<T> {
         Decodable::decode(self)
     }
 

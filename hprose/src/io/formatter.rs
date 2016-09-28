@@ -12,7 +12,7 @@
  *                                                        *
  * io Formatter for Rust.                                 *
  *                                                        *
- * LastModified: Sep 22, 2016                             *
+ * LastModified: Sep 28, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -33,7 +33,7 @@ pub fn marshal<T: Encodable>(v: &T) -> Vec<u8> {
 
 /// Unserialize data
 pub fn unserialize<T: Decodable>(buf: &Vec<u8>, simple: bool) -> DecodeResult<T> {
-    Reader::new(buf, simple).read()
+    Reader::new(buf, simple).read_value()
 }
 
 /// Unmarshal data

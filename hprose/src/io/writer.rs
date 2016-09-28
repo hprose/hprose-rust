@@ -68,6 +68,16 @@ impl Writer {
     }
 
     #[inline]
+    pub fn write_byte(&mut self, b: u8) {
+        self.byte_writer.write_byte(b);
+    }
+
+    #[inline]
+    pub fn write(&mut self, src: &[u8]) {
+        self.byte_writer.write(src);
+    }
+
+    #[inline]
     pub fn serialize<T: Encodable + ?Sized>(&mut self, v: &T) -> &mut Writer {
         self.write_value(v);
         self
@@ -85,142 +95,142 @@ impl Writer {
     // private functions
 
     fn write_str_with_len(&mut self, s: &str, len: usize) {
-        self.byte_writer.write_byte(TAG_STRING);
-        self.byte_writer.write(get_uint_bytes(&mut [0; 20], len as u64));
-        self.byte_writer.write_byte(TAG_QUOTE);
-        self.byte_writer.write(s.as_bytes());
-        self.byte_writer.write_byte(TAG_QUOTE);
+        self.write_byte(TAG_STRING);
+        self.write(get_uint_bytes(&mut [0; 20], len as u64));
+        self.write_byte(TAG_QUOTE);
+        self.write(s.as_bytes());
+        self.write_byte(TAG_QUOTE);
     }
 
     #[inline]
     fn write_empty_bytes(&mut self) {
-        self.byte_writer.write(&[TAG_BYTES, TAG_QUOTE, TAG_QUOTE]);
+        self.write(&[TAG_BYTES, TAG_QUOTE, TAG_QUOTE]);
     }
 
     fn write_date(&mut self, buf: &mut [u8], year: i32, month: i32, day: i32) {
-        self.byte_writer.write_byte(TAG_DATE);
-        self.byte_writer.write(get_date_bytes(buf, year, month, day));
+        self.write_byte(TAG_DATE);
+        self.write(get_date_bytes(buf, year, month, day));
     }
 
     fn write_time(&mut self, buf: &mut [u8], hour: i32, min: i32, sec: i32, nsec: i32) {
-        self.byte_writer.write_byte(TAG_TIME);
-        self.byte_writer.write(get_time_bytes(buf, hour, min, sec));
+        self.write_byte(TAG_TIME);
+        self.write(get_time_bytes(buf, hour, min, sec));
         if nsec > 0 {
-            self.byte_writer.write_byte(TAG_POINT);
-            self.byte_writer.write(get_nsec_bytes(buf, nsec));
+            self.write_byte(TAG_POINT);
+            self.write(get_nsec_bytes(buf, nsec));
         }
     }
 
     fn write_list_header(&mut self, len: usize) {
-        self.byte_writer.write_byte(TAG_LIST);
-        self.byte_writer.write(get_uint_bytes(&mut [0; 20], len as u64));
-        self.byte_writer.write_byte(TAG_OPENBRACE);
+        self.write_byte(TAG_LIST);
+        self.write(get_uint_bytes(&mut [0; 20], len as u64));
+        self.write_byte(TAG_OPENBRACE);
     }
 
     #[inline]
     fn write_list_footer(&mut self) {
-        self.byte_writer.write_byte(TAG_CLOSEBRACE);
+        self.write_byte(TAG_CLOSEBRACE);
     }
 
     #[inline]
     fn write_empty_list(&mut self) {
-        self.byte_writer.write(&[TAG_LIST, TAG_OPENBRACE, TAG_CLOSEBRACE]);
+        self.write(&[TAG_LIST, TAG_OPENBRACE, TAG_CLOSEBRACE]);
     }
 
     fn write_map_header(&mut self, len: usize) {
-        self.byte_writer.write_byte(TAG_MAP);
-        self.byte_writer.write(get_uint_bytes(&mut [0; 20], len as u64));
-        self.byte_writer.write_byte(TAG_OPENBRACE);
+        self.write_byte(TAG_MAP);
+        self.write(get_uint_bytes(&mut [0; 20], len as u64));
+        self.write_byte(TAG_OPENBRACE);
     }
 
     #[inline]
     fn write_map_footer(&mut self) {
-        self.byte_writer.write_byte(TAG_CLOSEBRACE);
+        self.write_byte(TAG_CLOSEBRACE);
     }
 
     #[inline]
     fn write_empty_map(&mut self) {
-        self.byte_writer.write(&[TAG_MAP, TAG_OPENBRACE, TAG_CLOSEBRACE]);
+        self.write(&[TAG_MAP, TAG_OPENBRACE, TAG_CLOSEBRACE]);
     }
 }
 
 impl Encoder for Writer {
     #[inline]
     fn write_nil(&mut self) {
-        self.byte_writer.write_byte(TAG_NULL);
+        self.write_byte(TAG_NULL);
     }
 
     #[inline]
     fn write_bool(&mut self, b: bool) {
-        self.byte_writer.write_byte(if b { TAG_TRUE } else { TAG_FALSE });
+        self.write_byte(if b { TAG_TRUE } else { TAG_FALSE });
     }
 
     fn write_i64(&mut self, i: i64) {
         if i >= 0 && i <= 9 {
-            self.byte_writer.write_byte(b'0' + i as u8);
+            self.write_byte(b'0' + i as u8);
             return
         }
         if i >= i32::MIN as i64 && i <= i32::MAX as i64 {
-            self.byte_writer.write_byte(TAG_INTEGER);
+            self.write_byte(TAG_INTEGER);
         } else {
-            self.byte_writer.write_byte(TAG_LONG);
+            self.write_byte(TAG_LONG);
         }
-        self.byte_writer.write(get_int_bytes(&mut [0; 20], i));
-        self.byte_writer.write_byte(TAG_SEMICOLON);
+        self.write(get_int_bytes(&mut [0; 20], i));
+        self.write_byte(TAG_SEMICOLON);
     }
 
     fn write_u64(&mut self, i: u64) {
         if i <= 9 {
-            self.byte_writer.write_byte(b'0' + i as u8);
+            self.write_byte(b'0' + i as u8);
             return
         }
         if i <= i32::MAX as u64 {
-            self.byte_writer.write_byte(TAG_INTEGER);
+            self.write_byte(TAG_INTEGER);
         } else {
-            self.byte_writer.write_byte(TAG_LONG);
+            self.write_byte(TAG_LONG);
         }
-        self.byte_writer.write(get_uint_bytes(&mut [0; 20], i));
-        self.byte_writer.write_byte(TAG_SEMICOLON);
+        self.write(get_uint_bytes(&mut [0; 20], i));
+        self.write_byte(TAG_SEMICOLON);
     }
 
     fn write_f32(&mut self, f: f32) {
         match f.classify() {
-            Fp::Nan => self.byte_writer.write_byte(TAG_NAN),
+            Fp::Nan => self.write_byte(TAG_NAN),
             Fp::Infinite => {
-                self.byte_writer.write_byte(TAG_INFINITY);
-                self.byte_writer.write_byte(if f == f32::NEG_INFINITY { TAG_NEG } else { TAG_POS });
+                self.write_byte(TAG_INFINITY);
+                self.write_byte(if f == f32::NEG_INFINITY { TAG_NEG } else { TAG_POS });
             },
             _ if f.fract() == 0f32 && f >= i64::MIN as f32 && f <= i64::MAX as f32 => {
-                self.byte_writer.write_byte(TAG_DOUBLE);
-                self.byte_writer.write(get_int_bytes(&mut [0; 20], f as i64));
-                self.byte_writer.write_byte(TAG_SEMICOLON);
+                self.write_byte(TAG_DOUBLE);
+                self.write(get_int_bytes(&mut [0; 20], f as i64));
+                self.write_byte(TAG_SEMICOLON);
             },
             _ => {
-                self.byte_writer.write_byte(TAG_DOUBLE);
+                self.write_byte(TAG_DOUBLE);
                 dtoa::write(&mut self.byte_writer.buf, f).unwrap();
-                // self.byte_writer.write(f.to_string().as_bytes());
-                self.byte_writer.write_byte(TAG_SEMICOLON);
+                // self.write(f.to_string().as_bytes());
+                self.write_byte(TAG_SEMICOLON);
             }
         };
     }
 
     fn write_f64(&mut self, f: f64) {
         match f.classify() {
-            Fp::Nan => self.byte_writer.write_byte(TAG_NAN),
+            Fp::Nan => self.write_byte(TAG_NAN),
             Fp::Infinite => {
-                self.byte_writer.write_byte(TAG_INFINITY);
-                self.byte_writer.write_byte(if f == f64::NEG_INFINITY { TAG_NEG } else { TAG_POS });
+                self.write_byte(TAG_INFINITY);
+                self.write_byte(if f == f64::NEG_INFINITY { TAG_NEG } else { TAG_POS });
             },
             _ if f.fract() == 0f64 && f >= i64::MIN as f64 && f <= i64::MAX as f64 => {
-                self.byte_writer.write_byte(TAG_DOUBLE);
-                self.byte_writer.write(get_int_bytes(&mut [0; 20], f as i64));
-                self.byte_writer.write_byte(TAG_SEMICOLON);
+                self.write_byte(TAG_DOUBLE);
+                self.write(get_int_bytes(&mut [0; 20], f as i64));
+                self.write_byte(TAG_SEMICOLON);
             },
             _ => {
-                self.byte_writer.write_byte(TAG_DOUBLE);
+                self.write_byte(TAG_DOUBLE);
                 dtoa::write(&mut self.byte_writer.buf, f).unwrap();
-                // self.byte_writer.write(f.to_string().as_bytes());
-                self.byte_writer.write_byte(TAG_SEMICOLON);
+                // self.write(f.to_string().as_bytes());
+                self.write_byte(TAG_SEMICOLON);
             }
         };
     }
@@ -233,10 +243,10 @@ impl Encoder for Writer {
     fn write_str(&mut self, s: &str) {
         let len = utf16_len(s);
         match len {
-            0 => self.byte_writer.write_byte(TAG_EMPTY),
+            0 => self.write_byte(TAG_EMPTY),
             1 => {
-                self.byte_writer.write_byte(TAG_UTF8_CHAR);
-                self.byte_writer.write(s.as_bytes());
+                self.write_byte(TAG_UTF8_CHAR);
+                self.write(s.as_bytes());
             },
             _ => {
                 self.set_ref(ptr::null::<&str>());
@@ -248,10 +258,10 @@ impl Encoder for Writer {
     fn write_string(&mut self, s: &String) {
         let length = utf16_len(s);
         match length {
-            0 => self.byte_writer.write_byte(TAG_EMPTY),
+            0 => self.write_byte(TAG_EMPTY),
             1 => {
-                self.byte_writer.write_byte(TAG_UTF8_CHAR);
-                self.byte_writer.write(s.as_bytes());
+                self.write_byte(TAG_UTF8_CHAR);
+                self.write(s.as_bytes());
             },
             _ => {
                 if self.write_ref(s) {
@@ -269,11 +279,11 @@ impl Encoder for Writer {
             self.write_empty_bytes();
             return
         }
-        self.byte_writer.write_byte(TAG_BYTES);
-        self.byte_writer.write(get_uint_bytes(&mut [0; 20], len as u64));
-        self.byte_writer.write_byte(TAG_QUOTE);
-        self.byte_writer.write(bytes);
-        self.byte_writer.write_byte(TAG_QUOTE);
+        self.write_byte(TAG_BYTES);
+        self.write(get_uint_bytes(&mut [0; 20], len as u64));
+        self.write_byte(TAG_QUOTE);
+        self.write(bytes);
+        self.write_byte(TAG_QUOTE);
     }
 
     fn write_datetime(&mut self, t: &Tm) {
@@ -290,7 +300,7 @@ impl Encoder for Writer {
             self.write_date(&mut buf, 1900 + t.tm_year, t.tm_mon + 1, t.tm_mday);
             self.write_time(&mut buf, t.tm_hour, t.tm_min, t.tm_sec, t.tm_nsec);
         }
-        self.byte_writer.write_byte(if t.tm_utcoff == 0 { TAG_UTC } else { TAG_SEMICOLON });
+        self.write_byte(if t.tm_utcoff == 0 { TAG_UTC } else { TAG_SEMICOLON });
     }
 
     fn write_uuid(&mut self, u: &Uuid) {
@@ -298,15 +308,15 @@ impl Encoder for Writer {
             return
         }
         self.set_ref(u);
-        self.byte_writer.write_byte(TAG_GUID);
-        self.byte_writer.write_byte(TAG_OPENBRACE);
-        self.byte_writer.write(u.hyphenated().to_string().as_bytes());
-        self.byte_writer.write_byte(TAG_CLOSEBRACE);
+        self.write_byte(TAG_GUID);
+        self.write_byte(TAG_OPENBRACE);
+        self.write(u.hyphenated().to_string().as_bytes());
+        self.write_byte(TAG_CLOSEBRACE);
     }
 
     fn write_struct(&mut self, name: &str, len: usize) {
-        self.byte_writer.write_byte(TAG_OBJECT);
-        self.byte_writer.write_byte(TAG_OPENBRACE);
+        self.write_byte(TAG_OBJECT);
+        self.write_byte(TAG_OPENBRACE);
     }
 
     fn write_struct_field<T: Encodable>(&mut self, key: &str, value: T) {
@@ -314,7 +324,7 @@ impl Encoder for Writer {
     }
 
     fn write_struct_end(&mut self) {
-        self.byte_writer.write_byte(TAG_CLOSEBRACE);
+        self.write_byte(TAG_CLOSEBRACE);
     }
 
     fn write_option<F>(&mut self, f: F) where F: FnOnce(&mut Writer) {

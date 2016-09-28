@@ -21,7 +21,7 @@ use io::{Reader, Decoder, Decodable, DecoderError, Bytes};
 use io::tags::*;
 use io::reader::cast_error;
 
-use std::{result, str};
+use std::result;
 
 type Result<T> = result::Result<T, DecoderError>;
 
