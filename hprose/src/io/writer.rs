@@ -80,9 +80,9 @@ impl Writer {
 
     // private functions
 
-    fn write_str_with_len(&mut self, s: &str, len: i64) {
+    fn write_str_with_len(&mut self, s: &str, len: usize) {
         self.byte_writer.write_byte(TAG_STRING);
-        self.byte_writer.write(get_int_bytes(&mut [0; 20], len));
+        self.byte_writer.write(get_uint_bytes(&mut [0; 20], len as u64));
         self.byte_writer.write_byte(TAG_QUOTE);
         self.byte_writer.write(s.as_bytes());
         self.byte_writer.write_byte(TAG_QUOTE);
@@ -222,10 +222,9 @@ impl Encoder for Writer {
     }
 
     fn write_str(&mut self, s: &str) {
-        let length = utf16_length(s);
+        let length = utf16_len(s);
         match length {
             0 => self.byte_writer.write_byte(TAG_EMPTY),
-            - 1 => self.write_bytes(s.as_bytes()),
             1 => {
                 self.byte_writer.write_byte(TAG_UTF8_CHAR);
                 self.byte_writer.write(s.as_bytes());
@@ -238,10 +237,9 @@ impl Encoder for Writer {
     }
 
     fn write_string(&mut self, s: &String) {
-        let length = utf16_length(s);
+        let length = utf16_len(s);
         match length {
             0 => self.byte_writer.write_byte(TAG_EMPTY),
-            - 1 => self.write_bytes(s.as_bytes()),
             1 => {
                 self.byte_writer.write_byte(TAG_UTF8_CHAR);
                 self.byte_writer.write(s.as_bytes());

@@ -12,7 +12,7 @@
  *                                                        *
  * io util for Rust.                                      *
  *                                                        *
- * LastModified: Sep 27, 2016                             *
+ * LastModified: Sep 28, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -166,31 +166,31 @@ pub fn get_uint_bytes(buf: &mut [u8], mut i: u64) -> &[u8] {
     return &buf[off..]
 }
 
-pub fn utf16_length(s: &str) -> i64 {
-    let length = s.len();
-    let bytes = s;
-    let mut n = length as i64;
+pub fn utf16_len(s: &str) -> usize {
+    let bytes = s.as_bytes();
+    let len = s.len();
+    let mut n = len;
     let mut p = 0;
-    while p < length {
-        let a = bytes.as_bytes()[p];
+    while p < len {
+        let a = bytes[p];
         match a >> 4 {
             0 ... 7 => p += 1,
             12 | 13 => {
                 p += 2;
-                n -= 1
+                n -= 1;
             },
             14 => {
                 p += 3;
-                n -= 2
+                n -= 2;
             },
             15 => {
                 if a & 8 == 8 {
-                    return -1
+                    unreachable!()
                 }
                 p += 4;
-                n -= 2
+                n -= 2;
             }
-            _ => return -1
+            _ => unreachable!()
         }
     }
     n
@@ -325,7 +325,7 @@ mod tests {
     }
 
     #[test]
-    fn test_utf16_length() {
+    fn test_utf16_len() {
         let test_cases = [
             ("", 0),
             ("π", 1),
@@ -335,7 +335,7 @@ mod tests {
             ("🇨🇳", 4)
         ];
         for test_case in &test_cases {
-            assert!(utf16_length(test_case.0) == test_case.1, r#"The UTF16Length of "{}" must be {}"#, test_case.0, test_case.1);
+            assert!(utf16_len(test_case.0) == test_case.1, r#"The utf16 len of "{}" must be {}"#, test_case.0, test_case.1);
         }
     }
 }
