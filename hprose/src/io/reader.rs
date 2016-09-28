@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 27, 2016                             *
+ * LastModified: Sep 28, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -114,7 +114,7 @@ impl<'a> Reader<'a> {
     }
 
     pub fn reset(&mut self) {
-        self.refer.as_mut().map(|mut refer| refer.reset());
+        self.refer.as_mut().map(|r| r.reset());
     }
 }
 

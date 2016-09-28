@@ -78,6 +78,10 @@ impl Writer {
         v.encode(self);
     }
 
+    pub fn reset(&mut self) {
+        self.refer.as_mut().map(|r| r.reset());
+    }
+
     // private functions
 
     fn write_str_with_len(&mut self, s: &str, len: usize) {
@@ -215,7 +219,7 @@ impl Encoder for Writer {
             _ => {
                 self.byte_writer.write_byte(TAG_DOUBLE);
                 dtoa::write(&mut self.byte_writer.buf, f).unwrap();
-                // self.byte_writer.write_from_slice(f.to_string().as_bytes());
+                // self.byte_writer.write(f.to_string().as_bytes());
                 self.byte_writer.write_byte(TAG_SEMICOLON);
             }
         };
@@ -227,8 +231,8 @@ impl Encoder for Writer {
     }
 
     fn write_str(&mut self, s: &str) {
-        let length = utf16_len(s);
-        match length {
+        let len = utf16_len(s);
+        match len {
             0 => self.byte_writer.write_byte(TAG_EMPTY),
             1 => {
                 self.byte_writer.write_byte(TAG_UTF8_CHAR);
@@ -236,7 +240,7 @@ impl Encoder for Writer {
             },
             _ => {
                 self.set_ref(ptr::null::<&str>());
-                self.write_str_with_len(s, length)
+                self.write_str_with_len(s, len)
             }
         }
     }
