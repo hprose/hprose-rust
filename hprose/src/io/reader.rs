@@ -81,7 +81,7 @@ impl<'a> Reader<'a> {
 
     #[inline]
     pub fn read_byte(&mut self) -> DecodeResult<u8> {
-        self.byte_reader.read_byte().map_err(|err| DecoderError::ParserError(err))
+        Ok(try!(self.byte_reader.read_byte()))
     }
 
     #[inline]
@@ -110,6 +110,93 @@ impl<'a> Reader<'a> {
         let reference = &self.byte_reader.buf[start..self.byte_reader.off];
         self.refer.as_mut().map(|mut r| r.set(reference));
         Ok(bytes)
+    }
+
+    pub fn read_datetime_without_tag(&mut self) -> DecodeResult<Tm> {
+        let start = self.byte_reader.off - 1;
+        let mut tm = empty_tm();
+        let mut tag: u8;
+        {
+            let bytes = try!(self.byte_reader.next(9));
+            tm.tm_year = bytes_to_diget4(&bytes[..4]) - 1900;
+            tm.tm_mon = bytes_to_diget2(&bytes[4..6]) - 1;
+            tm.tm_mday = bytes_to_diget2(&bytes[6..8]);
+            tag = bytes[8];
+        }
+        if tag == TAG_TIME {
+            {
+                let bytes = try!(self.byte_reader.next(7));
+                tm.tm_hour = bytes_to_diget2(&bytes[..2]);
+                tm.tm_min = bytes_to_diget2(&bytes[2..4]);
+                tm.tm_sec = bytes_to_diget2(&bytes[4..6]);
+                tag = bytes[6];
+            }
+            if tag == TAG_POINT {
+                {
+                    let bytes = try!(self.byte_reader.next(4));
+                    tm.tm_nsec = bytes_to_diget3(&bytes[..3]);
+                    tag = bytes[3];
+                }
+                if (tag >= b'0') && (tag <= b'9') {
+                    {
+                        let bytes = try!(self.byte_reader.next(3));
+                        tm.tm_nsec = tm.tm_nsec * 1000 + (tag - b'0') as i32 * 100 + bytes_to_diget2(&bytes[..2]);
+                        tag = bytes[2];
+                    }
+                    if (tag >= b'0') && (tag <= b'9') {
+                        let bytes = try!(self.byte_reader.next(3));
+                        tm.tm_nsec = tm.tm_nsec * 1000 + (tag - b'0') as i32 * 100 + bytes_to_diget2(&bytes[..2]);
+                        tag = bytes[2];
+                    }
+                }
+            }
+        };
+        if tag != TAG_UTC {
+            tm.tm_utcoff = get_utcoff();
+        }
+        let reference = &self.byte_reader.buf[start..self.byte_reader.off];
+        self.refer.as_mut().map(|mut r| r.set(reference));
+        Ok(tm)
+    }
+
+    pub fn read_time_without_tag(&mut self) -> DecodeResult<Tm> {
+        let start = self.byte_reader.off - 1;
+        let mut tm = empty_tm();
+        let mut tag: u8;
+        tm.tm_year = 70;
+        tm.tm_mday = 1;
+        {
+            let bytes = try!(self.byte_reader.next(7));
+            tm.tm_hour = bytes_to_diget2(&bytes[..2]);
+            tm.tm_min = bytes_to_diget2(&bytes[2..4]);
+            tm.tm_sec = bytes_to_diget2(&bytes[4..6]);
+            tag = bytes[6];
+        }
+        if tag == TAG_POINT {
+            {
+                let bytes = try!(self.byte_reader.next(4));
+                tm.tm_nsec = bytes_to_diget3(&bytes[..3]);
+                tag = bytes[3];
+            }
+            if (tag >= b'0') && (tag <= b'9') {
+                {
+                    let bytes = try!(self.byte_reader.next(3));
+                    tm.tm_nsec = tm.tm_nsec * 1000 + (tag - b'0') as i32 * 100 + bytes_to_diget2(&bytes[..2]);
+                    tag = bytes[2];
+                }
+                if (tag >= b'0') && (tag <= b'9') {
+                    let bytes = try!(self.byte_reader.next(3));
+                    tm.tm_nsec = tm.tm_nsec * 1000 + (tag - b'0') as i32 * 100 + bytes_to_diget2(&bytes[..2]);
+                    tag = bytes[2];
+                }
+            }
+        }
+        if tag != TAG_UTC {
+            tm.tm_utcoff = get_utcoff();
+        }
+        let reference = &self.byte_reader.buf[start..self.byte_reader.off];
+        self.refer.as_mut().map(|mut r| r.set(reference));
+        Ok(tm)
     }
 
     #[inline]
@@ -170,95 +257,12 @@ impl<'a> Decoder for Reader<'a> {
         bytes_decode(self, b)
     }
 
-    fn read_datetime_without_tag(&mut self) -> DecodeResult<Tm> {
-        let start = self.byte_reader.off - 1;
-        let mut tm = empty_tm();
-        let mut tag: u8;
-        {
-            let bytes = try!(self.byte_reader.next(9));
-            tm.tm_year = bytes_to_diget4(&bytes[..4]) - 1900;
-            tm.tm_mon = bytes_to_diget2(&bytes[4..6]) - 1;
-            tm.tm_mday = bytes_to_diget2(&bytes[6..8]);
-            tag = bytes[8];
-        }
-        if tag == TAG_TIME {
-            {
-                let bytes = try!(self.byte_reader.next(7));
-                tm.tm_hour = bytes_to_diget2(&bytes[..2]);
-                tm.tm_min = bytes_to_diget2(&bytes[2..4]);
-                tm.tm_sec = bytes_to_diget2(&bytes[4..6]);
-                tag = bytes[6];
-            }
-            if tag == TAG_POINT {
-                {
-                    let bytes = try!(self.byte_reader.next(4));
-                    tm.tm_nsec = bytes_to_diget3(&bytes[..3]);
-                    tag = bytes[3];
-                }
-                if (tag >= b'0') && (tag <= b'9') {
-                    {
-                        let bytes = try!(self.byte_reader.next(3));
-                        tm.tm_nsec = tm.tm_nsec * 1000 + (tag - b'0') as i32 * 100 + bytes_to_diget2(&bytes[..2]);
-                        tag = bytes[2];
-                    }
-                    if (tag >= b'0') && (tag <= b'9') {
-                        let bytes = try!(self.byte_reader.next(3));
-                        tm.tm_nsec = tm.tm_nsec * 1000 + (tag - b'0') as i32 * 100 + bytes_to_diget2(&bytes[..2]);
-                        tag = bytes[2];
-                    }
-                }
-            }
-        };
-        if tag != TAG_UTC {
-            tm.tm_utcoff = get_utcoff();
-        }
-        let reference = &self.byte_reader.buf[start..self.byte_reader.off];
-        self.refer.as_mut().map(|mut r| r.set(reference));
-        Ok(tm)
-    }
-
-    fn read_time_without_tag(&mut self) -> Result<Tm, Self::Error> {
-        let start = self.byte_reader.off - 1;
-        let mut tm = empty_tm();
-        let mut tag: u8;
-        tm.tm_year = 70;
-        tm.tm_mday = 1;
-        {
-            let bytes = try!(self.byte_reader.next(7));
-            tm.tm_hour = bytes_to_diget2(&bytes[..2]);
-            tm.tm_min = bytes_to_diget2(&bytes[2..4]);
-            tm.tm_sec = bytes_to_diget2(&bytes[4..6]);
-            tag = bytes[6];
-        }
-        if tag == TAG_POINT {
-            {
-                let bytes = try!(self.byte_reader.next(4));
-                tm.tm_nsec = bytes_to_diget3(&bytes[..3]);
-                tag = bytes[3];
-            }
-            if (tag >= b'0') && (tag <= b'9') {
-                {
-                    let bytes = try!(self.byte_reader.next(3));
-                    tm.tm_nsec = tm.tm_nsec * 1000 + (tag - b'0') as i32 * 100 + bytes_to_diget2(&bytes[..2]);
-                    tag = bytes[2];
-                }
-                if (tag >= b'0') && (tag <= b'9') {
-                    let bytes = try!(self.byte_reader.next(3));
-                    tm.tm_nsec = tm.tm_nsec * 1000 + (tag - b'0') as i32 * 100 + bytes_to_diget2(&bytes[..2]);
-                    tag = bytes[2];
-                }
-            }
-        }
-        if tag != TAG_UTC {
-            tm.tm_utcoff = get_utcoff();
-        }
-        let reference = &self.byte_reader.buf[start..self.byte_reader.off];
-        self.refer.as_mut().map(|mut r| r.set(reference));
-        Ok(tm)
+    fn read_datetime(&mut self) -> DecodeResult<Tm> {
+        unimplemented!()
     }
 
     fn read_option<T, F>(&mut self, mut f: F) -> DecodeResult<T> where F: FnMut(&mut Reader<'a>, bool) -> DecodeResult<T> {
-        let b = try!(self.byte_reader.read_byte());
+        let b = try!(self.read_byte());
         if b == TAG_NULL {
             f(self, false)
         } else {

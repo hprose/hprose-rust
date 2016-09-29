@@ -12,7 +12,7 @@
  *                                                        *
  * hprose lib for Rust.                                   *
  *                                                        *
- * LastModified: Sep 28, 2016                             *
+ * LastModified: Sep 29, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -26,5 +26,8 @@ extern crate num;
 extern crate time;
 extern crate uuid;
 
+/// Hprose serialization library.
 pub mod io;
+
+/// Hprose rpc library.
 pub mod rpc;

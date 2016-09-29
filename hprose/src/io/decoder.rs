@@ -12,7 +12,7 @@
  *                                                        *
  * hprose decoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 28, 2016                             *
+ * LastModified: Sep 29, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -44,8 +44,7 @@ pub trait Decoder {
     fn read_bytes(&mut self) -> Result<Bytes, Self::Error>;
 
     // Extern crate types:
-    fn read_datetime_without_tag(&mut self) -> Result<Tm, Self::Error>;
-    fn read_time_without_tag(&mut self) -> Result<Tm, Self::Error>;
+    fn read_datetime(&mut self) -> Result<Tm, Self::Error>;
 
     // Compound types:
 
