@@ -19,6 +19,7 @@
 
 use super::Hprose;
 
+use std::fmt::Display;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::borrow::Cow;
@@ -27,7 +28,8 @@ use std::cell::{Cell, RefCell};
 use std::hash::{Hash, BuildHasher};
 use std::collections::{LinkedList, VecDeque, BTreeMap, BTreeSet, HashMap, HashSet};
 
-use num::{BigInt, BigUint, BigRational, Complex};
+use num::{BigInt, BigUint, Integer, Complex};
+use num::rational::Ratio;
 use time::{Tm, Timespec, at_utc};
 use uuid::Uuid;
 
@@ -47,7 +49,7 @@ pub trait Encoder {
     // Extern crate types:
     fn write_bigint(&mut self, v: &BigInt);
     fn write_biguint(&mut self, v: &BigUint);
-    fn write_bigrat(&mut self, v: &BigRational);
+    fn write_ratio<T>(&mut self, v: &Ratio<T>) where T: Encodable + Clone + Integer + Display;
     fn write_complex32(&mut self, v: &Complex<f32>);
     fn write_complex64(&mut self, v: &Complex<f64>);
     fn write_datetime(&mut self, v: &Tm);
@@ -186,9 +188,9 @@ impl Encodable for BigUint {
     }
 }
 
-impl Encodable for BigRational {
+impl<T> Encodable for Ratio<T> where T: Encodable + Clone + Integer + Display {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_bigrat(self);
+        w.write_ratio(self);
     }
 }
 

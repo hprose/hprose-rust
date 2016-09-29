@@ -19,6 +19,7 @@
 
 extern crate dtoa;
 
+use std::fmt::Display;
 use std::{i32, i64, f32, f64, ptr};
 use std::num::FpCategory as Fp;
 use std::string::{String, FromUtf8Error};
@@ -29,7 +30,8 @@ use super::util::*;
 use super::encoder::*;
 use super::writer_refer::WriterRefer;
 
-use num::{BigInt, BigUint, BigRational, Complex};
+use num::{BigInt, BigUint, Integer, Complex};
+use num::rational::Ratio;
 use time::Tm;
 use uuid::Uuid;
 
@@ -299,12 +301,12 @@ impl Encoder for Writer {
         self.write_byte(TAG_SEMICOLON);
     }
 
-    fn write_bigrat(&mut self, r: &BigRational) {
+    fn write_ratio<T>(&mut self, r: &Ratio<T>) where T: Encodable + Clone + Integer + Display {
         if r.is_integer() {
-            self.write_bigint(&r.to_integer());
+            self.write_value(&r.to_integer());
         } else {
             let s = r.to_string();
-            self.set_ref(ptr::null::<&BigRational>());
+            self.set_ref(ptr::null::<&Ratio<T>>());
             self.write_str_with_len(&s, s.len());
         }
     }
@@ -424,7 +426,8 @@ mod tests {
     use super::*;
     use super::super::Hprose;
 
-    use num::{BigInt, BigUint, BigRational, Complex};
+    use num::{BigInt, BigUint, Complex};
+    use num::rational::Ratio;
     use time::strptime;
 
     macro_rules! t {
@@ -576,9 +579,15 @@ mod tests {
     }
 
     #[test]
-    fn test_serialize_bigrat() {
-        t!(BigRational::from_integer(BigInt::from(123i64)), "l123;");
-        t!(BigRational::new(BigInt::from(123i64), BigInt::from(2i64)), r#"s5"123/2""#);
+    fn test_serialize_ratio() {
+        t!(Ratio::from_integer(123i32), "i123;");
+        t!(Ratio::from_integer(123i64), "i123;");
+        t!(Ratio::from_integer(123isize), "i123;");
+        t!(Ratio::from_integer(BigInt::from(123i64)), "l123;");
+        t!(Ratio::new(123i32, 2i32), r#"s5"123/2""#);
+        t!(Ratio::new(123i64, 2i64), r#"s5"123/2""#);
+        t!(Ratio::new(123isize, 2isize), r#"s5"123/2""#);
+        t!(Ratio::new(BigInt::from(123i64), BigInt::from(2i64)), r#"s5"123/2""#);
     }
 
     #[test]
