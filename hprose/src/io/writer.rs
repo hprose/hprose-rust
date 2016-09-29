@@ -424,6 +424,7 @@ mod tests {
     use super::*;
     use super::super::Hprose;
 
+    use num::{BigInt, BigUint, BigRational, Complex};
     use time::strptime;
 
     macro_rules! t {
@@ -566,6 +567,26 @@ mod tests {
     fn test_serialize_bytes() {
         t!(b"hello", r#"b5"hello""#);
         t!(b"", r#"b"""#);
+    }
+
+    #[test]
+    fn test_serialize_bigint() {
+        t!(BigInt::from(-123i64), "l-123;");
+        t!(BigUint::from(123u64), "l123;");
+    }
+
+    #[test]
+    fn test_serialize_bigrat() {
+        t!(BigRational::from_integer(BigInt::from(123i64)), "l123;");
+        t!(BigRational::new(BigInt::from(123i64), BigInt::from(2i64)), r#"s5"123/2""#);
+    }
+
+    #[test]
+    fn test_serialize_complex() {
+        t!(Complex::new(100f32, 0f32), "d100;");
+        t!(Complex::new(100f64, 0f64), "d100;");
+        t!(Complex::new(0f32, 100f32), "a2{d0;d100;}");
+        t!(Complex::new(0f64, 100f64), "a2{d0;d100;}");
     }
 
     #[test]
