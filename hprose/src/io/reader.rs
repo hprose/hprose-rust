@@ -80,6 +80,11 @@ impl<'a> Reader<'a> {
     }
 
     #[inline]
+    pub fn read_byte(&mut self) -> DecodeResult<u8> {
+        self.byte_reader.read_byte().map_err(|err| DecoderError::ParserError(err))
+    }
+
+    #[inline]
     pub fn unserialize<T: Decodable>(&mut self) -> DecodeResult<T> {
         self.read_value()
     }
@@ -101,7 +106,7 @@ impl<'a> Reader<'a> {
         let start = self.byte_reader.off - 1;
         let len = try!(self.byte_reader.read_len());
         let bytes = try!(self.byte_reader.next(len)).to_owned();
-        try!(self.byte_reader.read_byte());
+        try!(self.read_byte());
         let reference = &self.byte_reader.buf[start..self.byte_reader.off];
         self.refer.as_mut().map(|mut r| r.set(reference));
         Ok(bytes)
@@ -122,32 +127,32 @@ impl<'a> Decoder for Reader<'a> {
     type Error = DecoderError;
 
     fn read_nil(&mut self) -> DecodeResult<()> {
-        let b = try!(self.byte_reader.read_byte());
+        let b = try!(self.read_byte());
         if b == TAG_NULL { Ok(()) } else { Err(DecoderError::UnexpectedTag(b, Some(vec!(TAG_NULL)))) }
     }
 
     fn read_bool(&mut self) -> DecodeResult<bool> {
-        let b = try!(self.byte_reader.read_byte());
+        let b = try!(self.read_byte());
         bool_decode(self, b)
     }
 
     fn read_i64(&mut self) -> DecodeResult<i64> {
-        let b = try!(self.byte_reader.read_byte());
+        let b = try!(self.read_byte());
         i64_decode(self, b)
     }
 
     fn read_u64(&mut self) -> DecodeResult<u64> {
-        let b = try!(self.byte_reader.read_byte());
+        let b = try!(self.read_byte());
         u64_decode(self, b)
     }
 
     fn read_f32(&mut self) -> DecodeResult<f32> {
-        let b = try!(self.byte_reader.read_byte());
+        let b = try!(self.read_byte());
         f32_decode(self, b)
     }
 
     fn read_f64(&mut self) -> DecodeResult<f64> {
-        let b = try!(self.byte_reader.read_byte());
+        let b = try!(self.read_byte());
         f64_decode(self, b)
     }
 
@@ -156,12 +161,12 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_string(&mut self) -> DecodeResult<String> {
-        let b = try!(self.byte_reader.read_byte());
+        let b = try!(self.read_byte());
         string_decode(self, b)
     }
 
     fn read_bytes(&mut self) -> DecodeResult<Bytes> {
-        let b = try!(self.byte_reader.read_byte());
+        let b = try!(self.read_byte());
         bytes_decode(self, b)
     }
 
@@ -265,14 +270,14 @@ impl<'a> Decoder for Reader<'a> {
     fn read_seq<T, F>(&mut self, f: F) -> DecodeResult<T>
         where T: Decodable, F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
     {
-        let b = try!(self.byte_reader.read_byte());
+        let b = try!(self.read_byte());
         seq_decode(self, b, |d, len| f(d, len))
     }
 
     fn read_map<T, F>(&mut self, f: F) -> DecodeResult<T>
         where T: Decodable, F: FnOnce(&mut Reader<'a>, usize) -> DecodeResult<T>
     {
-        let b = try!(self.byte_reader.read_byte());
+        let b = try!(self.read_byte());
         map_decode(self, b, |d, len| f(d, len))
     }
 

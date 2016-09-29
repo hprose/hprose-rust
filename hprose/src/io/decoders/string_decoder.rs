@@ -12,7 +12,7 @@
  *                                                        *
  * hprose string decoder for Rust.                        *
  *                                                        *
- * LastModified: Sep 26, 2016                             *
+ * LastModified: Sep 29, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -56,9 +56,8 @@ pub fn string_decode(r: &mut Reader, tag: u8) -> Result {
 }
 
 fn read_inf_as_string(r: &mut Reader) -> Result {
-    r.byte_reader.read_byte()
+    r.read_byte()
         .map(|sign| if sign == TAG_POS { String::from("+Inf") } else { String::from("-Inf") })
-        .map_err(|e| DecoderError::ParserError(e))
 }
 
 fn read_number_as_string(r: &mut Reader) -> Result {
@@ -81,7 +80,7 @@ fn read_bytes_as_string(r: &mut Reader) -> Result {
     };
     let bytes = try!(r.byte_reader.next(len)).to_owned();
     let s = try!(String::from_utf8(bytes).map_err(|_| ParserError::BadUTF8Encode));
-    try!(r.byte_reader.read_byte());
+    try!(r.read_byte());
     let reference = &r.byte_reader.buf[start..r.byte_reader.off];
     r.refer.as_mut().map(|mut r| r.set(reference));
     Ok(s)
@@ -89,10 +88,10 @@ fn read_bytes_as_string(r: &mut Reader) -> Result {
 
 fn read_guid_as_string(r: &mut Reader) -> Result {
     let start = r.byte_reader.off - 1;
-    try!(r.byte_reader.read_byte());
+    try!(r.read_byte());
     let bytes = try!(r.byte_reader.next(36)).to_owned();
     let s = try!(String::from_utf8(bytes).map_err(|_| ParserError::BadUTF8Encode));
-    try!(r.byte_reader.read_byte());
+    try!(r.read_byte());
     let reference = &r.byte_reader.buf[start..r.byte_reader.off];
     r.refer.as_mut().map(|mut r| r.set(reference));
     Ok(s)
