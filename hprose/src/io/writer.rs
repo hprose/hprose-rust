@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 28, 2016                             *
+ * LastModified: Sep 29, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -307,6 +307,30 @@ impl Encoder for Writer {
             self.set_ref(ptr::null::<&BigRational>());
             self.write_str_with_len(&s, s.len());
         }
+    }
+
+    fn write_complex32(&mut self, c: &Complex<f32>) {
+        if c.im == 0.0 {
+            self.write_f32(c.re);
+            return
+        }
+        self.set_ref(ptr::null::<&Complex<f32>>());
+        self.write_list_header(2);
+        self.write_f32(c.re);
+        self.write_f32(c.im);
+        self.write_list_footer();
+    }
+
+    fn write_complex64(&mut self, c: &Complex<f64>) {
+        if c.im == 0.0 {
+            self.write_f64(c.re);
+            return
+        }
+        self.set_ref(ptr::null::<&Complex<f64>>());
+        self.write_list_header(2);
+        self.write_f64(c.re);
+        self.write_f64(c.im);
+        self.write_list_footer();
     }
 
     fn write_datetime(&mut self, t: &Tm) {

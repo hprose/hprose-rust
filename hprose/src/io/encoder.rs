@@ -12,7 +12,7 @@
  *                                                        *
  * hprose encoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 28, 2016                             *
+ * LastModified: Sep 29, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -48,6 +48,8 @@ pub trait Encoder {
     fn write_bigint(&mut self, v: &BigInt);
     fn write_biguint(&mut self, v: &BigUint);
     fn write_bigrat(&mut self, v: &BigRational);
+    fn write_complex32(&mut self, v: &Complex<f32>);
+    fn write_complex64(&mut self, v: &Complex<f64>);
     fn write_datetime(&mut self, v: &Tm);
     fn write_uuid(&mut self, v: &Uuid);
 
@@ -187,6 +189,18 @@ impl Encodable for BigUint {
 impl Encodable for BigRational {
     fn encode<W: Encoder>(&self, w: &mut W) {
         w.write_bigrat(self);
+    }
+}
+
+impl Encodable for Complex<f32> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_complex32(self);
+    }
+}
+
+impl Encodable for Complex<f64> {
+    fn encode<W: Encoder>(&self, w: &mut W) {
+        w.write_complex64(self);
     }
 }
 
