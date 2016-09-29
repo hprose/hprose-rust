@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 28, 2016                             *
+ * LastModified: Sep 29, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -327,11 +327,12 @@ mod tests {
     use super::super::*;
 
     macro_rules! test {
-        ($ty:ty, $writer:expr, $($value:expr, $result:expr),+) => (
+        ($ty:ty, $($value:expr, $result:expr),+) => (
+            let mut w = Writer::new(false);
             $(
-                $writer.serialize(&$value);
+                w.serialize(&$value);
             )+
-            let bytes = $writer.bytes();
+            let bytes = w.bytes();
             let mut r = Reader::new(&bytes, false);
             $(
                 assert_eq!(r.unserialize::<$ty>().unwrap(), $result);
@@ -346,8 +347,7 @@ mod tests {
     #[test]
     fn test_unserialize_bool() {
         let true_value = String::from("true");
-        let mut w = Writer::new(false);
-        test! { bool, w,
+        test! { bool,
             true,               true,
             false,              false,
             (),                 false,
@@ -369,8 +369,7 @@ mod tests {
     #[test]
     fn test_unserialize_i64() {
         let int_value = String::from("1234567");
-        let mut w = Writer::new(false);
-        test! { i64, w,
+        test! { i64,
             true,                         1,
             false,                        0,
             (),                           0,
@@ -397,8 +396,7 @@ mod tests {
     #[test]
     fn test_unserialize_f32() {
         let f32_value = String::from("3.14159");
-        let mut w = Writer::new(false);
-        test! { f32, w,
+        test! { f32,
             true,                         1f32,
             false,                        0f32,
             (),                           0f32,
@@ -422,8 +420,7 @@ mod tests {
     #[test]
     fn test_unserialize_f64() {
         let f64_value = String::from("3.14159");
-        let mut w = Writer::new(false);
-        test! { f64, w,
+        test! { f64,
             true,                         1f64,
             false,                        0f64,
             (),                           0f64,
@@ -447,8 +444,7 @@ mod tests {
     #[test]
     fn test_unserialize_string() {
         let str_value = "你好";
-        let mut w = Writer::new(false);
-        test! { String, w,
+        test! { String,
             true,            "true",
             false,           "false",
             (),              "",
