@@ -331,7 +331,7 @@ pub fn cast_error(tag: u8, dst_type: &'static str) -> DecoderError {
 mod tests {
     use std::{i32, i64, u32, u64, f32, f64};
 
-    use time::{Timespec, at_utc, strptime};
+    use time::*;
 
     use super::super::*;
 
@@ -453,24 +453,28 @@ mod tests {
     #[test]
     fn test_unserialize_string() {
         let str_value = "你好";
+        let tm1 = strptime("1980-12-01", "%F").unwrap();
+        let tm2 = strptime("2006-09-09 12:34:56.789456123Z", "%F %T.%f%z").unwrap();
+        let mut tm3 = strptime("1970-01-01 12:34:56.789456123Z", "%F %T.%f%z").unwrap();
+        tm3.tm_utcoff = now().tm_utcoff;
         test! { String,
-            true,            "true",
-            false,           "false",
-            (),              "",
-            "",              "",
-            0,               "0",
-            1,               "1",
-            9,               "9",
-            100,             "100",
-            f32::MAX,        "3.4028235e38",
-            f64::MAX,        "1.7976931348623157e308",
-            0.0,             "0",
-            "1",             "1",
-            "9",             "9",
-            str_value,       "你好",
-            strptime("1980-12-01", "%F").unwrap(), "1980-12-01 00:00:00.000000000 -0000",
-            strptime("1970-01-01 12:34:56.789456123+08:00", "%F %T.%f%z").unwrap(), "1970-01-01 12:34:56.789456123 +0800",
-            strptime("2006-09-09 12:34:56.789456123Z", "%F %T.%f%z").unwrap(), "2006-09-09 12:34:56.789456123 -0000"
+            true,      "true",
+            false,     "false",
+            (),        "",
+            "",        "",
+            0,         "0",
+            1,         "1",
+            9,         "9",
+            100,       "100",
+            f32::MAX,  "3.4028235e38",
+            f64::MAX,  "1.7976931348623157e308",
+            0.0,       "0",
+            "1",       "1",
+            "9",       "9",
+            str_value, "你好",
+            tm1,       "1980-12-01 00:00:00.000000000 -0000",
+            tm2,       "2006-09-09 12:34:56.789456123 -0000",
+            tm3,       tm3.strftime("%F %T.%f %z").unwrap().to_string()
         }
     }
 }
