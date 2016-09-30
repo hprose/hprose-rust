@@ -244,7 +244,8 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_char(&mut self) -> DecodeResult<char> {
-        unimplemented!()
+        let b = try!(self.read_byte());
+        char_decode(self, b)
     }
 
     fn read_string(&mut self) -> DecodeResult<String> {
