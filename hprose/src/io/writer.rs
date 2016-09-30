@@ -364,21 +364,26 @@ impl Encoder for Writer {
         self.write_byte(TAG_CLOSEBRACE);
     }
 
-    fn write_struct(&mut self, name: &str, len: usize) {
+    fn write_struct<T: Encodable>(&mut self, v: &T) {
         self.write_byte(TAG_OBJECT);
         self.write_byte(TAG_OPENBRACE);
     }
 
-    fn write_struct_field<T: Encodable>(&mut self, key: &str, value: T) {
-        value.encode(self);
+    #[inline]
+    fn write_struct_field<T: Encodable>(&mut self, v: T) {
+        v.encode(self);
     }
 
+    #[inline]
     fn write_struct_end(&mut self) {
         self.write_byte(TAG_CLOSEBRACE);
     }
 
-    fn write_option<F>(&mut self, f: F) where F: FnOnce(&mut Writer) {
-        f(self);
+    fn write_option<T: Encodable>(&mut self, v: &Option<T>) {
+        match *v {
+            None => self.write_nil(),
+            Some(ref v) => v.encode(self)
+        }
     }
 
     fn write_seq<F>(&mut self, len: usize, f: F) where F: FnOnce(&mut Writer) {
@@ -391,7 +396,7 @@ impl Encoder for Writer {
         self.write_list_footer();
     }
 
-    fn write_map<F>(&mut self, len: usize, f: F) where F: FnOnce(&mut Self) {
+    fn write_map<F>(&mut self, len: usize, f: F) where F: FnOnce(&mut Writer) {
         if len == 0 {
             self.write_empty_map();
             return
