@@ -12,13 +12,13 @@
  *                                                        *
  * hprose client for Rust.                                *
  *                                                        *
- * LastModified: Sep 22, 2016                             *
+ * LastModified: Sep 30, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
 use io;
-use io::{Writer, ByteWriter, Encoder, Encodable, Reader, Decoder, Decodable};
+use io::{Writer, Encoder, Encodable, Reader, Decoder, Decodable};
 use io::tags::*;
 
 use super::ResultMode;
@@ -88,7 +88,7 @@ impl<T: Transporter> BaseClient<T> {
 
     pub fn do_output<A: Encodable, C: Client>(&self, name: &str, args: &mut Vec<A>, options: &InvokeOptions, context: &ClientContext<C>) -> Vec<u8> {
         let mut w = Writer::new(true);
-        w.byte_writer.write_byte(TAG_CALL);
+        w.write_byte(TAG_CALL);
         w.write_str(name);
         let by_ref = options.by_ref;
         let len = args.len();
@@ -102,7 +102,7 @@ impl<T: Transporter> BaseClient<T> {
                 w.write_bool(true);
             }
         }
-        w.byte_writer.write_byte(TAG_END);
+        w.write_byte(TAG_END);
         w.bytes()
     }
 

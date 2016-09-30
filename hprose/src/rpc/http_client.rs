@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for Rust.                           *
  *                                                        *
- * LastModified: Sep 22, 2016                             *
+ * LastModified: Sep 30, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -44,7 +44,7 @@ impl Transporter for HttpTransporter {
     fn send_and_receive(&self, uri: &str, data: &[u8]) -> Result<Vec<u8>, InvokeError> {
         self.client.post(uri).body(data).send().map(|mut resp| {
             let mut ret = Vec::new();
-            resp.read_to_end(&mut ret);
+            resp.read_to_end(&mut ret).unwrap();
             ret
         }).map_err(|e| InvokeError::TransError(String::from(e.description())))
     }

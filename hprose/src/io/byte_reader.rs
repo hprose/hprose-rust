@@ -12,7 +12,7 @@
  *                                                        *
  * byte reader for Rust.                                  *
  *                                                        *
- * LastModified: Sep 27, 2016                             *
+ * LastModified: Sep 30, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -41,6 +41,7 @@ pub struct ByteReader<'a> {
 }
 
 impl<'a> ByteReader<'a> {
+    /// Constructs a new `ByteReader<'a>`.
     #[inline]
     pub fn new(buf: &'a [u8]) -> ByteReader<'a> {
         ByteReader {

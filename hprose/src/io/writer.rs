@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Sep 30, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -37,11 +37,12 @@ use uuid::Uuid;
 
 /// Writer is a fine-grained operation struct for Hprose serialization
 pub struct Writer {
-    pub byte_writer: ByteWriter,
+    byte_writer: ByteWriter,
     refer: Option<WriterRefer>
 }
 
 impl Writer {
+    /// Constructs a new `Writer`.
     #[inline]
     pub fn new(simple: bool) -> Writer {
         Writer {
@@ -76,8 +77,8 @@ impl Writer {
     }
 
     #[inline]
-    pub fn write(&mut self, src: &[u8]) {
-        self.byte_writer.write(src);
+    pub fn write(&mut self, bytes: &[u8]) {
+        self.byte_writer.write(bytes);
     }
 
     #[inline]

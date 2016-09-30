@@ -12,7 +12,7 @@
  *                                                        *
  * byte writer for Rust.                                  *
  *                                                        *
- * LastModified: Sep 22, 2016                             *
+ * LastModified: Sep 30, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -31,15 +31,17 @@ impl ByteWriter {
     #[inline]
     pub fn new() -> ByteWriter {
         ByteWriter {
-            buf: Vec::with_capacity(1024)
+            buf: Vec::new()
         }
     }
 
+    /// Returns the `Bytes` of this writer.
     #[inline]
     pub fn bytes(&mut self) -> Bytes {
         self.buf.clone()
     }
 
+    /// Returns the `String` of this writer.
     #[inline]
     pub fn string(&mut self) -> Result<String, FromUtf8Error> {
         String::from_utf8(self.bytes())
@@ -58,26 +60,34 @@ impl ByteWriter {
     }
 
     /// Writes a byte to the end of the buf.
+    /// # Panics
+    ///
+    /// Panics if the number of elements in the buf overflows a `usize`.
+    ///
     #[inline]
     pub fn write_byte(&mut self, b: u8) {
         self.buf.push(b);
     }
 
-    /// Writes the contents in byte slice to the buf.
-    pub fn write(&mut self, src: &[u8]) {
-        let dst_len = self.len();
-        let src_len = src.len();
+    /// Writes all the bytes to the end of the buf.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the number of elements in the buf overflows a `usize`.
+    ///
+    pub fn write(&mut self, bytes: &[u8]) {
+        let slen = self.buf.len();
+        let blen = bytes.len();
 
-        self.buf.reserve(src_len);
+        self.buf.reserve(blen);
 
         unsafe {
-            // We would have failed if `reserve` overflowed
-            self.buf.set_len(dst_len + src_len);
-
             ptr::copy_nonoverlapping(
-                src.as_ptr(),
-                self.buf.as_mut_ptr().offset(dst_len as isize),
-                src_len);
+                bytes.as_ptr(),
+                self.buf.get_unchecked_mut(slen),
+                blen);
+
+            self.buf.set_len(slen + blen);
         }
     }
 }
