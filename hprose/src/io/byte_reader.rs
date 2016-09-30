@@ -24,12 +24,15 @@ use self::ParserError::*;
 
 use std::{io, num, f32, f64};
 
+use time;
+
 #[derive(Clone, PartialEq, Debug)]
 pub enum ParserError {
     BadUTF8Encode,
     ParseBoolError,
     ParseIntError(num::ParseIntError),
     ParseFloatError(num::ParseFloatError),
+    ParseTimeError(time::ParseError),
     IoError(io::ErrorKind),
 }
 

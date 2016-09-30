@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Sep 30, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -259,7 +259,8 @@ impl<'a> Decoder for Reader<'a> {
     }
 
     fn read_datetime(&mut self) -> DecodeResult<Tm> {
-        unimplemented!()
+        let b = try!(self.read_byte());
+        time_decode(self, b)
     }
 
     fn read_option<T, F>(&mut self, mut f: F) -> DecodeResult<T> where F: FnMut(&mut Reader<'a>, bool) -> DecodeResult<T> {

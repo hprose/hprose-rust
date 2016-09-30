@@ -12,7 +12,7 @@
  *                                                        *
  * hprose decoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Sep 30, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -25,7 +25,7 @@ use std::cell::{Cell, RefCell};
 use std::hash::{Hash, BuildHasher};
 use std::collections::HashMap;
 
-use time::Tm;
+use time::{Tm, Timespec};
 
 use super::Bytes;
 
@@ -276,9 +276,21 @@ impl<T: Decodable> Decodable for Vec<T> {
     }
 }
 
-impl Decodable for Vec<u8> {
-    fn decode<D: Decoder>(d: &mut D) -> Result<Vec<u8>, D::Error> {
+impl Decodable for Bytes {
+    fn decode<D: Decoder>(d: &mut D) -> Result<Bytes, D::Error> {
         d.read_bytes()
+    }
+}
+
+impl Decodable for Tm {
+    fn decode<D: Decoder>(d: &mut D) -> Result<Tm, D::Error> {
+        d.read_datetime()
+    }
+}
+
+impl Decodable for Timespec {
+    fn decode<D: Decoder>(d: &mut D) -> Result<Timespec, D::Error> {
+        d.read_datetime().map(|tm| tm.to_timespec())
     }
 }
 
