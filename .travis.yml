@@ -2,6 +2,8 @@ language: rust
 sudo: required
 rust:
   - nightly
+install:
+  - curl -sSf https://static.rust-lang.org/rustup.sh | sudo sh -s -- --channel=nightly
 script:
   - (cd hprose && cargo build)
   - (cd hprose && cargo test)
