@@ -12,7 +12,7 @@
  *                                                        *
  * hprose encoder for Rust.                               *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Sep 30, 2016                             *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -56,12 +56,12 @@ pub trait Encoder {
     fn write_uuid(&mut self, v: &Uuid);
 
     // Compound types:
-    fn write_struct(&mut self, name: &str, len: usize);
-    fn write_struct_field<T: Encodable>(&mut self, key: &str, value: T);
+    fn write_struct<T: Encodable>(&mut self, v: &T);
+    fn write_struct_field<T: Encodable>(&mut self, v: T);
     fn write_struct_end(&mut self);
 
     // Specialized types:
-    fn write_option<F>(&mut self, f: F) where F: FnOnce(&mut Self);
+    fn write_option<T: Encodable>(&mut self, v: &Option<T>);
     fn write_seq<F>(&mut self, len: usize, f: F) where F: FnOnce(&mut Self);
     fn write_map<F>(&mut self, len: usize, f: F) where F: FnOnce(&mut Self);
 
@@ -456,12 +456,7 @@ where K: Encodable + Hash + Eq,
 
 impl<T: Encodable> Encodable for Option<T> {
     fn encode<W: Encoder>(&self, w: &mut W) {
-        w.write_option(|w| {
-            match *self {
-                None => w.write_nil(),
-                Some(ref v) => v.encode(w)
-            }
-        })
+        w.write_option(self)
     }
 }
 
