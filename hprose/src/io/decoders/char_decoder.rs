@@ -8,16 +8,16 @@
 \**********************************************************/
 /**********************************************************\
  *                                                        *
- * io/decoders/char_decoder.rs                          *
+ * io/decoders/char_decoder.rs                            *
  *                                                        *
  * hprose char decoder for Rust.                          *
  *                                                        *
- * LastModified: Sep 30, 2016                             *
+ * LastModified: Oct 8, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
 
-use io::{Reader, Decoder, DecoderError, ParserError};
+use io::{Reader, Decoder, DecoderError};
 use io::tags::*;
 use io::reader::cast_error;
 use io::util::utf8_slice_to_str;

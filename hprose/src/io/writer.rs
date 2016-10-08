@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Sep 30, 2016                             *
+ * LastModified: Oct 8, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -52,13 +52,18 @@ impl Writer {
     }
 
     #[inline]
-    pub fn bytes(&mut self) -> Bytes {
-        self.byte_writer.bytes()
+    pub fn into_bytes(self) -> Bytes {
+        self.byte_writer.into_bytes()
     }
 
     #[inline]
-    pub fn string(&mut self) -> Result<String, FromUtf8Error> {
-        self.byte_writer.string()
+    pub fn as_bytes(&self) -> &[u8] {
+        self.byte_writer.as_bytes()
+    }
+
+    #[inline]
+    pub fn as_string(&self) -> Result<String, FromUtf8Error> {
+        self.byte_writer.as_string()
     }
 
     #[inline]
@@ -211,7 +216,7 @@ impl Encoder for Writer {
             },
             _ => {
                 self.write_byte(TAG_DOUBLE);
-                dtoa::write(&mut self.byte_writer.buf, f).unwrap();
+                dtoa::write(&mut self.byte_writer.vec, f).unwrap();
                 // self.write(f.to_string().as_bytes());
                 self.write_byte(TAG_SEMICOLON);
             }
@@ -232,7 +237,7 @@ impl Encoder for Writer {
             },
             _ => {
                 self.write_byte(TAG_DOUBLE);
-                dtoa::write(&mut self.byte_writer.buf, f).unwrap();
+                dtoa::write(&mut self.byte_writer.vec, f).unwrap();
                 // self.write(f.to_string().as_bytes());
                 self.write_byte(TAG_SEMICOLON);
             }
@@ -438,7 +443,7 @@ mod tests {
 
     macro_rules! t {
         ($value:expr, $result:expr) => {
-            assert_eq!(Writer::new(true).serialize(&$value).string().unwrap(), $result);
+            assert_eq!(Writer::new(true).serialize(&$value).as_string().unwrap(), $result);
         }
     }
 
@@ -673,7 +678,7 @@ mod tests {
             r#"m3{s4"male"ts3"age"i36;s4"name"s3"Tom"}"#,
             r#"m3{s4"male"ts4"name"s3"Tom"s3"age"i36;}"#
         ];
-        let result = w.serialize(&map).string().unwrap();
+        let result = w.serialize(&map).as_string().unwrap();
         assert!(expected.contains(&result.as_str()), "expected one of {:?}, but {} found", expected, result)
     }
 }
@@ -693,7 +698,7 @@ mod benchmarks {
         ($b:expr, $value:expr) => {
             let mut w = Writer::new(true);
             let v = $value;
-            $b.bytes = w.serialize(&v).bytes().len() as u64;
+            $b.bytes = w.serialize(&v).as_bytes().len() as u64;
             $b.iter(|| {
                 w.serialize(&v);
             });

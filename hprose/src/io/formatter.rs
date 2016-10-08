@@ -12,7 +12,7 @@
  *                                                        *
  * io Formatter for Rust.                                 *
  *                                                        *
- * LastModified: Sep 30, 2016                             *
+ * LastModified: Oct 8, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -22,7 +22,9 @@ use super::*;
 
 /// Serialize data
 pub fn serialize<T: Encodable>(v: &T, simple: bool) -> Bytes {
-    Writer::new(simple).serialize(v).bytes()
+    let mut w = Writer::new(simple);
+    w.serialize(v);
+    w.into_bytes()
 }
 
 /// Marshal data

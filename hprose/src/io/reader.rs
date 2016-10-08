@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Sep 30, 2016                             *
+ * LastModified: Oct 8, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -343,8 +343,8 @@ mod tests {
             $(
                 w.serialize(&$value);
             )+
-            let bytes = w.bytes();
-            let mut r = Reader::new(&bytes, false);
+            let bytes = w.as_bytes();
+            let mut r = Reader::new(bytes, false);
             $(
                 assert_eq!(r.unserialize::<$ty>().unwrap(), $result);
             )+
@@ -493,10 +493,11 @@ mod benchmarks {
     macro_rules! b {
         ($b:expr, $ty:ty, $value:expr) => {
             let v: $ty = $value;
-            let bytes = Writer::new(true).serialize(&v).bytes();
+            let mut w = Writer::new(true);
+            let bytes = w.serialize(&v).as_bytes();
             $b.bytes = bytes.len() as u64;
             $b.iter(|| {
-                Reader::new(&bytes, true).unserialize::<$ty>().unwrap();
+                Reader::new(bytes, true).unserialize::<$ty>().unwrap();
             });
         }
     }

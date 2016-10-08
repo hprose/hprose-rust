@@ -12,7 +12,7 @@
  *                                                        *
  * hprose time decoder for Rust.                          *
  *                                                        *
- * LastModified: Sep 30, 2016                             *
+ * LastModified: Oct 8, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -20,7 +20,6 @@
 use io::{Reader, Decoder, DecoderError, ParserError};
 use io::tags::*;
 use io::reader::cast_error;
-use io::util::utf8_slice_to_str;
 
 use std::result;
 
