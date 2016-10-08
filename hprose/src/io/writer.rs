@@ -72,7 +72,7 @@ impl Writer {
     }
 
     #[inline]
-    pub fn len(&mut self) -> usize {
+    pub fn len(&self) -> usize {
         self.byte_writer.len()
     }
 
@@ -103,11 +103,11 @@ impl Writer {
 
     // private functions
 
-    fn write_str_with_len(&mut self, s: &str, len: usize) {
+    fn write_str_with_len(&mut self, string: &str, len: usize) {
         self.write_byte(TAG_STRING);
         self.write(get_uint_bytes(&mut [0; 20], len as u64));
         self.write_byte(TAG_QUOTE);
-        self.write(s.as_bytes());
+        self.write(string.as_bytes());
         self.write_byte(TAG_QUOTE);
     }
 
@@ -188,17 +188,17 @@ impl Encoder for Writer {
         self.write_byte(TAG_SEMICOLON);
     }
 
-    fn write_u64(&mut self, i: u64) {
-        if i <= 9 {
-            self.write_byte(b'0' + i as u8);
+    fn write_u64(&mut self, u: u64) {
+        if u <= 9 {
+            self.write_byte(b'0' + u as u8);
             return
         }
-        if i <= i32::MAX as u64 {
+        if u <= i32::MAX as u64 {
             self.write_byte(TAG_INTEGER);
         } else {
             self.write_byte(TAG_LONG);
         }
-        self.write(get_uint_bytes(&mut [0; 20], i));
+        self.write(get_uint_bytes(&mut [0; 20], u));
         self.write_byte(TAG_SEMICOLON);
     }
 
@@ -245,39 +245,39 @@ impl Encoder for Writer {
     }
 
     #[inline]
-    fn write_char(&mut self, c: char) {
-        self.write_str(&c.to_string());
+    fn write_char(&mut self, ch: char) {
+        self.write_str(&ch.to_string());
     }
 
-    fn write_str(&mut self, s: &str) {
-        let len = utf16_len(s);
+    fn write_str(&mut self, string: &str) {
+        let len = utf16_len(string);
         match len {
             0 => self.write_byte(TAG_EMPTY),
             1 => {
                 self.write_byte(TAG_UTF8_CHAR);
-                self.write(s.as_bytes());
+                self.write(string.as_bytes());
             },
             _ => {
                 self.set_ref(ptr::null::<&str>());
-                self.write_str_with_len(s, len)
+                self.write_str_with_len(string, len)
             }
         }
     }
 
-    fn write_string(&mut self, s: &String) {
-        let length = utf16_len(s);
+    fn write_string(&mut self, string: &String) {
+        let length = utf16_len(string);
         match length {
             0 => self.write_byte(TAG_EMPTY),
             1 => {
                 self.write_byte(TAG_UTF8_CHAR);
-                self.write(s.as_bytes());
+                self.write(string.as_bytes());
             },
             _ => {
-                if self.write_ref(s) {
+                if self.write_ref(string) {
                     return
                 }
-                self.set_ref(s);
-                self.write_str_with_len(s, length)
+                self.set_ref(string);
+                self.write_str_with_len(string, length)
             }
         }
     }
@@ -295,23 +295,23 @@ impl Encoder for Writer {
         self.write_byte(TAG_QUOTE);
     }
 
-    fn write_bigint(&mut self, i: &BigInt) {
+    fn write_bigint(&mut self, bi: &BigInt) {
         self.write_byte(TAG_LONG);
-        self.write(i.to_str_radix(10).as_bytes());
+        self.write(bi.to_str_radix(10).as_bytes());
         self.write_byte(TAG_SEMICOLON);
     }
 
-    fn write_biguint(&mut self, u: &BigUint) {
+    fn write_biguint(&mut self, bu: &BigUint) {
         self.write_byte(TAG_LONG);
-        self.write(u.to_str_radix(10).as_bytes());
+        self.write(bu.to_str_radix(10).as_bytes());
         self.write_byte(TAG_SEMICOLON);
     }
 
-    fn write_ratio<T>(&mut self, r: &Ratio<T>) where T: Encodable + Clone + Integer + Display {
-        if r.is_integer() {
-            self.write_value(&r.to_integer());
+    fn write_ratio<T>(&mut self, rat: &Ratio<T>) where T: Encodable + Clone + Integer + Display {
+        if rat.is_integer() {
+            self.write_value(&rat.to_integer());
         } else {
-            let s = r.to_string();
+            let s = rat.to_string();
             self.set_ref(ptr::null::<&Ratio<T>>());
             self.write_str_with_len(&s, s.len());
         }
@@ -358,14 +358,14 @@ impl Encoder for Writer {
         self.write_byte(if t.tm_utcoff == 0 { TAG_UTC } else { TAG_SEMICOLON });
     }
 
-    fn write_uuid(&mut self, u: &Uuid) {
-        if self.write_ref(u) {
+    fn write_uuid(&mut self, uuid: &Uuid) {
+        if self.write_ref(uuid) {
             return
         }
-        self.set_ref(u);
+        self.set_ref(uuid);
         self.write_byte(TAG_GUID);
         self.write_byte(TAG_OPENBRACE);
-        self.write(u.hyphenated().to_string().as_bytes());
+        self.write(uuid.hyphenated().to_string().as_bytes());
         self.write_byte(TAG_CLOSEBRACE);
     }
 

@@ -30,9 +30,7 @@ impl ByteWriter {
     /// Constructs a new `ByteWriter`.
     #[inline]
     pub fn new() -> ByteWriter {
-        ByteWriter {
-            vec: Vec::new()
-        }
+        ByteWriter { vec: Vec::new() }
     }
 
     /// Converts a `ByteWriter` into a byte vector.
@@ -49,7 +47,12 @@ impl ByteWriter {
         &self.vec
     }
 
-    /// Returns the `String` of this writer.
+    /// Converts the contents of a `ByteWriter` to a `String`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the slice is not UTF-8 with a description as to why the
+    /// provided bytes are not UTF-8. The vector you moved in is also included.
     #[inline]
     pub fn as_string(&self) -> Result<String, FromUtf8Error> {
         String::from_utf8(self.vec.clone())
@@ -63,7 +66,7 @@ impl ByteWriter {
 
     /// Returns the number of bytes in the vector.
     #[inline]
-    pub fn len(&mut self) -> usize {
+    pub fn len(&self) -> usize {
         self.vec.len()
     }
 
