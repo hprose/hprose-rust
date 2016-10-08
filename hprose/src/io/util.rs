@@ -12,7 +12,7 @@
  *                                                        *
  * io util for Rust.                                      *
  *                                                        *
- * LastModified: Sep 28, 2016                             *
+ * LastModified: Oct 8, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -88,7 +88,7 @@ const MIN_I64_BUF: &'static [u8] = b"-9223372036854775808";
 
 pub fn get_int_bytes(buf: &mut [u8], mut i: i64) -> &[u8] {
     if i == 0 {
-        buf[0] = '0' as u8;
+        buf[0] = b'0';
         return &buf[..1]
     }
 
@@ -135,7 +135,7 @@ pub fn get_int_bytes(buf: &mut [u8], mut i: i64) -> &[u8] {
 
 pub fn get_uint_bytes(buf: &mut [u8], mut i: u64) -> &[u8] {
     if i == 0 {
-        buf[0] = '0' as u8;
+        buf[0] = b'0';
         return &buf[..1]
     }
 
