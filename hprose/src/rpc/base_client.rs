@@ -17,6 +17,8 @@
  *                                                        *
 \**********************************************************/
 
+use std::time::Duration;
+
 use io;
 use io::{Writer, Encoder, Encodable, Reader, Decoder, Decodable};
 use io::tags::*;
@@ -26,28 +28,30 @@ use super::*;
 /// BaseClient is the hprose base client
 pub struct BaseClient<T: Transporter> {
     trans: T,
-    url: String
+    uri: String,
+    timeout: Option<Duration>
 }
 
 impl<T: Transporter> BaseClient<T> {
     #[inline]
-    pub fn new(trans: T, url: String) -> BaseClient<T> {
+    pub fn new(trans: T, uri: String) -> BaseClient<T> {
         BaseClient {
             trans: trans,
-            url: url
+            uri: uri,
+            timeout: Some(Duration::from_secs(30))
         }
     }
 
-    pub fn invoke<R: Decodable, A: Encodable, C: Client>(&self, name: &str, args: &mut Vec<A>, options: &InvokeOptions, context: &ClientContext<C>) -> InvokeResult<R> {
-        let odata = self.do_output(name, args, options, context);
-        self.trans.send_and_receive(&self.url, &odata).and_then(|idata| self.do_input(idata, args, context))
+    pub fn invoke<R: Decodable, A: Encodable>(&self, name: &str, args: &mut Vec<A>, settings: Option<InvokeSettings>) -> InvokeResult<R> {
+        let odata = self.do_output(name, args, settings);
+        self.trans.send_and_receive(&self.uri, &odata).and_then(|idata| self.do_input(idata, args))
     }
 
-    pub fn do_output<A: Encodable, C: Client>(&self, name: &str, args: &mut Vec<A>, options: &InvokeOptions, context: &ClientContext<C>) -> Vec<u8> {
+    pub fn do_output<A: Encodable>(&self, name: &str, args: &mut Vec<A>, settings: Option<InvokeSettings>) -> Vec<u8> {
         let mut w = Writer::new(true);
         w.write_byte(TAG_CALL);
         w.write_str(name);
-        let by_ref = options.by_ref;
+        let by_ref = settings.map_or(false, |s| s.by_ref);
         let len = args.len();
         if len > 0 || by_ref {
             w.write_seq(args.len(), |w| {
@@ -63,7 +67,7 @@ impl<T: Transporter> BaseClient<T> {
         w.into_bytes()
     }
 
-    pub fn do_input<R: Decodable, A: Encodable, C: Client>(&self, data: Vec<u8>, args: &mut Vec<A>, context: &ClientContext<C>) -> InvokeResult<R> {
+    pub fn do_input<R: Decodable, A: Encodable>(&self, data: Vec<u8>, args: &mut Vec<A>) -> InvokeResult<R> {
         let mut r = Reader::new(&data, false);
         r.byte_reader.read_byte()
             .map_err(|e| InvokeError::DecoderError(io::DecoderError::ParserError(e)))

@@ -76,8 +76,8 @@ impl HttpClient {
 }
 
 impl Client for HttpClient {
-    fn invoke<R: Decodable, A: Encodable>(&self, name: &str, args: &mut Vec<A>, options: &InvokeOptions) -> InvokeResult<R> {
-        let context = ClientContext::new(self);
-        self.base_client.invoke::<R, A, HttpClient>(name, args, options, &context)
+    #[inline]
+    fn invoke<R: Decodable, A: Encodable>(&self, name: &str, args: &mut Vec<A>, settings: Option<InvokeSettings>) -> InvokeResult<R> {
+        self.base_client.invoke(name, args, settings)
     }
 }

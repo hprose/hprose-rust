@@ -22,7 +22,7 @@ mod base_client;
 mod http_client;
 mod result_mode;
 
-pub use self::client::{InvokeOptions, InvokeResult, InvokeError, Client, Transporter, ClientContext};
+pub use self::client::{InvokeSettings, InvokeResult, InvokeError, Client, Transporter, ClientContext};
 pub use self::base_client::BaseClient;
 pub use self::http_client::HttpClient;
 pub use self::result_mode::ResultMode;

@@ -17,16 +17,23 @@
  *                                                        *
 \**********************************************************/
 
+use std::time::Duration;
+
 use io;
 use io::{Encodable, Decodable};
 
 use super::ResultMode;
 
-/// InvokeOptions is the invoke options of hprose client
-pub struct InvokeOptions {
+/// InvokeSettings is the invoke settings of hprose client
+pub struct InvokeSettings {
     pub by_ref: bool,
-    pub simple_mode: bool,
-    pub result_mode: ResultMode
+    pub simple: bool,
+    pub idempotent: bool,
+    pub failswitch: bool,
+    pub oneway: bool,
+    pub retry: i32,
+    pub mode: ResultMode,
+    pub timeout: Option<Duration>
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -41,7 +48,7 @@ pub type InvokeResult<T> = Result<T, InvokeError>;
 
 /// Client is hprose client
 pub trait Client {
-    fn invoke<R: Decodable, A: Encodable>(&self, name: &str, args: &mut Vec<A>, options: &InvokeOptions) -> InvokeResult<R>;
+    fn invoke<R: Decodable, A: Encodable>(&self, name: &str, args: &mut Vec<A>, settings: Option<InvokeSettings>) -> InvokeResult<R>;
 }
 
 /// Transporter is the hprose client transporter
@@ -51,14 +58,16 @@ pub trait Transporter {
 
 /// ClientContext is the hprose client context
 pub struct ClientContext<'a, T: 'a + Client> {
+    settings: &'a Option<InvokeSettings>,
     client: &'a T
 }
 
 impl<'a, T: 'a + Client> ClientContext<'a, T> {
     #[inline]
-    pub fn new(client: &'a T) -> ClientContext<'a, T> {
+    pub fn new(client: &'a T, settings: &'a Option<InvokeSettings>) -> ClientContext<'a, T> {
         ClientContext {
-            client: client
+            client: client,
+            settings: settings
         }
     }
 }
