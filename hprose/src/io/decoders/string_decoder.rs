@@ -12,7 +12,7 @@
  *                                                        *
  * hprose string decoder for Rust.                        *
  *                                                        *
- * LastModified: Sep 29, 2016                             *
+ * LastModified: Oct 9, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -28,20 +28,20 @@ type Result = result::Result<String, DecoderError>;
 
 pub fn string_decode(r: &mut Reader, tag: u8) -> Result {
     match tag {
-        b'0' => Ok(String::from("0")),
-        b'1' => Ok(String::from("1")),
-        b'2' => Ok(String::from("2")),
-        b'3' => Ok(String::from("3")),
-        b'4' => Ok(String::from("4")),
-        b'5' => Ok(String::from("5")),
-        b'6' => Ok(String::from("6")),
-        b'7' => Ok(String::from("7")),
-        b'8' => Ok(String::from("8")),
-        b'9' => Ok(String::from("9")),
+        b'0' => Ok("0".to_owned()),
+        b'1' => Ok("1".to_owned()),
+        b'2' => Ok("2".to_owned()),
+        b'3' => Ok("3".to_owned()),
+        b'4' => Ok("4".to_owned()),
+        b'5' => Ok("5".to_owned()),
+        b'6' => Ok("6".to_owned()),
+        b'7' => Ok("7".to_owned()),
+        b'8' => Ok("8".to_owned()),
+        b'9' => Ok("9".to_owned()),
         TAG_NULL | TAG_EMPTY => Ok(String::new()),
-        TAG_FALSE => Ok(String::from("false")),
-        TAG_TRUE => Ok(String::from("true")),
-        TAG_NAN => Ok(String::from("NaN")),
+        TAG_FALSE => Ok("false".to_owned()),
+        TAG_TRUE => Ok("true".to_owned()),
+        TAG_NAN => Ok("NaN".to_owned()),
         TAG_INFINITY => read_inf_as_string(r),
         TAG_INTEGER | TAG_LONG | TAG_DOUBLE => read_number_as_string(r),
         TAG_UTF8_CHAR => read_utf8_char_as_string(r),
@@ -57,7 +57,7 @@ pub fn string_decode(r: &mut Reader, tag: u8) -> Result {
 
 fn read_inf_as_string(r: &mut Reader) -> Result {
     r.read_byte()
-        .map(|sign| if sign == TAG_POS { String::from("+Inf") } else { String::from("-Inf") })
+        .map(|sign| if sign == TAG_POS { "+Inf".to_owned() } else { "-Inf".to_owned() })
 }
 
 fn read_number_as_string(r: &mut Reader) -> Result {

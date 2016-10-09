@@ -12,7 +12,7 @@
  *                                                        *
  * hprose reader for Rust.                                *
  *                                                        *
- * LastModified: Oct 8, 2016                              *
+ * LastModified: Oct 9, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -357,7 +357,7 @@ mod tests {
 
     #[test]
     fn test_unserialize_bool() {
-        let true_value = String::from("true");
+        let true_value = "true".to_owned();
         test! { bool,
             true,               true,
             false,              false,
@@ -379,7 +379,7 @@ mod tests {
 
     #[test]
     fn test_unserialize_i64() {
-        let int_value = String::from("1234567");
+        let int_value = "1234567".to_owned();
         test! { i64,
             true,                         1,
             false,                        0,
@@ -406,7 +406,7 @@ mod tests {
 
     #[test]
     fn test_unserialize_f32() {
-        let f32_value = String::from("3.14159");
+        let f32_value = "3.14159".to_owned();
         test! { f32,
             true,                         1f32,
             false,                        0f32,
@@ -430,7 +430,7 @@ mod tests {
 
     #[test]
     fn test_unserialize_f64() {
-        let f64_value = String::from("3.14159");
+        let f64_value = "3.14159".to_owned();
         test! { f64,
             true,                         1f64,
             false,                        0f64,

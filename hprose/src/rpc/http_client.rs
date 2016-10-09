@@ -12,7 +12,7 @@
  *                                                        *
  * hprose http client for Rust.                           *
  *                                                        *
- * LastModified: Oct 8, 2016                              *
+ * LastModified: Oct 9, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -52,7 +52,7 @@ impl Transporter for HttpTransporter {
                 resp.read_to_end(&mut ret).unwrap();
                 ret
             })
-            .map_err(|e| InvokeError::TransError(String::from(e.description())))
+            .map_err(|e| InvokeError::TransError(e.description().to_owned()))
     }
 }
 

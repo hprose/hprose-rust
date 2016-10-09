@@ -12,7 +12,7 @@
  *                                                        *
  * hprose writer for Rust.                                *
  *                                                        *
- * LastModified: Oct 8, 2016                              *
+ * LastModified: Oct 9, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -660,14 +660,14 @@ mod tests {
     #[test]
     fn test_serialize_vec() {
         t!(Vec::<Hprose>::new(), "a{}");
-        t!(vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)], r#"a4{1s5"hello"nd3.14159;}"#);
+        t!(vec![Hprose::I64(1), Hprose::String("hello".to_owned()), Hprose::Nil, Hprose::F64(3.14159)], r#"a4{1s5"hello"nd3.14159;}"#);
     }
 
     #[test]
     fn test_serialize_map() {
         let mut w = Writer::new(true);
         let mut map = HashMap::new();
-        map.insert("name", Hprose::String(String::from("Tom")));
+        map.insert("name", Hprose::String("Tom".to_owned()));
         map.insert("age", Hprose::I64(36));
         map.insert("male", Hprose::Boolean(true));
         let expected = [
@@ -772,7 +772,7 @@ mod benchmarks {
 
     #[bench]
     fn benchmark_serialize_vec(b: &mut Bencher) {
-        b!(b,  vec![Hprose::I64(1), Hprose::String(String::from("hello")), Hprose::Nil, Hprose::F64(3.14159)]);
+        b!(b,  vec![Hprose::I64(1), Hprose::String("hello".to_owned()), Hprose::Nil, Hprose::F64(3.14159)]);
     }
 
     #[bench]
@@ -784,7 +784,7 @@ mod benchmarks {
     #[bench]
     fn benchmark_serialize_string_key_map(b: &mut Bencher) {
         let mut map = HashMap::new();
-        map.insert("name", Hprose::String(String::from("Tom")));
+        map.insert("name", Hprose::String("Tom".to_owned()));
         map.insert("age", Hprose::I64(36));
         map.insert("male", Hprose::Boolean(true));
         b!(b, map);
