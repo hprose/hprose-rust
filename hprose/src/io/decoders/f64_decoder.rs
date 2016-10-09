@@ -12,7 +12,7 @@
  *                                                        *
  * hprose f64 decoder for Rust.                           *
  *                                                        *
- * LastModified: Sep 26, 2016                             *
+ * LastModified: Oct 9, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -28,16 +28,16 @@ type Result = result::Result<f64, DecoderError>;
 
 pub fn f64_decode(r: &mut Reader, tag: u8) -> Result {
     match tag {
-        b'0' | TAG_NULL | TAG_EMPTY | TAG_FALSE => Ok(0f64),
-        b'1' | TAG_TRUE => Ok(1f64),
-        b'2' => Ok(2f64),
-        b'3' => Ok(3f64),
-        b'4' => Ok(4f64),
-        b'5' => Ok(5f64),
-        b'6' => Ok(6f64),
-        b'7' => Ok(7f64),
-        b'8' => Ok(8f64),
-        b'9' => Ok(9f64),
+        b'0' | TAG_NULL | TAG_EMPTY | TAG_FALSE => Ok(0.0),
+        b'1' | TAG_TRUE => Ok(1.0),
+        b'2' => Ok(2.0),
+        b'3' => Ok(3.0),
+        b'4' => Ok(4.0),
+        b'5' => Ok(5.0),
+        b'6' => Ok(6.0),
+        b'7' => Ok(7.0),
+        b'8' => Ok(8.0),
+        b'9' => Ok(9.0),
         TAG_NAN => Ok(f64::NAN),
         TAG_INFINITY => read_inf_as_f64(r),
         TAG_INTEGER | TAG_LONG => read_long_as_f64(r),
@@ -80,7 +80,7 @@ fn read_datetime_as_f64(r: &mut Reader) -> Result {
     r.read_datetime_without_tag()
         .map(|ref tm| {
             let ts = tm.to_timespec();
-            ts.sec as f64 + ts.nsec as f64 / 1_000_000_000f64
+            ts.sec as f64 + ts.nsec as f64 / 1_000_000_000.0
         })
 }
 
@@ -88,6 +88,6 @@ fn read_time_as_f64(r: &mut Reader) -> Result {
     r.read_time_without_tag()
         .map(|ref tm| {
             let ts = tm.to_timespec();
-            ts.sec as f64 + ts.nsec as f64 / 1_000_000_000f64
+            ts.sec as f64 + ts.nsec as f64 / 1_000_000_000.0
         })
 }

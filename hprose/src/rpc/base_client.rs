@@ -28,6 +28,7 @@ use super::*;
 /// BaseClient is the hprose base client
 pub struct BaseClient<T: Transporter> {
     trans: T,
+    filter_manager: FilterManager,
     uri: String,
     timeout: Option<Duration>
 }
@@ -37,17 +38,18 @@ impl<T: Transporter> BaseClient<T> {
     pub fn new(trans: T, uri: String) -> BaseClient<T> {
         BaseClient {
             trans: trans,
+            filter_manager: FilterManager::new(),
             uri: uri,
             timeout: Some(Duration::from_secs(30))
         }
     }
 
     pub fn invoke<R: Decodable, A: Encodable>(&self, name: &str, args: &mut Vec<A>, settings: Option<InvokeSettings>) -> InvokeResult<R> {
-        let odata = self.do_output(name, args, settings);
-        self.trans.send_and_receive(&self.uri, &odata).and_then(|idata| self.do_input(idata, args))
+        let odata = self.encode(name, args, settings);
+        self.trans.send_and_receive(&self.uri, &odata).and_then(|idata| self.decode(idata, args))
     }
 
-    pub fn do_output<A: Encodable>(&self, name: &str, args: &mut Vec<A>, settings: Option<InvokeSettings>) -> Vec<u8> {
+    fn encode<A: Encodable>(&self, name: &str, args: &mut Vec<A>, settings: Option<InvokeSettings>) -> Vec<u8> {
         let mut w = Writer::new(true);
         w.write_byte(TAG_CALL);
         w.write_str(name);
@@ -67,7 +69,7 @@ impl<T: Transporter> BaseClient<T> {
         w.into_bytes()
     }
 
-    pub fn do_input<R: Decodable, A: Encodable>(&self, data: Vec<u8>, args: &mut Vec<A>) -> InvokeResult<R> {
+    fn decode<R: Decodable, A: Encodable>(&self, data: Vec<u8>, args: &mut Vec<A>) -> InvokeResult<R> {
         let mut r = Reader::new(&data, false);
         r.byte_reader.read_byte()
             .map_err(|e| InvokeError::DecoderError(io::DecoderError::ParserError(e)))

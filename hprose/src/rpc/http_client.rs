@@ -35,9 +35,7 @@ pub struct HttpTransporter {
 impl HttpTransporter {
     #[inline]
     pub fn new() -> HttpTransporter {
-        HttpTransporter {
-            client: HyperClient::new()
-        }
+        HttpTransporter { client: HyperClient::new() }
     }
 }
 

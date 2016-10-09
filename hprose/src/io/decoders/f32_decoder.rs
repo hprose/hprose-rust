@@ -12,7 +12,7 @@
  *                                                        *
  * hprose f32 decoder for Rust.                           *
  *                                                        *
- * LastModified: Sep 26, 2016                             *
+ * LastModified: Oct 9, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -28,16 +28,16 @@ type Result = result::Result<f32, DecoderError>;
 
 pub fn f32_decode(r: &mut Reader, tag: u8) -> Result {
     match tag {
-        b'0' | TAG_NULL | TAG_EMPTY | TAG_FALSE => Ok(0f32),
-        b'1' | TAG_TRUE => Ok(1f32),
-        b'2' => Ok(2f32),
-        b'3' => Ok(3f32),
-        b'4' => Ok(4f32),
-        b'5' => Ok(5f32),
-        b'6' => Ok(6f32),
-        b'7' => Ok(7f32),
-        b'8' => Ok(8f32),
-        b'9' => Ok(9f32),
+        b'0' | TAG_NULL | TAG_EMPTY | TAG_FALSE => Ok(0.0),
+        b'1' | TAG_TRUE => Ok(1.0),
+        b'2' => Ok(2.0),
+        b'3' => Ok(3.0),
+        b'4' => Ok(4.0),
+        b'5' => Ok(5.0),
+        b'6' => Ok(6.0),
+        b'7' => Ok(7.0),
+        b'8' => Ok(8.0),
+        b'9' => Ok(9.0),
         TAG_NAN => Ok(f32::NAN),
         TAG_INFINITY => read_inf_as_f32(r),
         TAG_INTEGER | TAG_LONG => read_long_as_f32(r),
@@ -82,7 +82,7 @@ fn read_datetime_as_f32(r: &mut Reader) -> Result {
     r.read_datetime_without_tag()
         .map(|ref tm| {
             let ts = tm.to_timespec();
-            ts.sec as f32 + ts.nsec as f32 / 1_000_000_000f32
+            ts.sec as f32 + ts.nsec as f32 / 1_000_000_000.0
         })
 }
 
@@ -90,6 +90,6 @@ fn read_time_as_f32(r: &mut Reader) -> Result {
     r.read_time_without_tag()
         .map(|ref tm| {
             let ts = tm.to_timespec();
-            ts.sec as f32 + ts.nsec as f32 / 1_000_000_000f32
+            ts.sec as f32 + ts.nsec as f32 / 1_000_000_000.0
         })
 }
