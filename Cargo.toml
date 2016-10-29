@@ -1,0 +1,34 @@
+[package]
+name = "hprose"
+version = "0.1.0"
+authors = ["Chen Fei <cf@hprose.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/hprose/hprose-rust"
+documentation = "https://docs.rs/hprose"
+homepage = "http://hprose.com"
+description = """
+Hprose is a High Performance Remote Object Service Engine.
+
+This project is the implementation of Hprose for Rust.
+"""
+keywords = ["hprose", "rpc", "webservice",
+    "cross-language", "cross-platform", "cross-domain",
+    "serialize", "serialization", "protocol",
+    "communication", "middleware", "webapi"]
+include = [
+    "**/*.rs",
+    "Cargo.toml",
+]
+
+[dependencies]
+rand = "0.3"
+num = "0.1"
+time = "0.1"
+uuid = "0.3"
+dtoa = "0.2"
+custom_derive = "0.1"
+
+[dependencies.hyper]
+version = "0.9"
+default-features = false
