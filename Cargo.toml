@@ -12,10 +12,7 @@ Hprose is a High Performance Remote Object Service Engine.
 
 This project is the implementation of Hprose for Rust.
 """
-keywords = ["hprose", "rpc", "webservice",
-    "cross-language", "cross-platform", "cross-domain",
-    "serialize", "serialization", "protocol",
-    "communication", "middleware", "webapi"]
+keywords = ["hprose", "rpc", "serialize", "webservice", "microservice"]
 include = [
     "**/*.rs",
     "Cargo.toml",
