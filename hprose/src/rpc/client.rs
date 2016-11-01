@@ -12,7 +12,7 @@
  *                                                        *
  * hprose client for Rust.                                *
  *                                                        *
- * LastModified: Oct 8, 2016                              *
+ * LastModified: Oct 9, 2016                              *
  * Author: Chen Fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/

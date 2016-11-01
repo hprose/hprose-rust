@@ -26,5 +26,5 @@ mod result_mode;
 pub use self::client::{InvokeSettings, InvokeResult, InvokeError, Client, Transporter, ClientContext};
 pub use self::filter::{Filter, FilterManager};
 pub use self::base_client::BaseClient;
-pub use self::http_client::HttpClient;
+pub use self::http_client::{HttpClient, HttpTransporter};
 pub use self::result_mode::ResultMode;

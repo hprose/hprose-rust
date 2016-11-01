@@ -80,4 +80,14 @@ impl<T: Transporter> BaseClient<T> {
                 _ => Err(InvokeError::WrongResponse(data.clone())),
             })
     }
+
+    //    fn before_filter(&self, request: &[u8]) -> &[u8] {
+    //        let request = self.filter_manager.output(request);
+    //        let response = self.after_filter(request);
+    //        self.filter_manager.input(response)
+    //    }
+    //
+    //    fn after_filter(&self, request: &[u8]) -> &[u8] {
+    //        self.trans.send_and_receive(&self.uri, request)
+    //    }
 }
